@@ -1,0 +1,6 @@
+- become: yes
+  user:
+    name: danil
+    groups: adm,audio,cdrom,dialout,games,gpio,i2c,input,netdev,plugdev,spi,sudo,users,video
+- become: yes
+  shell: 'gpasswd -d pi sudo || :'

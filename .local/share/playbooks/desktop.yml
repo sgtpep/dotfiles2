@@ -1,13 +1,7 @@
 - connection: local
   hosts: localhost
   tasks:
-    - become: yes
-      user:
-        name: danil
-        groups: adm,audio,cdrom,dialout,games,gpio,i2c,input,netdev,plugdev,spi,sudo,users,video
-      when: ansible_hostname == 'raspberrypi'
-    - become: yes
-      shell: 'gpasswd -d pi sudo || :'
+    - include: raspbian.yml
       when: ansible_hostname == 'raspberrypi'
     - apt:
         cache_valid_time: 1000000
