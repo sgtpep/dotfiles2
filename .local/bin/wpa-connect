@@ -1,0 +1,25 @@
+#!/bin/bash
+set -eu
+command=(sudo wpa_cli -i wlan0)
+if [[ $@ ]]; then
+  if [[ $# == 2 ]]; then
+    wpa_passphrase "$1" "$2" | sudo tee -a /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null
+  else
+    sudo tee -a /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null << EOF
+network={
+  key_mgmt=NONE
+  ssid="$1"
+}
+EOF
+  fi
+  "${command[@]}" reconfigure
+else
+  "${command[@]}" scan
+  while :; do
+    output=$("${command[@]}" scan_results)
+    if [[ $output ]]; then
+      echo "$output"
+      break
+    fi
+  done
+fi
