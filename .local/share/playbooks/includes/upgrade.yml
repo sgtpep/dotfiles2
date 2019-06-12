@@ -14,5 +14,5 @@
   register: prompt
   when: reboot.stat.exists
 - become: yes
-  shell: reboot
+  command: reboot
   when: reboot.stat.exists and (not prompt.user_input or prompt.user_input[0].lower() == 'y')

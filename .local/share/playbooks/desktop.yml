@@ -1,8 +1,11 @@
 - connection: local
   hosts: localhost
   tasks:
+    - command: grep -Po '(?<=^ID=).+' /etc/os-release
+      register: raspbian
     - include: includes/raspbian.yml
-      when: ansible_hostname == 'raspberrypi'
+      when: raspbian.stdout == 'raspbian'
+    - include: includes/dotfiles.yml
     - apt:
         cache_valid_time: 1000000
         name: unattended-upgrades

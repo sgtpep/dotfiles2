@@ -1,0 +1,14 @@
+- args:
+    chdir: '/home/{{ansible_user}}'
+    creates: ~/.git
+  shell: |
+    repository=sgtpep/dotfiles2
+    git init
+    git remote add origin https://"${repository%/*}"@github.com/"$repository".git
+    git fetch
+    git checkout -ft origin/master
+    git ls-files | grep -Po '.+(?=\.orig$)' | xargs -r -I {} -d '\n' cp ~/{}{.orig,}
+    [ ! -f .ssh/id_rsa ] || git remote set-url origin git@github.com:"$repository".git
+    git config status.showUntrackedFiles no
+    rm -f LICENSE
+    git update-index --assume-unchanged LICENSE
