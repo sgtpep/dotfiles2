@@ -6,6 +6,14 @@
     - include: includes/raspbian.yml
       when: raspbian.stdout == 'raspbian'
     - include: includes/dotfiles.yml
+    - become: yes
+      copy:
+        content: |
+          [Service]
+          ExecStart=
+          ExecStart=-/usr/bin/agetty -a $USER %I
+          Type=simple
+        dest: /etc/systemd/system/getty@tty1.service.d/autologin.conf
     - apt:
         cache_valid_time: 1000000
         name: unattended-upgrades
