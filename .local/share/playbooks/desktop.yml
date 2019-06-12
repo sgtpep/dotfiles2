@@ -11,8 +11,7 @@
         content: |
           [Service]
           ExecStart=
-          ExecStart=-/usr/bin/agetty -a $USER %I
-          Type=simple
+          ExecStart=-/sbin/agetty -a {{ansible_user}} %I
         dest: /etc/systemd/system/getty@tty1.service.d/autologin.conf
     - apt:
         cache_valid_time: 1000000
