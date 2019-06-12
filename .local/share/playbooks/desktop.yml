@@ -1,20 +1,32 @@
 - connection: local
   hosts: localhost
   tasks:
-    - command: grep -Po '(?<=^ID=).+' /etc/os-release
-      register: raspbian
-    - include: includes/raspbian.yml
-      when: raspbian.stdout == 'raspbian'
+    - block:
+        - command: grep -Po '(?<=^ID=).+' /etc/os-release
+          register: release
+        - include: includes/raspbian.yml
+          when: release.stdout == 'raspbian'
     - include: includes/dotfiles.yml
     - become: yes
-      copy:
-        content: |
-          [Service]
-          ExecStart=
-          ExecStart=-/sbin/agetty -a {{ansible_user}} %I
-        dest: /etc/systemd/system/getty@tty1.service.d/autologin.conf
-    - apt:
-        cache_valid_time: 1000000
-        name: unattended-upgrades
-      become: yes
+      block:
+        - replace:
+            dest: /etc/default/keyboard
+            regexp: '(?<=^XKBLAYOUT=")[^"]*'
+            replace: 'us,ru'
+        - block:
+            - file:
+                path: '{{path}}'
+                recurse: yes
+                state: directory
+            - copy:
+                content: |
+                  [Service]
+                  ExecStart=
+                  ExecStart=-/sbin/agetty -a {{ansible_user}} %I
+                dest: '{{path}}/autologin.conf'
+          vars:
+            path: /etc/systemd/system/getty@tty1.service.d
+        - apt:
+            cache_valid_time: 1000000
+            name: unattended-upgrades
     - include: includes/upgrade.yml

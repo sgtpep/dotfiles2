@@ -1,55 +1,43 @@
 - become: yes
-  shell: echo 50 > /sys/class/backlight/rpi_backlight/brightness
-- become: yes
-  user:
-    name: danil
-    groups: adm,audio,cdrom,dialout,games,gpio,i2c,input,netdev,plugdev,spi,sudo,users,video
-- become: yes
-  shell: 'gpasswd -d pi sudo || :'
-- apt:
-    pkg: plymouth
-    state: absent
-  become: yes
-- become: yes
-  replace:
-    dest: /boot/cmdline.txt
-    regexp: '(\bconsole=tty)\d+\b'
-    replace: '\g<1>6'
-- become: yes
-  replace:
-    dest: /boot/cmdline.txt
-    regexp: ' rootwait$'
-    replace: '\g<0> loglevel=3 logo.nologo'
-- become: yes
-  blockinfile:
-    block: |
-      disable_splash=1
-      display_lcd_rotate=2
-    dest: /boot/config.txt
-- become: yes
-  replace:
-    dest: /etc/apt/sources.list
-    regexp: '\braspbian\.raspberrypi\.org\b'
-    replace: 'mirrordirector.raspbian.org'
-- become: yes
-  file:
-    dest: /etc/systemd/system/dhcpcd.service.d/wait.conf
-    state: absent
-- become: yes
-  timezone:
-    name: Europe/Moscow
-- set_fact:
-    locale: en_US.UTF-8
-- become: yes
-  locale_gen:
-    name: '{{locale}}'
-- become: yes
-  command: 'update-locale LANG={{locale}} LC_ALL={{locale}}'
-- become: yes
-  hostname:
-    name: localhost
-- become: yes
-  replace:
-    dest: /etc/default/keyboard
-    regexp: '(?<=^XKBLAYOUT=")[^"]*'
-    replace: 'us,ru'
+  block:
+    - shell: echo 50 > /sys/class/backlight/rpi_backlight/brightness
+    - user:
+        name: danil
+        groups: adm,audio,cdrom,dialout,games,gpio,i2c,input,netdev,plugdev,spi,sudo,users,video
+    - shell: 'gpasswd -d pi sudo || :'
+    - apt:
+        pkg: plymouth
+        state: absent
+    - block:
+        - replace:
+            dest: '{{path}}'
+            regexp: '(\bconsole=tty)\d+\b'
+            replace: '\g<1>6'
+        - replace:
+            dest: '{{path}}'
+            regexp: ' rootwait$'
+            replace: '\g<0> loglevel=3 logo.nologo'
+      vars:
+        path: /boot/cmdline.txt
+    - blockinfile:
+        block: |
+          disable_splash=1
+          display_lcd_rotate=2
+        dest: /boot/config.txt
+    - replace:
+        dest: /etc/apt/sources.list
+        regexp: '\braspbian\.raspberrypi\.org\b'
+        replace: 'mirrordirector.raspbian.org'
+    - file:
+        dest: /etc/systemd/system/dhcpcd.service.d/wait.conf
+        state: absent
+    - timezone:
+        name: Europe/Moscow
+    - block:
+        - locale_gen:
+            name: '{{locale}}'
+        - command: 'update-locale LANG={{locale}} LC_ALL={{locale}}'
+      vars:
+        locale: en_US.UTF-8
+    - hostname:
+        name: localhost
