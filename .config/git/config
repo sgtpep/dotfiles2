@@ -1,0 +1,18 @@
+[core]
+pager = perl /usr/share/doc/git/contrib/diff-highlight/diff-highlight | less
+
+[credential]
+helper = cache
+
+[interactive]
+diffFilter = perl /usr/share/doc/git/contrib/diff-highlight/diff-highlight
+
+[pull]
+rebase = true
+
+[push]
+followTags = true
+
+[user]
+email = mail"@"danil.mobi
+name = Danil Semelenov
