@@ -24,3 +24,8 @@
       disable_splash=1
       display_lcd_rotate=2
     dest: /boot/config.txt
+- become: yes
+  replace:
+    dest: /etc/apt/sources.list
+    regexp: '\braspbian\.rasperrypi.org\b'
+    replace: 'mirrordirector.raspbian.org'
