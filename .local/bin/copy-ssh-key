@@ -1,0 +1,11 @@
+#!/bin/bash
+set -eu
+sudo mount /dev/disk/by-label/keys /mnt
+mkdir -p ~/.ssh
+cp /mnt/id_rsa ~/.ssh
+sudo umount /mnt
+chmod 600 ~/.ssh/id_rsa
+sed -i 's/\bhttps:\/\/[^@]*@github\.com\//git@github.com:/' ~/.git/config
+until ssh-keygen -p -N '' -f ~/.ssh/id_rsa; do
+  :
+done
