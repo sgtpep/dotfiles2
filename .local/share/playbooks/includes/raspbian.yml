@@ -4,3 +4,23 @@
     groups: adm,audio,cdrom,dialout,games,gpio,i2c,input,netdev,plugdev,spi,sudo,users,video
 - become: yes
   shell: 'gpasswd -d pi sudo || :'
+- apt:
+    pkg: plymouth
+    state: absent
+  become: yes
+- become: yes
+  replace:
+    dest: /boot/cmdline.txt
+    regexp: '(\bconsole=tty)\d+\b'
+    replace: '\g<1>6'
+- become: yes
+  replace:
+    dest: /boot/cmdline.txt
+    regexp: ' rootwait$'
+    replace: '\g<0> loglevel=3 logo.nologo'
+- become: yes
+  blockinfile:
+    block: |
+      disable_splash=1
+      display_lcd_rotate=2
+    dest: /boot/config.txt
