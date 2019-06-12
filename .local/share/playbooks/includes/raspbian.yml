@@ -31,3 +31,7 @@
     dest: /etc/apt/sources.list
     regexp: '\braspbian\.raspberrypi\.org\b'
     replace: 'mirrordirector.raspbian.org'
+- become: yes
+  file:
+    dest: /etc/systemd/system/dhcpcd.service.d/wait.conf
+    state: absent
