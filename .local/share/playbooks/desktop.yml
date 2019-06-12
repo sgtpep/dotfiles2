@@ -1,17 +1,10 @@
 - connection: local
   hosts: localhost
   tasks:
-    - include: raspbian.yml
+    - include: includes/raspbian.yml
       when: ansible_hostname == 'raspberrypi'
     - apt:
         cache_valid_time: 1000000
         name: unattended-upgrades
       become: yes
-    - register: aptitude
-      stat:
-        path: /var/log/aptitude
-    - apt:
-        cache_valid_time: 1000000
-        upgrade: yes
-      become: yes
-      when: not aptitude.stat.exists
+    - include: includes/upgrade.yml

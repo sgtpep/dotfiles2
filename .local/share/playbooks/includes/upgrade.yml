@@ -1,0 +1,18 @@
+- register: aptitude
+  stat:
+    path: /var/log/aptitude
+- apt:
+    cache_valid_time: 1000000
+    upgrade: yes
+  become: yes
+  when: not aptitude.stat.exists
+- register: reboot
+  stat:
+    path: /run/reboot-required
+- pause:
+    prompt: 'Reboot? [Y/n]'
+  register: prompt
+  when: reboot.stat.exists
+- become: yes
+  shell: reboot
+  when: reboot.stat.exists and (not prompt.user_input or prompt.user_input[0].lower() == 'y')
