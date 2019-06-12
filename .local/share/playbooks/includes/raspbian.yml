@@ -1,4 +1,6 @@
 - become: yes
+  shell: echo 50 > /sys/class/backlight/rpi_backlight/brightness
+- become: yes
   user:
     name: danil
     groups: adm,audio,cdrom,dialout,games,gpio,i2c,input,netdev,plugdev,spi,sudo,users,video
@@ -27,5 +29,5 @@
 - become: yes
   replace:
     dest: /etc/apt/sources.list
-    regexp: '\braspbian\.rasperrypi.org\b'
+    regexp: '\braspbian\.raspberrypi\.org\b'
     replace: 'mirrordirector.raspbian.org'
