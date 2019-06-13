@@ -1,7 +1,0 @@
-- become: yes
-  block:
-    - block:
-        - command: cat /sys/class/dmi/id/product_name
-          register: product
-        - include: virtualbox.yml
-          when: product.stdout == 'VirtualBox'

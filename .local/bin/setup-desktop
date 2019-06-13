@@ -1,7 +1,170 @@
 #!/bin/bash
 set -eu
-if ! command -v ansible-pull > /dev/null; then
-  sudo apt update
-  sudo apt -y install ansible git
+
+function configure-brightness {
+  declare -A brightness=(
+    [intel_backlight]=1000
+    [rpi_backlight]=50
+  )
+  local dirname
+  for dirname in "${!brightness[@]}"; do
+    [[ ! -d /sys/class/backlight/$dirname ]] || sudo tee /sys/class/backlight/"$dirname"/brightness > /dev/null <<< ${brightness[$dirname]}
+  done
+}
+
+function clone-dotfiles {
+  if [[ ! -d ~/.git ]]; then
+    install-packages git
+    git -C ~ init
+    git -C ~ remote add origin https://"${repository%/*}"@github.com/"$repository".git
+    git -C ~ fetch
+    git -C ~ checkout -ft origin/master
+    git -C ~ ls-files | grep -Po '.+(?=\.orig$)' | xargs -r -I {} -d '\n' cp ~/{}{.orig,}
+    rm ~/LICENSE
+    configure-dotfiles
+  fi
+}
+
+function configure-dotfiles {
+  [[ ! -f ~/.ssh/id_rsa ]] || git -C ~ remote set-url origin git@github.com:"$repository".git
+  git -C ~ config status.showUntrackedFiles no
+  git -C ~ update-index --assume-unchanged LICENSE
+}
+
+function configure-hostname {
+  sudo hostnamectl set-hostname localhost
+}
+
+function configure-locale {
+  sudo sed -i 's/^#*\(en_US\.UTF-8 \)/\1/' /etc/locale.gen
+  [[ -f /usr/lib/locale/locale-archive ]] || sudo locale-gen
+  sudo sed -i 's/\(="\)[^"]*/\1en_US.UTF-8/' /etc/default/locale
+}
+
+function configure-raspbian-boot {
+  ! dpkg -s plymouth &> /dev/null || sudo apt -y remove plymouth
+  sudo sed -i 's/\b\(console=tty\)\d*/\16/; s/ rootwait$/\0 loglevel=3 logo.nologo/' /boot/cmdline.txt
+  if ! grep -q '^\(disable_splash\|display_lcd_rotate\)=' /boot/config.txt; then
+    sudo tee -a /boot/config.txt > /dev/null << \EOF
+disable_splash=1
+display_lcd_rotate=2
+EOF
 fi
-exec ansible-pull -K -U https://github.com/sgtpep/dotfiles2.git .local/share/playbooks/desktop.yml
+}
+
+function configure-raspbian-mirror {
+  sudo sed -i 's/\braspbian\.raspberrypi\.org\b/mirrordirector.raspbian.org/' /etc/apt/sources.list
+}
+
+function configure-timezone {
+  sudo ln -fs /usr/share/zoneinfo/Europe/Moscow /etc/localtime
+}
+
+function configure-sudoers {
+  sudo tee /etc/sudoers.d/apt-install > /dev/null <<< '%sudo ALL = NOPASSWD: /usr/bin/apt -y install *'
+  sudo tee /etc/sudoers.d/sshuttle > /dev/null <<< '%sudo ALL = NOPASSWD: SETENV: /usr/bin/python3 /usr/bin/sshuttle --method auto --firewall'
+}
+
+function create-raspbian-user {
+  id "$username" &> /dev/null || sudo useradd -m -G adm,audio,cdrom,dialout,games,gpio,i2c,input,netdev,plugdev,spi,sudo,users,video -s /bin/bash "$username"
+  sudo grep -q "^$username:\\$" /etc/shadow || sudo passwd "$username"
+  gpasswd -d pi sudo || :
+}
+
+function disable-raspbian-dhcp-wait {
+  sudo rm -f /etc/systemd/system/dhcpcd.service.d/wait.conf
+}
+
+function enable-autologin {
+  sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
+  sudo tee /etc/systemd/system/getty@tty1.service.d/autologin.conf > /dev/null << EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty -a $USER %I
+EOF
+}
+
+function enable-fstrim {
+  sudo ln -fs /usr/share/doc/util-linux/examples/fstrim.service /etc/systemd/system
+  sudo systemctl enable /usr/share/doc/util-linux/examples/fstrim.timer
+}
+
+function fix-efi {
+  sudo mkdir -p /boot/efi/EFI/boot
+  sudo cp /boot/efi/EFI/{debian/grubx64.efi,boot/bootx64.efi}
+}
+
+function install-packages {
+  local package
+  for package; do
+    dpkg -s "$package" &> /dev/null || sudo DEBIAN_FRONTEND=noninteractive apt -y install "$package"
+  done
+}
+
+function main {
+  if [[ $(os-release) == raspbian ]] && [[ $USER == pi ]]; then
+    create-raspbian-user
+    exec sudo -u "$username" bash -"$-" "$0" "$@"
+  else
+    clone-dotfiles
+    install-packages unattended-upgrades
+    reboot-if-needed
+    setup-system
+    upgrade-system
+  fi
+}
+
+function os-release {
+  grep -Po '(?<=^ID=).+' /etc/os-release
+}
+
+function product-name {
+  [[ ! -f /sys/class/dmi/id/product_name ]] || echo "$(< /sys/class/dmi/id/product_name)"
+}
+
+function reboot-if-needed {
+  if [[ -f /run/reboot-required ]]; then
+    read -p 'Reboot? [Y/n] '
+    [[ ! $REPLY =~ ^[Yy]*$ ]] || sudo reboot
+  fi
+}
+
+repository=sgtpep/dotfiles2
+
+function setup-raspbian {
+  if [[ $(os-release) == raspbian ]]; then
+    configure-hostname
+    configure-locale
+    configure-raspbian-boot
+    configure-raspbian-mirror
+    configure-timezone
+    disable-raspbian-dhcp-wait
+  fi
+}
+
+function setup-system {
+  configure-brightness
+  configure-sudoers
+  enable-autologin
+  enable-fstrim
+  setup-raspbian
+  setup-virtualbox
+}
+
+function setup-virtualbox {
+  if [[ $(product-name) == VirtualBox ]]; then
+    fix-efi
+  fi
+}
+
+function upgrade-system {
+  if [[ ! $(zgrep ' full-upgrade\b' /var/log/apt/history.log* || :) ]]; then
+    sudo apt update
+    sudo APT_LISTCHANGES_FRONTEND=none DEBIAN_FRONTEND=noninteractive apt -y -o Dpkg::Options::=--force-confnew full-upgrade
+    sudo apt -y autoremove --purge
+  fi
+}
+
+username=danil
+
+[[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"
