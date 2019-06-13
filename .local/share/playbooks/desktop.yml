@@ -34,17 +34,15 @@
                 dest: '/etc/systemd/system/{{name}}.service'
                 src: '{{path}}/{{name}}.service'
                 state: link
-            - service:
-                enabled: yes
-                name: '{{path}}/{{name}}.timer'
+            - command: 'systemctl enable {{path}}/{{name}}.timer'
           vars:
             name: fstrim
             path: /usr/share/doc/util-linux/examples
         - copy:
-            content: '%sudo ALL = NOPASSWD: /usr/bin/apt -y install'
+            content: '%sudo ALL = (ALL) NOPASSWD: /usr/bin/apt -y install'
             dest: /etc/sudoers.d/apt-install
         - copy:
-            content: '%sudo ALL = NOPASSWD: SETENV: /usr/bin/python3 /usr/bin/sshuttle --method auto --firewall'
+            content: '%sudo ALL = (ALL) NOPASSWD: SETENV: /usr/bin/python3 /usr/bin/sshuttle --method auto --firewall'
             dest: /etc/sudoers.d/sshuttle
         - apt:
             cache_valid_time: 1000000
