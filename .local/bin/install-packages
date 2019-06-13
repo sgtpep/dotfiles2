@@ -1,0 +1,41 @@
+#!/bin/bash
+set -eu
+
+function install-packages {
+  if ! packages-installed "$@"; then
+    run-command sudo DEBIAN_FRONTEND=noninteractive apt -y install "$@"
+    until packages-installed "$@"; do
+      sleep 1
+    done
+  fi
+}
+
+function main {
+  if [[ ${0##*/} == install-packages ]]; then
+    install-packages "$@"
+  else
+    [[ -x /usr/bin/${0##*/} ]] || install-packages "${0##*/}"
+    exec /usr/bin/"${0##*/}" "$@"
+  fi
+}
+
+function packages-installed {
+  local package
+  for package; do
+    [[ -f /var/lib/dpkg/info/$package.list ]] || return 1
+  done
+}
+
+function run-command {
+  local command=(flock /tmp/install-packages.lock execute-online "$@")
+  local detached_command=(bash -"$-" -c '"$@" || read -s' -- "${command[@]}")
+  if [[ ! -t 1 && -v TMUX ]]; then
+    tmux new-window -n installing "${detached_command[@]}"
+  elif [[ ! -t 1 && -v DISPLAY && -x /usr/bin/$(readlink ~/.local/bin/x-terminal-emulator) ]]; then
+    x-terminal-emulator -title installing -e "${detached_command[@]}"
+  else
+    "${command[@]}"
+  fi
+}
+
+[[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"

@@ -1,0 +1,11 @@
+#!/bin/bash
+set -eu
+command=(ping -c 1 danil.mobi)
+if ! "${command[@]}" &> /dev/null; then
+  echo -n 'Connecting...' >&2
+  until "${command[@]}" &> /dev/null; do
+    sleep 1
+  done
+  echo >&2
+fi
+exec "$@"
