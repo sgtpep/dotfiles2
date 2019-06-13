@@ -4,8 +4,11 @@
     - block:
         - command: grep -Po '(?<=^ID=).+' /etc/os-release
           register: release
-        - include: includes/raspbian.yml
-          when: release.stdout == 'raspbian'
+        - include: 'includes/{{item}}.yml'
+          when: release.stdout == item
+          with_list:
+            - debian
+            - raspberry
     - include: includes/dotfiles.yml
     - become: yes
       block:
@@ -24,6 +27,7 @@
                   ExecStart=
                   ExecStart=-/sbin/agetty -a {{ansible_user}} %I
                 dest: '{{path}}/autologin.conf'
+                force: no
           vars:
             path: /etc/systemd/system/getty@tty1.service.d
         - apt:
