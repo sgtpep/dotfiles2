@@ -29,6 +29,17 @@
                 dest: '{{path}}/autologin.conf'
           vars:
             path: /etc/systemd/system/getty@tty1.service.d
+        - block:
+            - file:
+                dest: '/etc/systemd/system/{{name}}.service'
+                src: '{{path}}/{{name}}.service'
+                state: link
+            - service:
+                enabled: yes
+                name: '{{path}}/{{name}}.timer'
+          vars:
+            name: fstrim
+            path: /usr/share/doc/util-linux/examples
         - copy:
             content: '%sudo ALL = NOPASSWD: /usr/bin/apt -y install'
             dest: /etc/sudoers.d/apt-install
