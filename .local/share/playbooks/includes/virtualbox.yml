@@ -5,7 +5,6 @@
         state: directory
     - copy:
         dest: '{{path}}/boot/bootx64.efi'
-        force: no
         remote_src: yes
         src: '{{path}}/debian/grubx64.efi'
   vars:
