@@ -1,6 +1,37 @@
 #!/bin/bash
 set -eu
 
+declare -A executables=(
+  [7zr]=p7zip
+  [ag]=silversearcher-ag
+  [aria2c]=aria2
+  [calc]=apcalc
+  [convert]=imagemagick
+  [dig]=dnsutils
+  [ebook-convert]=calibre
+  [ebook-viewer]=calibre
+  [firefox]=firefox-esr
+  [gem]=ruby
+  [jpegtran]=libjpeg-turbo-progs
+  [mbsync]=isync
+  [notify-send]=libnotify-bin
+  [pdftotext]=poppler-utils
+  [pip3]=python3-pip
+  [scp]=openssh-client
+  [slock]=suckless-tools
+  [ssh]=openssh-client
+  [ssh-add]=openssh-client
+  [ssh-agent]=openssh-client
+  [unrar]=unrar-free
+  [xclipboard]=x11-apps
+  [xev]=x11-utils
+  [xmodmap]=x11-xserver-utils
+  [xprop]=x11-utils
+  [xrandr]=x11-xserver-utils
+  [xrdb]=x11-xserver-utils
+  [xset]=x11-xserver-utils
+)
+
 function install-packages {
   if ! packages-installed "$@"; then
     run-command sudo DEBIAN_FRONTEND=noninteractive apt -y install "$@"
@@ -11,11 +42,12 @@ function install-packages {
 }
 
 function main {
-  if [[ ${0##*/} == install-packages ]]; then
+  local executable=${0##*/}
+  if [[ $executable == install-packages ]]; then
     install-packages "$@"
   else
-    [[ -x /usr/bin/${0##*/} ]] || install-packages "${0##*/}"
-    exec /usr/bin/"${0##*/}" "$@"
+    [[ -x /usr/bin/$executable ]] || install-packages "${executables[$executable]-$executable}"
+    exec /usr/bin/"$executable" "$@"
   fi
 }
 
