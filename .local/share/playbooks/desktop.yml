@@ -29,6 +29,9 @@
                 dest: '{{path}}/autologin.conf'
           vars:
             path: /etc/systemd/system/getty@tty1.service.d
+        - copy:
+            content: '{{ansible_user}} ALL = (ALL) NOPASSWD: /usr/bin/apt -y install'
+            dest: /etc/sudoers.d/apt-install
         - apt:
             cache_valid_time: 1000000
             name: unattended-upgrades
