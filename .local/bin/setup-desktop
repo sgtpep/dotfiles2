@@ -1,17 +1,6 @@
 #!/bin/bash
 set -eu
 
-function configure-brightness {
-  declare -A brightness=(
-    [intel_backlight]=1000
-    [rpi_backlight]=50
-  )
-  local dirname
-  for dirname in "${!brightness[@]}"; do
-    [[ ! -d /sys/class/backlight/$dirname ]] || sudo tee /sys/class/backlight/"$dirname"/brightness > /dev/null <<< ${brightness[$dirname]}
-  done
-}
-
 function clone-dotfiles {
   if [[ ! -d ~/.git ]]; then
     install-packages git
@@ -25,25 +14,68 @@ function clone-dotfiles {
   fi
 }
 
+function configure-brightness {
+  declare -A brightness=(
+    [intel_backlight]=1000
+    [rpi_backlight]=50
+  )
+  local dirname
+  for dirname in "${!brightness[@]}"; do
+    [[ ! -d /sys/class/backlight/$dirname ]] || sudo tee /sys/class/backlight/"$dirname"/brightness > /dev/null <<< ${brightness[$dirname]}
+  done
+}
+
+function configure-console-font {
+  sudo sed -i 's/^\(FONTFACE="\)[^"]*/\1VGA/' /etc/default/console-setup
+}
+
+function configure-console-keyboard {
+  sudo sed -i 's/^\(XKBLAYOUT="\)[^"]*/\1us/' /etc/default/keyboard
+}
+
 function configure-dotfiles {
   [[ ! -f ~/.ssh/id_rsa ]] || git -C ~ remote set-url origin git@github.com:"$repository".git
   git -C ~ config status.showUntrackedFiles no
   git -C ~ update-index --assume-unchanged LICENSE
 }
 
+function configure-grub {
+  local checksum=$(md5sum /etc/default/grub)
+  grep -q '^GRUB_TIMEOUT_STYLE=' /etc/default/grub || sudo tee -a /etc/default/grub > /dev/null <<< 'GRUB_TIMEOUT_STYLE=hidden'
+  sudo sed -i -f - /etc/default/grub << \EOF
+s/^#*\(GRUB_TERMINAL=\).*/\1console/
+s/^\(GRUB_CMDLINE_LINUX_DEFAULT\)=.*/\1="quiet loglevel=3"/
+s/^\(GRUB_TIMEOUT=\).*/\11/
+EOF
+  md5sum -c --status <<< "$checksum" || sudo update-grub
+}
+
 function configure-hostname {
   sudo hostnamectl set-hostname localhost
 }
 
+function configure-initramfs {
+  local modprobe_checksum=$(cat /etc/modprobe.d/* 2> /dev/null | md5sum)
+  local modules_checksum=$(md5sum /etc/initramfs-tools/modules)
+  if [[ $(product-name) == 'HP Stream '* ]]; then
+    sudo tee /etc/modprobe.d/i2c-hid.conf > /dev/null <<< 'blacklist i2c-hid'
+    grep -qx 'i915' /etc/initramfs-tools/modules || sudo tee -a /etc/initramfs-tools/modules > /dev/null <<< 'i915'
+  fi
+  [[ $(cat /etc/modprobe.d/* 2> /dev/null | md5sum) == $modprobe_checksum ]] && md5sum -c --status <<< "$modules_checksum" || sudo update-initramfs -u
+}
+
 function configure-locale {
-  sudo sed -i 's/^#*\(en_US\.UTF-8 \)/\1/' /etc/locale.gen
-  [[ -f /usr/lib/locale/locale-archive ]] || sudo locale-gen
-  sudo sed -i 's/\(="\)[^"]*/\1en_US.UTF-8/' /etc/default/locale
+  sudo sed -i 's/^#* *\(en_US\.UTF-8 \)/\1/' /etc/locale.gen
+  [[ $(< /etc/default/locale) == 'LANG=en_US.UTF-8' ]] || sudo locale-gen
+  sudo tee /etc/default/locale > /dev/null <<< 'LANG=en_US.UTF-8'
 }
 
 function configure-raspbian-boot {
-  ! dpkg -s plymouth &> /dev/null || sudo apt -y remove plymouth
-  sudo sed -i 's/\b\(console=tty\)\d*/\16/; s/ rootwait$/\0 loglevel=3 logo.nologo/' /boot/cmdline.txt
+  ! dpkg -s plymouth &> /dev/null || sudo apt -y purge plymouth
+  sudo sed -i -f - /boot/cmdline.txt << \EOF
+s/\b\(console=tty\)[^ ]*/\16/
+s/ rootwait$/\0 loglevel=3 logo.nologo/
+EOF
   if ! grep -q '^\(disable_splash\|display_lcd_rotate\)=' /boot/config.txt; then
     sudo tee -a /boot/config.txt > /dev/null << \EOF
 disable_splash=1
@@ -61,7 +93,7 @@ function configure-timezone {
 }
 
 function configure-sudoers {
-  sudo tee /etc/sudoers.d/apt-install > /dev/null <<< '%sudo ALL = NOPASSWD: /usr/bin/apt -y install *'
+  sudo tee /etc/sudoers.d/apt-install > /dev/null <<< '%sudo ALL = NOPASSWD: SETENV: /usr/bin/apt -y install *'
   sudo tee /etc/sudoers.d/sshuttle > /dev/null <<< '%sudo ALL = NOPASSWD: SETENV: /usr/bin/python3 /usr/bin/sshuttle --method auto --firewall'
 }
 
@@ -71,8 +103,20 @@ function create-raspbian-user {
   gpasswd -d pi sudo || :
 }
 
+function disable-power-key {
+  [[ $(product-name) == VirtualBox ]] || sudo sed -i 's/^#*\(HandlePowerKey=\).*/\1ignore/' /etc/systemd/logind.conf
+}
+
 function disable-raspbian-dhcp-wait {
   sudo rm -f /etc/systemd/system/dhcpcd.service.d/wait.conf
+}
+
+function enable-archive-area {
+  local path=/etc/apt/sources.list.d/$1${2+-$2}.list
+  if [[ ! -f $path ]]; then
+    sudo tee "$path" > /dev/null <<< "deb http://deb.debian.org/debian $(lsb_release -cs)${2+-$2} $1"
+    sudo apt update -o APT::Get::List-Cleanup=0 -o Dir::Etc::sourcelist="$path" -o Dir::Etc::sourceparts=-
+  fi
 }
 
 function enable-autologin {
@@ -94,9 +138,16 @@ function fix-efi {
   sudo cp /boot/efi/EFI/{debian/grubx64.efi,boot/bootx64.efi}
 }
 
+function install-firmware {
+  if [[ $(product-name) == 'HP Stream '* ]]; then
+    enable-archive-area non-free
+    install-packages firmware-iwlwifi
+  fi
+}
+
 function install-packages {
   local package
-  for package; do
+  for package in "${@%/*}"; do
     dpkg -s "$package" &> /dev/null || sudo DEBIAN_FRONTEND=noninteractive apt -y install "$package"
   done
 }
@@ -107,10 +158,10 @@ function main {
     exec sudo -u "$username" bash -"$-" "$0" "$@"
   else
     clone-dotfiles
-    install-packages unattended-upgrades
-    reboot-if-needed
     setup-system
+    install-packages unattended-upgrades
     upgrade-system
+    reboot-if-needed
   fi
 }
 
@@ -131,8 +182,36 @@ function reboot-if-needed {
 
 repository=sgtpep/dotfiles2
 
+function setup-acpid {
+  install-packages acpid
+  sudo ln -fs /usr/share/doc/acpid/examples/default /etc/acpi/events
+  sudo tee /etc/acpi/default.sh > /dev/null << \EOF
+#!/bin/bash
+set -eu
+if [[ $1 == video/brightness* ]]; then
+  for path in /sys/class/backlight/*; do
+    ! cd "$path" 2> /dev/null || break
+  done
+  if [[ $1 == *down ]]; then
+    expression='/ 3 * 2'
+  elif [[ $1 == *up ]]; then
+    expression='* 3 / 2'
+  fi
+  echo "$(("$(< brightness)" "$expression"))" > brightness
+fi
+EOF
+  sudo chmod +x /etc/acpi/default.sh
+}
+
+function setup-debian {
+  if [[ $(os-release) == debian ]]; then
+    configure-grub
+  fi
+}
+
 function setup-raspbian {
   if [[ $(os-release) == raspbian ]]; then
+    configure-console-keyboard
     configure-hostname
     configure-locale
     configure-raspbian-boot
@@ -144,9 +223,14 @@ function setup-raspbian {
 
 function setup-system {
   configure-brightness
+  configure-console-font
+  configure-initramfs
   configure-sudoers
+  disable-power-key
   enable-autologin
   enable-fstrim
+  setup-acpid
+  setup-debian
   setup-raspbian
   setup-virtualbox
 }
@@ -154,7 +238,14 @@ function setup-system {
 function setup-virtualbox {
   if [[ $(product-name) == VirtualBox ]]; then
     fix-efi
+    setup-virtualbox-guest
   fi
+}
+
+function setup-virtualbox-guest {
+  enable-archive-area contrib backports
+  install-packages virtualbox-guest-x11/"$(lsb_release -cs)"-backports
+  sudo usermod -a -G vboxsf "$USER"
 }
 
 function upgrade-system {
