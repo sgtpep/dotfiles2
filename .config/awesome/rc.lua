@@ -1,23 +1,12 @@
 local awful = require('awful')
 local beautiful = require('beautiful')
 local gears = require('gears')
-local naughty = require('naughty')
-local wibox = require('wibox')
-require('awful.autofocus')
-
 gears.math = require('./math')
 gears.string = require('./string')
 gears.table = require('./table')
-
-naughty.destroy_all_notifications = function()
-  for _, positions in pairs(naughty.notifications) do
-    for _, notifications in pairs(positions) do
-      while #notifications > 0 do
-        naughty.destroy(notifications[1])
-      end
-    end
-  end
-end
+local naughty = require('naughty')
+local wibox = require('wibox')
+require('awful.autofocus')
 
 function activate_history_client(offset, focus)
   local client = awful.client.focus.history.list[((gears.table.hasitem(awful.client.focus.history.list, focus or client.focus) or 1) + offset - 1) % #awful.client.focus.history.list + 1]
@@ -79,7 +68,7 @@ function configure_notifications()
 end
 
 function create_keyboard()
-  keyboard = awful.wibar({ height = 320, ontop = true, position = 'bottom', visible = os.getenv('TERMUX') ~= nil })
+  keyboard = awful.wibar({ height = 320, ontop = true, position = 'bottom', visible = io.open('/etc/os-release'):read('*all'):find('ID=raspbian') ~= nil })
   local groups = { Return = {}, space = {} }
   local modifiers = {}
   keyboard:setup(gears.table.join({ layout = wibox.layout.flex.vertical }, gears.table.map(function(keys)
@@ -195,6 +184,16 @@ function main()
   set_background()
   set_keys()
   set_rules()
+end
+
+naughty.destroy_all_notifications = function()
+  for _, positions in pairs(naughty.notifications) do
+    for _, notifications in pairs(positions) do
+      while #notifications > 0 do
+        naughty.destroy(notifications[1])
+      end
+    end
+  end
 end
 
 rules = {
