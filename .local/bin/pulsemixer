@@ -1,0 +1,5 @@
+#!/bin/bash
+set -eu
+path=$PYTHONUSERBASE/bin/${0##*/}
+[[ -x $path ]] || pip3 install "${0##*/}"
+exec "$path" "$@"
