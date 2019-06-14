@@ -18,10 +18,11 @@ declare -A executables=(
   [pdftotext]=poppler-utils
   [pip3]=python3-pip
   [scp]=openssh-client
+  [setxkbmap]='x11-xkb-utils xkb-data'
   [slock]=suckless-tools
-  [ssh]=openssh-client
   [ssh-add]=openssh-client
   [ssh-agent]=openssh-client
+  [ssh]=openssh-client
   [unrar]=unrar-free
   [xclipboard]=x11-apps
   [xev]=x11-utils
@@ -46,7 +47,7 @@ function main {
   if [[ $executable == install-packages ]]; then
     install-packages "$@"
   else
-    [[ -x /usr/bin/$executable ]] || install-packages "${executables[$executable]-$executable}"
+    [[ -x /usr/bin/$executable ]] || install-packages ${executables[$executable]-"$executable"}
     exec /usr/bin/"$executable" "$@"
   fi
 }
