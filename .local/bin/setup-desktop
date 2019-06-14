@@ -70,6 +70,19 @@ function configure-locale {
   sudo tee /etc/default/locale > /dev/null <<< 'LANG=en_US.UTF-8'
 }
 
+function configure-nopasswd {
+  declare -A commands=(
+    [apt-install]='/usr/bin/apt -y install *'
+    [rfkill]=/usr/sbin/rfkill
+    [sshuttle]='/usr/bin/python3 /usr/bin/sshuttle --method auto --firewall'
+  )
+  [[ $(os-release) != raspbian ]] || commands[poweroff]=/sbin/poweroff
+  local name
+  for name in "${!commands[@]}"; do
+    sudo tee /etc/sudoers.d/"$name" > /dev/null <<< "%sudo ALL = NOPASSWD: SETENV: ${commands[$name]}"
+  done
+}
+
 function configure-raspbian-boot {
   ! dpkg -s plymouth &> /dev/null || sudo apt -y purge plymouth
   sudo sed -i -f - /boot/cmdline.txt << \EOF
@@ -91,18 +104,6 @@ function configure-raspbian-mirror {
 
 function configure-timezone {
   sudo ln -fs /usr/share/zoneinfo/Europe/Moscow /etc/localtime
-}
-
-function configure-sudoers {
-  declare -A commands=(
-    [apt-install]='/usr/bin/apt -y install *'
-    [rfkill]=/usr/sbin/rfkill
-    [sshuttle]='/usr/bin/python3 /usr/bin/sshuttle --method auto --firewall'
-  )
-  local name
-  for name in "${!commands[@]}"; do
-    sudo tee /etc/sudoers.d/"$name" > /dev/null <<< "%sudo ALL = NOPASSWD: SETENV: ${commands[$name]}"
-  done
 }
 
 function create-raspbian-user {
@@ -247,7 +248,7 @@ function setup-system {
   configure-brightness
   configure-console-font
   configure-initramfs
-  configure-sudoers
+  configure-nopasswd
   disable-power-key
   enable-autologin
   enable-fstrim
