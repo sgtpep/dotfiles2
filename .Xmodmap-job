@@ -1,0 +1,5 @@
+clear Control
+clear Lock
+keycode 105 = Control_L NoSymbol Control_L
+keycode 135 = ISO_Level3_Shift NoSymbol ISO_Level3_Shift
+add Control = Control_L Control_R
