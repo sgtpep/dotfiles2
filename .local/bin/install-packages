@@ -66,12 +66,16 @@ function packages-installed {
 function run-command {
   local command=(flock /tmp/install-packages.lock execute-online "$@")
   local detached_command=(bash -"$-" -c '"$@" || read -s' -- "${command[@]}")
-  if [[ ! -t 1 && -v TMUX ]]; then
-    tmux new-window -n installing "${detached_command[@]}"
-  elif [[ ! -t 1 && -v DISPLAY && -x /usr/bin/$(readlink ~/.local/bin/x-terminal-emulator) ]]; then
-    x-terminal-emulator -title installing -e "${detached_command[@]}"
-  else
+  if [[ -t 1 ]]; then
     "${command[@]}"
+  else
+    if [[ -v TMUX ]]; then
+      tmux new-window -n installing "${detached_command[@]}"
+    elif [[ -v DISPLAY && -x /usr/bin/$(readlink ~/.local/bin/x-terminal-emulator) ]]; then
+      x-terminal-emulator -title installing -e "${detached_command[@]}"
+    else
+      "${command[@]}"
+    fi
   fi
 }
 

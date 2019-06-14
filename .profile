@@ -1,4 +1,4 @@
-[ "${PATH%%:*}" = ~/.local/bin ] || export PATH=~/.gem/ruby/2.6.0/bin:~/.npm/bin:~/.pip/bin:~/.local/bin:$PATH:node_modules/.bin
+[ "${PATH/~}" != "$PATH" ] || export PATH=~/.gem/ruby/2.6.0/bin:~/.npm/bin:~/.pip/bin:~/.local/bin:$PATH:node_modules/.bin
 export EDITOR=vim
 export LESS='-FRX -j 3'
 export MANWIDTH=78
