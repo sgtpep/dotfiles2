@@ -1,0 +1,8 @@
+#!/bin/bash
+set -eu
+if [[ $(pgrep -cf " ${BASH_SOURCE[0]}$") == 1 ]] && ls /sys/class/power_supply/*/status &> /dev/null; then
+  while :; do
+    [[ $(< /sys/class/power_supply/*/status) == Charging ]] || (($(< /sys/class/power_supply/*/capacity) > 5)) || x-terminal-emulator -T battery -e bash -"$-" -c $'read -s -p \'Low battery...\'' || :
+    sleep 3m
+  done
+fi

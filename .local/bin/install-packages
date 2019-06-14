@@ -35,7 +35,7 @@ declare -A executables=(
 
 function install-packages {
   if ! packages-installed "$@"; then
-    run-command sudo DEBIAN_FRONTEND=noninteractive apt -y install "$@"
+    run-command sh -c 'find /var/cache/apt/pkgcache.bin -mtime +7 | xargs -r sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt -y install "$@"' -- "$@"
     until packages-installed "$@"; do
       sleep 1
     done
