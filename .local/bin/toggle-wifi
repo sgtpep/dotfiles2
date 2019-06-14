@@ -1,6 +1,6 @@
 #!/bin/bash
 set -eu
-sudo rfkill "$1" wifi
+! command -v rfkill > /dev/null || sudo rfkill "$1" wifi
 if [[ $1 == unblock ]]; then
   echo -n 'Connecting...' >&2
   until ping -c 1 danil.mobi &> /dev/null; do
