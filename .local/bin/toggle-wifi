@@ -1,10 +1,13 @@
 #!/bin/bash
 set -eu
-! command -v rfkill > /dev/null || sudo rfkill "$1" wifi
-if [[ $1 == unblock ]]; then
-  echo -n 'Connecting...' >&2
-  until ping -c 1 danil.mobi &> /dev/null; do
-    sleep 1
-  done
-  echo >&2
+command=(ping -c 1 danil.mobi)
+if [[ $1 == block ]] || ! "${command[@]}" &> /dev/null; then
+  ! command -v rfkill > /dev/null || sudo rfkill "$1" wifi
+  if [[ $1 == unblock ]]; then
+    echo -n 'Connecting...' >&2
+    until "${command[@]}" &> /dev/null; do
+      sleep 1
+    done
+    echo >&2
+  fi
 fi
