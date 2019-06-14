@@ -1,1 +1,18 @@
-install-packages
+#!/bin/bash
+set -eu
+base_url=https://raw.githubusercontent.com/awesomeWM/awesome/v4.3/lib/gears
+declare downloads=(
+  [$base_url/math.lua]=0c426fce6df68143a16ae284d7910945
+  [$base_url/table.lua]=bfdc3169d6178651ae2d3b72b0bad601
+)
+for url in "${!downloads[@]}"; do
+  output=~/.config/awesome/${url##*/}
+  if [[ ! -f $output ]]; then
+    wget -O "$output" "$url"
+    [[ $(md5sum "$url") == ${downloads[$url]\ * ]]
+    sed -i 's/\("\)gears\./\1.\//' "$output"
+  fi
+done
+path=/usr/bin/${0##*/}
+[[ -x $path ]] || install-package "${0##*/}"
+exec "$path" "$@"
