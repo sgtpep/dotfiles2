@@ -117,6 +117,10 @@ function disable-dhcp-wait {
   sudo rm -f /etc/systemd/system/dhcpcd.service.d/wait.conf
 }
 
+function disable-pam-mail {
+  sudo sed -i 's/^[^#].* pam_mail\.so /#\0/' /etc/pam.d/*
+}
+
 function disable-power-key {
   [[ $(product-name) == VirtualBox ]] || sudo sed -i 's/^#*\(HandlePowerKey=\).*/\1ignore/' /etc/systemd/logind.conf
 }
@@ -250,6 +254,7 @@ function setup-system {
   configure-console-font
   configure-initramfs
   configure-nopasswd
+  disable-pam-mail
   disable-power-key
   enable-autologin
   enable-fstrim
