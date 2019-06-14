@@ -3,6 +3,7 @@ set -eu
 base_url=https://raw.githubusercontent.com/awesomeWM/awesome/v4.3/lib/gears
 declare -A downloads=(
   [$base_url/math.lua]=0c426fce6df68143a16ae284d7910945
+  [$base_url/string.lua]=226d58477c17c6736b5e1caac02f5257
   [$base_url/table.lua]=bfdc3169d6178651ae2d3b72b0bad601
 )
 for url in "${!downloads[@]}"; do
@@ -10,7 +11,7 @@ for url in "${!downloads[@]}"; do
   if [[ ! -f $output ]]; then
     wget -O "$output" "$url"
     [[ $(md5sum "$output") == ${downloads[$url]}\ * ]]
-    sed -i 's/\("\)gears\./\1.\//' "$output"
+    sed -i 's/\("\)gears\.\(table"\)/\1.\/\2/' "$output"
   fi
 done
 path=/usr/bin/${0##*/}

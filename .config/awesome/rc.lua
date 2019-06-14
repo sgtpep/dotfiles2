@@ -4,8 +4,20 @@ local gears = require('gears')
 local naughty = require('naughty')
 local wibox = require('wibox')
 require('awful.autofocus')
+
 gears.math = require('./math')
+gears.string = require('./string')
 gears.table = require('./table')
+
+naughty.destroy_all_notifications = function()
+  for _, positions in pairs(naughty.notifications) do
+    for _, notifications in pairs(positions) do
+      while #notifications > 0 do
+        naughty.destroy(notifications[1])
+      end
+    end
+  end
+end
 
 function activate_history_client(offset, focus)
   local client = awful.client.focus.history.list[((gears.table.hasitem(awful.client.focus.history.list, focus or client.focus) or 1) + offset - 1) % #awful.client.focus.history.list + 1]
@@ -16,6 +28,30 @@ function activate_history_client(offset, focus)
       client:jump_to()
     end
   end
+end
+
+function alt_tab(offset)
+  local grabber
+  local reorder
+  grabber = awful.keygrabber.run(function(modifiers, key, event)
+    if key == 'Alt_L' and event == 'release' then
+      awful.keygrabber.stop(grabber)
+      if client.focus then
+        awful.client.focus.history.add(client.focus)
+      end
+      if reorder then
+        gears.table.map(function(client)
+          client:emit_signal('request::activate', 'alt_tab', { raise = true })
+        end, gears.table.reverse(awful.client.focus.history.list))
+      end
+      awful.client.focus.history.enable_tracking()
+    elseif key == 'Tab' and event == 'press' then
+      reorder = true
+      activate_history_client(offset)
+    end
+  end)
+  awful.client.focus.history.disable_tracking()
+  activate_history_client(offset)
 end
 
 function configure_chromium(client)
@@ -32,116 +68,86 @@ function configure_chromium(client)
 end
 
 function configure_notifications()
-  beautiful.notification_bg = 'Black'
-  beautiful.notification_border_color = 'Black'
-  beautiful.notification_font = 'monospace 14'
-  beautiful.notification_icon_size = 0
-  beautiful.notification_max_height = 115
-  beautiful.notification_max_width = 350
-  naughty.config.defaults.border_width = 5
-  naughty.config.defaults.margin = 0
-  naughty.config.defaults.position = 'top_left'
+  naughty.config.defaults.bg = 'Black'
+  naughty.config.defaults.border_color = '#ffffff'
+  naughty.config.defaults.border_width = 1
+  naughty.config.defaults.font = 'monospace 14'
+  naughty.config.defaults.icon_size = 0
+  naughty.config.defaults.margin = 5
   naughty.config.padding = 0
   naughty.config.spacing = 0
 end
 
---function create_keyboard()
---  keyboard = awful.wibar({ height = 320, ontop = true, position = 'bottom', visible = os.getenv('TERMUX') ~= nil })
---  local groups = { Return = {}, space = {} }
---  local modifiers = {}
---  keyboard:setup(gears.table.join({ layout = wibox.layout.flex.vertical }, gears.table.map(function(keys)
---    return gears.table.join({ layout = wibox.layout.flex.horizontal, spacing = -1 }, gears.table.map(function(key)
---      local button = wibox.widget({
---        widget = wibox.container.background,
---        {
---          align = 'center',
---          markup = type(key[2]) == 'string' and gears.string.xml_escape(key[1]) or string.format('<sup>%s</sup> %s <sub>%s</sub>', gears.string.xml_escape(key[1]:sub(2, 2)), gears.string.xml_escape(key[1]:sub(1, 1)), gears.string.xml_escape(key[1]:sub(3))),
---          valign = 'center',
---          widget = wibox.widget.textbox,
---        },
---      })
---      button:buttons(awful.button({}, 1, function()
---        if key[3] then
---          modifiers[key[2]] = not modifiers[key[2]] or nil
---        else
---          for modifier in pairs(modifiers) do
---            root.fake_input('key_press', modifier)
---          end
---          if key[2] == 'ISO_Next_Group' then
---            for _, arguments in ipairs({ { 'key_press', 'Shift_L' }, { 'key_press', 'Shift_R' }, { 'key_release', 'Shift_R' }, { 'key_release', 'Shift_L' } }) do
---              root.fake_input(unpack(arguments))
---            end
---          else
---            root.fake_input('key_press', key[2])
---          end
---          for modifier in pairs(modifiers) do
---            root.fake_input('key_release', modifier)
---            modifiers[modifier] = nil
---          end
---        end
---        for _, button in ipairs(groups[key[2]] or { button }) do
---          button.bg, button.fg = 'White', 'Black'
---        end
---      end, function()
---        button:emit_signal('mouse::leave')
---      end))
---      button:connect_signal('mouse::leave', function()
---        if button.bg and button.fg then
---          for _, button in ipairs(groups[key[2]] or { button }) do
---            button.bg, button.fg = nil, nil
---          end
---          if key[2] == 'hide' then
---            toggle_keyboard()
---          elseif not key[3] then
---            root.fake_input('key_release', key[2])
---          end
---        end
---      end)
---      if groups[key[2]] then
---        table.insert(groups[key[2]], button)
---      end
---      return button
---    end, keys))
---  end, layout)))
---  if keyboard.visible then
---    keyboard_toggle = awful.wibar({ height = 5, ontop = true, position = 'bottom', visible = false })
---    keyboard_toggle:buttons(awful.button({}, 1, function()
---      toggle_keyboard()
---    end))
---  else
---    keyboard_toggle = nil
---  end
---end
+function create_keyboard()
+  keyboard = awful.wibar({ height = 320, ontop = true, position = 'bottom', visible = os.getenv('TERMUX') ~= nil })
+  local groups = { Return = {}, space = {} }
+  local modifiers = {}
+  keyboard:setup(gears.table.join({ layout = wibox.layout.flex.vertical }, gears.table.map(function(keys)
+    return gears.table.join({ layout = wibox.layout.flex.horizontal, spacing = -1 }, gears.table.map(function(key)
+      local button = wibox.widget({
+        widget = wibox.container.background,
+        {
+          align = 'center',
+          markup = type(key[2]) == 'string' and gears.string.xml_escape(key[1]) or string.format('<sup>%s</sup> %s <sub>%s</sub>', gears.string.xml_escape(key[1]:sub(2, 2)), gears.string.xml_escape(key[1]:sub(1, 1)), gears.string.xml_escape(key[1]:sub(3))),
+          valign = 'center',
+          widget = wibox.widget.textbox,
+        },
+      })
+      button:buttons(awful.button({}, 1, function()
+        if key[3] then
+          modifiers[key[2]] = not modifiers[key[2]] or nil
+        else
+          for modifier in pairs(modifiers) do
+            root.fake_input('key_press', modifier)
+          end
+          if key[2] == 'ISO_Next_Group' then
+            for _, arguments in ipairs({ { 'key_press', 'Shift_L' }, { 'key_press', 'Shift_R' }, { 'key_release', 'Shift_R' }, { 'key_release', 'Shift_L' } }) do
+              root.fake_input(unpack(arguments))
+            end
+          else
+            root.fake_input('key_press', key[2])
+          end
+          for modifier in pairs(modifiers) do
+            root.fake_input('key_release', modifier)
+            modifiers[modifier] = nil
+          end
+        end
+        for _, button in ipairs(groups[key[2]] or { button }) do
+          button.bg, button.fg = 'White', 'Black'
+        end
+      end, function()
+        button:emit_signal('mouse::leave')
+      end))
+      button:connect_signal('mouse::leave', function()
+        if button.bg and button.fg then
+          for _, button in ipairs(groups[key[2]] or { button }) do
+            button.bg, button.fg = nil, nil
+          end
+          if key[2] == 'hide' then
+            toggle_keyboard()
+          elseif not key[3] then
+            root.fake_input('key_release', key[2])
+          end
+        end
+      end)
+      if groups[key[2]] then
+        table.insert(groups[key[2]], button)
+      end
+      return button
+    end, keys))
+  end, layout)))
+  if keyboard.visible then
+    keyboard_toggle = awful.wibar({ height = 5, ontop = true, position = 'bottom', visible = false })
+    keyboard_toggle:buttons(awful.button({}, 1, function()
+      toggle_keyboard()
+    end))
+  else
+    keyboard_toggle = nil
+  end
+end
 
 function create_tag()
   awful.tag({ 0 }, awful.screen.focused(), awful.layout.suit.max)
-end
-
-function enable_alt_tab()
-  local count
-  awful.keygrabber({ export_keybindings = true, keybindings = {
-    { { 'Mod1' }, 'Tab', function()
-      count = count + 1
-      activate_history_client(1)
-    end },
-    { { 'Mod1', 'Shift' }, 'Tab', function()
-      count = count + 1
-      activate_history_client(-1)
-    end },
-  }, start_callback = function()
-    count = 0
-    awful.client.focus.history.disable_tracking()
-  end, stop_callback = function()
-    if client.focus then
-      awful.client.focus.history.add(client.focus)
-    end
-    if count > 1 then
-      gears.table.map(function(client)
-        client:emit_signal('request::activate', 'enable_alt_tab', { raise = true })
-      end, gears.table.reverse(awful.client.focus.history.list))
-    end
-    awful.client.focus.history.enable_tracking()
-  end, stop_event = 'release', stop_key = 'Mod1' })
 end
 
 keys = {
@@ -166,25 +172,26 @@ keys = {
   { { 'Control', 'Mod1', 'Shift' }, 'space', function() run_or_raise('x-terminal-emulator -e enable-wifi false', { name = 'enable-wifi' }) end },
   { { 'Mod1' }, 'Escape', function() tag = root.tags()[1] tag.selected = not tag.selected end },
   { { 'Mod1' }, 'F4', function() if client.focus then client.focus:kill() end end },
+  { { 'Mod1' }, 'Tab', function() alt_tab(1) end },
+  { { 'Mod1', 'Shift' }, 'Tab', function() alt_tab(-1) end },
   { {}, 'XF86AudioLowerVolume', function() awful.spawn.with_shell('pactl set-sink-mute 0 no; pactl set-sink-volume 0 -10%; pactl set-source-mute 1 no') end },
   { {}, 'XF86AudioMute', function() awful.spawn.with_shell('pactl set-sink-mute 0 no; pactl set-sink-volume 0 0%; pactl set-source-mute 1 yes; pactl set-source-volume 1 25%') end },
   { {}, 'XF86AudioRaiseVolume', function() awful.spawn.with_shell('pactl set-sink-mute 0 no; pactl set-sink-volume 0 +10%; pactl set-source-mute 1 no') end },
 }
 
---layout = {
---  { { 'Esc', 'Escape' }, { 'F1', 'F1' }, { 'F2', 'F2' }, { 'F3', 'F3' }, { 'F4', 'F4' }, { 'F5', 'F5' }, { 'F6', 'F6' }, { 'F7', 'F7' }, { 'F8', 'F8' }, { 'F9', 'F9' }, { 'F10', 'F10' }, { 'F11', 'F11' }, { 'F12', 'F12' }, { 'Home', 'Home' }, { 'End', 'End' }, { 'Ins', 'Insert' }, { 'Del', 'Delete' }, { '×', 'hide' } },
---  { { '`~', 49 }, { '1!', 10 }, { '2@', 11 }, { '3#', 12 }, { '4$', 13 }, { '5%', 14 }, { '6^', 15 }, { '7&', 16 }, { '8*', 17 }, { '9(', 18 }, { '0)', 19 }, { '-_', 20 }, { '=+', 21 }, { 'Bksp', 'BackSpace' } },
---  { { 'Tab', 'Tab' }, { 'Q Й', 24 }, { 'W Ц', 25 }, { 'E У', 26 }, { 'R К', 27 }, { 'T Е', 28 }, { 'Y Н', 29 }, { 'U Г', 30 }, { 'I Ш', 31 }, { 'O Щ', 32 }, { 'P З', 33 }, { '[{Х', 34 }, { ']}Ъ', 35 }, { '\\|', 51 } },
---  { { 'Lang', 'ISO_Next_Group' }, { 'A Ф', 38 }, { 'S Ы', 39 }, { 'D В', 40 }, { 'F А', 41 }, { 'G П', 42 }, { 'H Р', 43 }, { 'J О', 44 }, { 'K Л', 45 }, { 'L Д', 46 }, { '; Ж', 47 }, { '\' Э', 48 }, { '', 'Return' }, { 'Enter', 'Return' } },
---  { { 'Shift', 'Shift_L', true }, { 'Z Я', 52 }, { 'X Ч', 53 }, { 'C С', 54 }, { 'V М', 55 }, { 'B И', 56 }, { 'N Т', 57 }, { 'M Ь', 58 }, { ', Б', 59 }, { '. Ю', 60 }, { '/ .', 61 }, { 'PgUp', 'Prior' }, { '↑', 'Up' }, { 'PgDn', 'Next' } },
---  { { 'Ctrl', 'Control_L', true }, { 'Win', 'Super_L', true }, { 'Alt', 'Alt_L', true }, { '', 'space' }, { '', 'space' }, { '', 'space' }, { '', 'space' }, { '', 'space' }, { 'AltGr', 'Mode_switch', true }, { 'Menu', 'Menu' }, { 'Ctrl', 'ISO_Level3_Shift', true }, { '←', 'Left' }, { '↓', 'Down' }, { '→', 'Right' } },
---}
+layout = {
+  { { 'Esc', 'Escape' }, { 'F1', 'F1' }, { 'F2', 'F2' }, { 'F3', 'F3' }, { 'F4', 'F4' }, { 'F5', 'F5' }, { 'F6', 'F6' }, { 'F7', 'F7' }, { 'F8', 'F8' }, { 'F9', 'F9' }, { 'F10', 'F10' }, { 'F11', 'F11' }, { 'F12', 'F12' }, { 'Home', 'Home' }, { 'End', 'End' }, { 'Ins', 'Insert' }, { 'Del', 'Delete' }, { '×', 'hide' } },
+  { { '`~', 49 }, { '1!', 10 }, { '2@', 11 }, { '3#', 12 }, { '4$', 13 }, { '5%', 14 }, { '6^', 15 }, { '7&', 16 }, { '8*', 17 }, { '9(', 18 }, { '0)', 19 }, { '-_', 20 }, { '=+', 21 }, { 'Bksp', 'BackSpace' } },
+  { { 'Tab', 'Tab' }, { 'Q Й', 24 }, { 'W Ц', 25 }, { 'E У', 26 }, { 'R К', 27 }, { 'T Е', 28 }, { 'Y Н', 29 }, { 'U Г', 30 }, { 'I Ш', 31 }, { 'O Щ', 32 }, { 'P З', 33 }, { '[{Х', 34 }, { ']}Ъ', 35 }, { '\\|', 51 } },
+  { { 'Lang', 'ISO_Next_Group' }, { 'A Ф', 38 }, { 'S Ы', 39 }, { 'D В', 40 }, { 'F А', 41 }, { 'G П', 42 }, { 'H Р', 43 }, { 'J О', 44 }, { 'K Л', 45 }, { 'L Д', 46 }, { '; Ж', 47 }, { '\' Э', 48 }, { '', 'Return' }, { 'Enter', 'Return' } },
+  { { 'Shift', 'Shift_L', true }, { 'Z Я', 52 }, { 'X Ч', 53 }, { 'C С', 54 }, { 'V М', 55 }, { 'B И', 56 }, { 'N Т', 57 }, { 'M Ь', 58 }, { ', Б', 59 }, { '. Ю', 60 }, { '/ .', 61 }, { 'PgUp', 'Prior' }, { '↑', 'Up' }, { 'PgDn', 'Next' } },
+  { { 'Ctrl', 'Control_L', true }, { 'Win', 'Super_L', true }, { 'Alt', 'Alt_L', true }, { '', 'space' }, { '', 'space' }, { '', 'space' }, { '', 'space' }, { '', 'space' }, { 'AltGr', 'Mode_switch', true }, { 'Menu', 'Menu' }, { 'Ctrl', 'ISO_Level3_Shift', true }, { '←', 'Left' }, { '↓', 'Down' }, { '→', 'Right' } },
+}
 
 function main()
   configure_notifications()
---  create_keyboard()
+  create_keyboard()
   create_tag()
-  enable_alt_tab()
   set_background()
   set_keys()
   set_rules()
@@ -241,11 +248,11 @@ function set_rules()
   end, rules))
 end
 
---function toggle_keyboard()
---  keyboard.visible = not keyboard.visible
---  if keyboard_toggle then
---    keyboard_toggle.visible = not keyboard_toggle.visible
---  end
---end
+function toggle_keyboard()
+  keyboard.visible = not keyboard.visible
+  if keyboard_toggle then
+    keyboard_toggle.visible = not keyboard_toggle.visible
+  end
+end
 
 main()
