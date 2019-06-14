@@ -94,8 +94,15 @@ function configure-timezone {
 }
 
 function configure-sudoers {
-  sudo tee /etc/sudoers.d/apt-install > /dev/null <<< '%sudo ALL = NOPASSWD: SETENV: /usr/bin/apt -y install *'
-  sudo tee /etc/sudoers.d/sshuttle > /dev/null <<< '%sudo ALL = NOPASSWD: SETENV: /usr/bin/python3 /usr/bin/sshuttle --method auto --firewall'
+  declare -A commands=(
+    [apt-install]='/usr/bin/apt -y install *'
+    [rfkill]=/usr/sbin/rfkill
+    [sshuttle]='/usr/bin/python3 /usr/bin/sshuttle --method auto --firewall'
+  )
+  local name
+  for name in "${!commands[@]}"; do
+    sudo tee /etc/sudoers.d/"$name" > /dev/null <<< "%sudo ALL = NOPASSWD: SETENV: ${commands[$name]}"
+  done
 }
 
 function create-raspbian-user {
