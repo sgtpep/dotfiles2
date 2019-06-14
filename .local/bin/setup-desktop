@@ -76,10 +76,11 @@ function configure-raspbian-boot {
 s/\b\(console=tty\)[^ ]*/\16/
 s/ rootwait$/\0 loglevel=3 logo.nologo/
 EOF
-  if ! grep -q '^\(disable_splash\|display_lcd_rotate\)=' /boot/config.txt; then
+  if ! grep -q '^\(disable_splash\|display_lcd_rotate\|dtoverlay\)=' /boot/config.txt; then
     sudo tee -a /boot/config.txt > /dev/null << \EOF
 disable_splash=1
 display_lcd_rotate=2
+dtoverlay=pi3-disable-bt
 EOF
 fi
 }
