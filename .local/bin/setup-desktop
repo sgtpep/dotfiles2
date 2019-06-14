@@ -104,12 +104,12 @@ function create-raspbian-user {
   gpasswd -d pi sudo || :
 }
 
-function disable-power-key {
-  [[ $(product-name) == VirtualBox ]] || sudo sed -i 's/^#*\(HandlePowerKey=\).*/\1ignore/' /etc/systemd/logind.conf
+function disable-dhcp-wait {
+  sudo rm -f /etc/systemd/system/dhcpcd.service.d/wait.conf
 }
 
-function disable-raspbian-dhcp-wait {
-  sudo rm -f /etc/systemd/system/dhcpcd.service.d/wait.conf
+function disable-power-key {
+  [[ $(product-name) == VirtualBox ]] || sudo sed -i 's/^#*\(HandlePowerKey=\).*/\1ignore/' /etc/systemd/logind.conf
 }
 
 function enable-archive-area {
@@ -127,6 +127,19 @@ function enable-autologin {
 ExecStart=
 ExecStart=-/sbin/agetty -a $USER %I
 EOF
+}
+
+function enable-block-wifi {
+  sudo tee /etc/systemd/system/block-wifi.service > /dev/null << \EOF
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+ExecStart=/usr/sbin/rfkill block wifi
+Type=oneshot
+EOF
+  sudo systemctl enable block-wifi
+  sudo systemctl mask systemd-rfkill
 }
 
 function enable-fstrim {
@@ -218,7 +231,8 @@ function setup-raspbian {
     configure-raspbian-boot
     configure-raspbian-mirror
     configure-timezone
-    disable-raspbian-dhcp-wait
+    disable-dhcp-wait
+    enable-block-wifi
   fi
 }
 
