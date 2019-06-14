@@ -73,6 +73,7 @@ function configure-locale {
 function configure-nopasswd {
   declare -A commands=(
     [apt-install]='/usr/bin/apt -y install *'
+    [apt-update]='/usr/bin/apt update'
     [rfkill]=/usr/sbin/rfkill
     [sshuttle]='/usr/bin/python3 /usr/bin/sshuttle --method auto --firewall'
   )
