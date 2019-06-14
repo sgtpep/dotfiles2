@@ -16,8 +16,8 @@ function clone-dotfiles {
 
 function configure-brightness {
   declare -A brightness=(
-    [intel_backlight]=1000
-    [rpi_backlight]=50
+    [intel_backlight]=500
+    [rpi_backlight]=25
   )
   local dirname
   for dirname in "${!brightness[@]}"; do
