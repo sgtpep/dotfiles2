@@ -90,20 +90,30 @@ function configure-nopasswd {
   done
 }
 
-function configure-raspbian-boot {
+function configure-raspbian-cmdline {
   ! dpkg -s plymouth &> /dev/null || sudo apt -y purge plymouth
   sudo sed -i -f - /boot/cmdline.txt << \EOF
 s/\b\(console=tty\)[^ ]*/\16/
 s/ rootwait$/\0 loglevel=3 logo.nologo/
 EOF
-  if ! grep -q '^\(disable_splash\|display_lcd_rotate\|dtoverlay\)=' /boot/config.txt; then
-    sudo tee -a /boot/config.txt > /dev/null << \EOF
-boot_delay=0
-disable_splash=1
-display_lcd_rotate=2
-dtoverlay=pi3-disable-bt
-EOF
-fi
+}
+
+function configure-raspbian-config {
+  declare -A options=(
+    [boot_delay]=0
+    [disable_splash]=1
+    [display_lcd_rotate]=2
+    [dtoverlay]=pi3-disable-bt
+  )
+  local option
+  for option in "${!options[@]}"; do
+    local path=/boot/config.txt
+    if grep -q "^$option=" "$path"; then
+      sudo sed -i "s/^\($option=\).*/\1${options[$option]}/" "$path"
+    else
+      sudo tee -a "$path" > /dev/null <<< "$option=${options[$option]}"
+    fi
+  done
 }
 
 function configure-raspbian-mirror {
@@ -254,7 +264,8 @@ function setup-raspbian {
     configure-console-keyboard
     configure-hostname
     configure-locale
-    configure-raspbian-boot
+    configure-raspbian-cmdline
+    configure-raspbian-config
     configure-raspbian-mirror
     configure-timezone
     disable-dhcp-wait
