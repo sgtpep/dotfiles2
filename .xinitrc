@@ -1,7 +1,5 @@
 #!/bin/bash
 set -eu
-. ~/.profile
-
 setxkbmap -option ctrl:nocaps,grp:shifts_toggle,grp:switch,lv3:switch,misc:typo us,ru
 xrdb ~/.Xresources
 
