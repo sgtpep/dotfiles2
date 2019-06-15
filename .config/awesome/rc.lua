@@ -42,6 +42,10 @@ function alt_tab(offset)
   activate_history_client(offset)
 end
 
+function change_volume(change)
+  awful.spawn.with_shell(change < 0 and 'pactl set-sink-mute 0 no; pactl set-sink-volume 0 -10%; pactl set-source-mute 1 no' or change > 0 and 'pactl set-sink-mute 0 no; pactl set-sink-volume 0 +10%; pactl set-source-mute 1 no' or 'pactl set-sink-mute 0 no; pactl set-sink-volume 0 0%; pactl set-source-mute 1 yes; pactl set-source-volume 1 25%')
+end
+
 function configure_chromium(client)
   local copy_command = 'xdotool keyup alt shift key alt+y sleep 0.1'
   local copy_close_command = copy_command .. ' key ctrl+w'
@@ -139,6 +143,13 @@ function create_tag()
 end
 
 keys = {
+
+  { { 'Control', 'Mod1' }, 'F1', function() awful.spawn('sudo /etc/acpi/default.sh video/brightnessdown') end },
+  { { 'Control', 'Mod1' }, 'F2', function() awful.spawn('sudo /etc/acpi/default.sh video/brightnessup') end },
+  { { 'Control', 'Mod1' }, 'F3', function() change_volume(0) end },
+  { { 'Control', 'Mod1' }, 'F4', function() change_volume(-1) end },
+  { { 'Control', 'Mod1' }, 'F5', function() change_volume(1) end },
+  { { 'Control', 'Mod1' }, 'F6', function() toggle_wifi('unblock') end },
   { { 'Control', 'Mod1' }, 'Tab', function() naughty.destroy_all_notifications() end },
   { { 'Control', 'Mod1' }, 'a', function() run_or_raise('x-terminal-emulator -e calc', { name = 'calc' }) end },
   { { 'Control', 'Mod1' }, 'b', function() run_or_raise('x-terminal-emulator -title acpi -e bash -c \'acpi; read -s -n 1\'', { name = 'acpi' }) end },
@@ -155,19 +166,20 @@ keys = {
   { { 'Control', 'Mod1' }, 'v', function() run_or_raise('x-terminal-emulator -title cal -e bash -c \'ncal -Mb -A 1; read -s -n 1\'', { name = 'cal' }) end },
   { { 'Control', 'Mod1' }, 'w', function() run_or_raise('x-terminal-emulator -title notes -e tmux new-session -Ad -s notes notes \\; set-option status off \\; attach-session -t notes', { name = 'notes' }) end },
   { { 'Control', 'Mod1' }, 'z', function() awful.spawn('slock') end },
+  { { 'Control', 'Mod1', 'Shift' }, 'F6', function() toggle_wifi('block') end },
   { { 'Mod1' }, 'Escape', function() tag = root.tags()[1] tag.selected = not tag.selected end },
   { { 'Mod1' }, 'F4', function() if client.focus then client.focus:kill() end end },
   { { 'Mod1' }, 'Tab', function() alt_tab(1) end },
   { { 'Mod1', 'Shift' }, 'Tab', function() alt_tab(-1) end },
-  { { 'Shift' }, 'XF86WLAN', function() run_or_raise('x-terminal-emulator -e toggle-wifi block', { name = 'toggle-wifi' }) end },
-  { {}, 'XF86AudioLowerVolume', function() awful.spawn.with_shell('pactl set-sink-mute 0 no; pactl set-sink-volume 0 -10%; pactl set-source-mute 1 no') end },
-  { {}, 'XF86AudioMute', function() awful.spawn.with_shell('pactl set-sink-mute 0 no; pactl set-sink-volume 0 0%; pactl set-source-mute 1 yes; pactl set-source-volume 1 25%') end },
-  { {}, 'XF86AudioRaiseVolume', function() awful.spawn.with_shell('pactl set-sink-mute 0 no; pactl set-sink-volume 0 +10%; pactl set-source-mute 1 no') end },
-  { {}, 'XF86WLAN', function() run_or_raise('x-terminal-emulator -e toggle-wifi unblock', { name = 'toggle-wifi' }) end },
+  { { 'Shift' }, 'XF86WLAN', function() toggle_wifi('block') end },
+  { {}, 'XF86AudioLowerVolume', function() change_volume(-1) end },
+  { {}, 'XF86AudioMute', function() change_volume(0) end },
+  { {}, 'XF86AudioRaiseVolume', function() change_volume(1) end },
+  { {}, 'XF86WLAN', function() toggle_wifi('unblock') end },
 }
 
 layout = {
-  { { 'Esc', 'Escape' }, { 'F1', 'F1' }, { 'F2', 'F2' }, { 'F3', 'F3' }, { 'F4', 'F4' }, { 'F5', 'F5' }, { 'F6', 'F6' }, { 'F7', 'F7' }, { 'F8', 'F8' }, { 'F9', 'F9' }, { 'F10', 'F10' }, { 'F11', 'F11' }, { 'F12', 'F12' }, { 'Home', 'Home' }, { 'End', 'End' }, { 'Ins', 'Insert' }, { 'Del', 'Delete' }, { '×', 'hide' } },
+  { { 'Esc', 'Escape' }, { 'F1 ☼', 'F1' }, { 'F2 ☀', 'F2' }, { 'F3 🔇', 'F3' }, { 'F4 🔈', 'F4' }, { 'F5 🔉', 'F5' }, { 'F6 📶', 'F6' }, { 'F7', 'F7' }, { 'F8', 'F8' }, { 'F9', 'F9' }, { 'F10', 'F10' }, { 'F11', 'F11' }, { 'F12', 'F12' }, { 'Home', 'Home' }, { 'End', 'End' }, { 'Ins', 'Insert' }, { 'Del', 'Delete' }, { '×', 'hide' } },
   { { '`~', 49 }, { '1!', 10 }, { '2@', 11 }, { '3#', 12 }, { '4$', 13 }, { '5%', 14 }, { '6^', 15 }, { '7&', 16 }, { '8*', 17 }, { '9(', 18 }, { '0)', 19 }, { '-_', 20 }, { '=+', 21 }, { 'Bksp', 'BackSpace' } },
   { { 'Tab', 'Tab' }, { 'Q Й', 24 }, { 'W Ц', 25 }, { 'E У', 26 }, { 'R К', 27 }, { 'T Е', 28 }, { 'Y Н', 29 }, { 'U Г', 30 }, { 'I Ш', 31 }, { 'O Щ', 32 }, { 'P З', 33 }, { '[{Х', 34 }, { ']}Ъ', 35 }, { '\\|', 51 } },
   { { 'Lang', 'ISO_Next_Group' }, { 'A Ф', 38 }, { 'S Ы', 39 }, { 'D В', 40 }, { 'F А', 41 }, { 'G П', 42 }, { 'H Р', 43 }, { 'J О', 44 }, { 'K Л', 45 }, { 'L Д', 46 }, { '; Ж', 47 }, { '\' Э', 48 }, { '', 'Return' }, { 'Enter', 'Return' } },
@@ -249,6 +261,10 @@ function toggle_keyboard()
   if keyboard_toggle then
     keyboard_toggle.visible = not keyboard_toggle.visible
   end
+end
+
+function toggle_wifi(command)
+  run_or_raise('x-terminal-emulator -e toggle-wifi ' .. command, { name = 'toggle-wifi' })
 end
 
 main()
