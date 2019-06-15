@@ -2,10 +2,11 @@
 set -eu
 command=(sudo wpa_cli -i wlan0)
 if [[ $@ ]]; then
+  local path=/etc/wpa_supplicant/wpa_supplicant.conf
   if [[ $# == 2 ]]; then
-    wpa_passphrase "$1" "$2" | sudo tee -a /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null
+    wpa_passphrase "$1" "$2" | sudo tee -a "$path" > /dev/null
   else
-    sudo tee -a /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null << EOF
+    sudo tee -a "$path" > /dev/null << EOF
 network={
   key_mgmt=NONE
   ssid="$1"

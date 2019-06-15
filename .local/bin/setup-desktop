@@ -21,7 +21,8 @@ function configure-brightness {
   )
   local dirname
   for dirname in "${!brightness[@]}"; do
-    [[ ! -d /sys/class/backlight/$dirname ]] || sudo tee /sys/class/backlight/"$dirname"/brightness > /dev/null <<< ${brightness[$dirname]}
+    local path=/sys/class/backlight/$dirname
+    [[ ! -d $path ]] || sudo tee "$path"/brightness > /dev/null <<< ${brightness[$dirname]}
   done
 }
 
@@ -40,9 +41,10 @@ function configure-dotfiles {
 }
 
 function configure-grub {
-  local checksum=$(md5sum /etc/default/grub)
-  grep -q '^GRUB_TIMEOUT_STYLE=' /etc/default/grub || sudo tee -a /etc/default/grub > /dev/null <<< 'GRUB_TIMEOUT_STYLE=hidden'
-  sudo sed -i -f - /etc/default/grub << \EOF
+  local path=/etc/default/grub
+  local checksum=$(md5sum "$path")
+  grep -q '^GRUB_TIMEOUT_STYLE=' "$path" || sudo tee -a "$path" > /dev/null <<< 'GRUB_TIMEOUT_STYLE=hidden'
+  sudo sed -i -f - "$path" << \EOF
 s/^#*\(GRUB_TERMINAL=\).*/\1console/
 s/^\(GRUB_CMDLINE_LINUX_DEFAULT\)=.*/\1="quiet loglevel=3"/
 s/^\(GRUB_TIMEOUT=\).*/\11/
@@ -55,19 +57,22 @@ function configure-hostname {
 }
 
 function configure-initramfs {
-  local modprobe_checksum=$(cat /etc/modprobe.d/* 2> /dev/null | md5sum)
-  local modules_checksum=$(md5sum /etc/initramfs-tools/modules)
+  local modprobe_path=/etc/modprobe.d
+  local modprobe_checksum=$(cat "$modprobe_path"/* 2> /dev/null | md5sum)
+  local modules_path=/etc/initramfs-tools/modules
+  local modules_checksum=$(md5sum "$modules_path")
   if [[ $(product-name) == 'HP Stream '* ]]; then
-    sudo tee /etc/modprobe.d/i2c-hid.conf > /dev/null <<< 'blacklist i2c-hid'
-    grep -qx 'i915' /etc/initramfs-tools/modules || sudo tee -a /etc/initramfs-tools/modules > /dev/null <<< 'i915'
+    sudo tee "$modprobe_path"/i2c-hid.conf > /dev/null <<< 'blacklist i2c-hid'
+    grep -qx 'i915' "$modules_path" || sudo tee -a "$modules_path" > /dev/null <<< 'i915'
   fi
-  [[ $(cat /etc/modprobe.d/* 2> /dev/null | md5sum) == $modprobe_checksum ]] && md5sum -c --status <<< "$modules_checksum" || sudo update-initramfs -u
+  [[ $(cat "$modprobe_path"/* 2> /dev/null | md5sum) == $modprobe_checksum ]] && md5sum -c --status <<< "$modules_checksum" || sudo update-initramfs -u
 }
 
 function configure-locale {
   sudo sed -i 's/^#* *\(en_US\.UTF-8 \)/\1/' /etc/locale.gen
-  [[ $(< /etc/default/locale) == 'LANG=en_US.UTF-8' ]] || sudo locale-gen
-  sudo tee /etc/default/locale > /dev/null <<< 'LANG=en_US.UTF-8'
+  local path=/etc/default/locale
+  [[ $(< "$path") == 'LANG=en_US.UTF-8' ]] || sudo locale-gen
+  sudo tee "$path" > /dev/null <<< 'LANG=en_US.UTF-8'
 }
 
 function configure-nopasswd {
@@ -134,8 +139,9 @@ function enable-archive-area {
 }
 
 function enable-autologin {
-  sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
-  sudo tee /etc/systemd/system/getty@tty1.service.d/autologin.conf > /dev/null << EOF
+  local path=/etc/systemd/system/getty@tty1.service.d
+  sudo mkdir -p "$path"
+  sudo tee "$path"/autologin.conf > /dev/null << EOF
 [Service]
 ExecStart=
 ExecStart=-/sbin/agetty -a $USER %I
@@ -143,7 +149,8 @@ EOF
 }
 
 function enable-block-wifi {
-  sudo tee /etc/systemd/system/block-wifi.service > /dev/null << \EOF
+  local name=block-wifi
+  sudo tee /etc/systemd/system/"$name".service > /dev/null << \EOF
 [Install]
 WantedBy=multi-user.target
 
@@ -151,18 +158,20 @@ WantedBy=multi-user.target
 ExecStart=/usr/sbin/rfkill block wifi
 Type=oneshot
 EOF
-  sudo systemctl enable block-wifi
+  sudo systemctl enable "$name"
   sudo systemctl mask systemd-rfkill
 }
 
 function enable-fstrim {
-  sudo ln -fs /usr/share/doc/util-linux/examples/fstrim.service /etc/systemd/system
-  sudo systemctl enable /usr/share/doc/util-linux/examples/fstrim.timer
+  local path=/usr/share/doc/util-linux/examples/fstrim.service
+  sudo ln -fs "$path" /etc/systemd/system
+  sudo systemctl enable "${path%.*}".timer
 }
 
 function fix-efi {
-  sudo mkdir -p /boot/efi/EFI/boot
-  sudo cp /boot/efi/EFI/{debian/grubx64.efi,boot/bootx64.efi}
+  local path=/boot/efi/EFI
+  sudo mkdir -p "$path"/boot
+  sudo cp "$path"/{debian/grubx64.efi,boot/bootx64.efi}
 }
 
 function install-firmware {
@@ -197,7 +206,8 @@ function os-release {
 }
 
 function product-name {
-  [[ ! -f /sys/class/dmi/id/product_name ]] || echo "$(< /sys/class/dmi/id/product_name)"
+  local path=/sys/class/dmi/id/product_name
+  [[ ! -f $path ]] || echo "$(< "$path")"
 }
 
 function reboot-if-needed {
@@ -212,7 +222,8 @@ repository=sgtpep/dotfiles2
 function setup-acpid {
   install-packages acpid
   sudo ln -fs /usr/share/doc/acpid/examples/default /etc/acpi/events
-  sudo tee /etc/acpi/default.sh > /dev/null << \EOF
+  local path=/etc/acpi/default.sh
+  sudo tee "$path" > /dev/null << \EOF
 #!/bin/bash
 set -eu
 if [[ $1 == video/brightness* ]]; then
@@ -227,7 +238,7 @@ if [[ $1 == video/brightness* ]]; then
   echo "$(("$(< brightness)" "$expression"))" > brightness
 fi
 EOF
-  sudo chmod +x /etc/acpi/default.sh
+  sudo chmod +x "$path"
 }
 
 function setup-debian {
