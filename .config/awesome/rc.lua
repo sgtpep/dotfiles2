@@ -2,6 +2,7 @@ local awful = require('awful')
 local beautiful = require('beautiful')
 local gears = require('gears')
 gears.math = require('./math')
+gears.string = require('./string')
 gears.table = require('./table')
 local naughty = require('naughty')
 local wibox = require('wibox')
@@ -80,7 +81,7 @@ function create_keyboard()
         widget = wibox.container.background,
         {
           align = 'center',
-          markup = type(key[2]) == 'string' and key[1] or string.format('<sup>%s</sup> %s <sub>%s</sub>', key[1]:sub(2, 2), key[1]:sub(1, 1), key[1]:sub(3)),
+          markup = type(key[2]) == 'string' and gears.string.xml_escape(key[1]) or string.format('<sup>%s</sup> %s <sub>%s</sub>', gears.string.xml_escape(key[1]:sub(2, 2)), gears.string.xml_escape(key[1]:sub(1, 1)), gears.string.xml_escape(key[1]:sub(3))),
           valign = 'center',
           widget = wibox.widget.textbox,
         },
