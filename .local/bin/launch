@@ -1,0 +1,8 @@
+#!/bin/bash
+set -eu
+command -v dmenu_path > /dev/null || install-packages suckless-tools
+command=$(rlwrap -co -C "${0##*/}" -P '' -S "${0##*/}> " -b '' -f <(dmenu_path 2> /dev/null) -g '^ ' -q '([' -s 10000 -w 0 cat)
+if [[ $command ]]; then
+  eval "setsid $command" &> /dev/null &
+  sleep 0.1
+fi
