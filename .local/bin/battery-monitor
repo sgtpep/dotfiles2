@@ -2,7 +2,7 @@
 set -eu
 if [[ $(pgrep -cf " ${BASH_SOURCE[0]}$") == 1 ]]; then
   cd /sys/class/power_supply
-  ls */capacity &> /dev/null; then
+  if ls */capacity &> /dev/null; then
     while :; do
       [[ $(< */status) == Charging ]] || (($(< */capacity) > 5)) || x-terminal-emulator -T battery -e bash -"$-" -c $'read -s -p \'Low battery...\'' || :
       sleep 3m
