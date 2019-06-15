@@ -1,0 +1,24 @@
+#!/bin/bash
+set -eu
+output=$(sed '/^\s*#\s*!/d' "$1")
+path=/tmp/cjs
+cat > "$path" << EOF
+__filename = '${1//'/\\'}';
+__dirname = require('path').dirname(__filename);
+require.main.filename = __filename;
+require.main.path = __dirname;
+require.main.paths = __dirname.split(require('path').sep).reduce(paths => {
+  const path = require('path');
+  return [
+    ...paths,
+    path.join(
+      path.dirname(path.dirname(paths[paths.length - 1] || __filename)),
+      'node_modules'
+    ),
+  ];
+}, []);
+module = { ...module };
+$output
+console.log($2);
+EOF
+exec node "$path" "${@:3}"

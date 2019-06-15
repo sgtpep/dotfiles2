@@ -1,0 +1,19 @@
+#!/bin/bash
+set -eu
+if [[ $1 == 1 ]]; then
+  xargs -d '\n' exiftran -1i
+elif [[ $1 == 2 ]]; then
+  xargs -d '\n' exiftran -2i
+elif [[ $1 == 9 ]]; then
+  xargs -d '\n' exiftran -9i
+elif [[ $1 == d ]]; then
+  xargs -d '\n' sh -"$-" -c 'for path; do mv "$path" "${path%/*}"/."${path##*/}"; done' --
+elif [[ $1 == g ]]; then
+  xargs -d '\n' gimp
+elif [[ $1 == y ]]; then
+  head -c -1 | xclip -selection clipboard
+elif [[ $1 == m ]]; then
+  mapfile -t
+  x-terminal-emulator -e vifm --choose-dir=/tmp/sxiv-vifm "${MAPFILE[0]%/*/*}"
+  mv "${MAPFILE[@]}" "$(< /tmp/sxiv-vifm)"
+fi

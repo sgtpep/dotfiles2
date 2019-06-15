@@ -1,0 +1,21 @@
+Create Both
+Expunge Both
+SyncState *
+
+IMAPAccount default
+  Host imap.fastmail.com
+  PassCmd "netrc-password imap.fastmail.com mail'@'danil.mobi"
+  SSLType IMAPS
+  User "mail"@"danil.mobi"
+
+IMAPStore remote
+  Account default
+
+MaildirStore local
+  Inbox ~/mail/Inbox
+  Path ~/mail/
+
+Channel default
+  Master :remote:
+  Pattern % !Notes !Trash
+  Slave :local:

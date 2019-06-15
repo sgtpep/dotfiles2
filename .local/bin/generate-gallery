@@ -1,0 +1,374 @@
+#!/usr/bin/env python3
+import datetime
+import functools
+import hashlib
+import hmac
+import html
+import os
+import re
+import sys
+import textwrap
+import urllib.parse
+import xml.etree.ElementTree
+
+access_key = lambda: configuration()[3]
+
+append_directory = lambda path: append_file(index_path(os.path.dirname(path)), directory_html(path))
+
+append_file = lambda path, content: write_file(path, content, True)
+
+append_item = lambda key: append_file(item_index_path(key), item_html(key))
+
+bucket_hostname = lambda: '{}.s3.amazonaws.com'.format(bucket_name())
+
+bucket_name = lambda: configuration()[0]
+
+bucket_region = lambda: configuration()[1]
+
+build_url = lambda path, query={}: \
+  '{}?{}&X-Amz-Signature={}'.format(
+    urllib.parse.quote(path),
+    canonical_query(query),
+    signature(path, query),
+  )
+
+canonical_query = lambda query={}: \
+  urllib.parse.urlencode((
+    ('X-Amz-Algorithm', 'AWS4-HMAC-SHA256'),
+    ('X-Amz-Credential', '{}/{}'.format(
+      access_key(),
+      signature_scope(),
+    )),
+    ('X-Amz-Date', current_date_time()),
+    ('X-Amz-Expires', 604800),
+    ('X-Amz-SignedHeaders', 'host'),
+  ) + \
+  tuple(sorted(query.items())))
+
+configuration = functools.lru_cache()(lambda: read_file(sys.argv[1]).split())
+
+current_date = lambda: current_datetime().strftime('%Y%m%d')
+
+current_date_time = lambda: current_datetime().strftime('%Y%m%dT%H%M%SZ')
+
+current_datetime = functools.lru_cache()(lambda: datetime.datetime.utcnow())
+
+directory_html = lambda path: \
+  '<li><a href="{}/">{}</a></li>\n'.format(
+    html.escape(os.path.basename(path)),
+    html.escape(os.path.basename(path).replace(space_replacement, ' ')),
+  )
+
+generate_directories = lambda: all(append_directory(os.path.join(path, directory)) for path, directories, filenames in os.walk(temp_path()) if 'index.html' not in filenames for directory in sort_directories(directories))
+
+header_html = lambda path: \
+  textwrap.dedent('''\
+  <!doctype html>
+  <meta charset="utf-8">
+  <meta content="initial-scale=1, width=device-width" name="viewport">
+  <title>{}</title>
+  ''').format(html.escape(page_heading(path) or 'Галерея')) + \
+  style_html() + \
+  script_html() + \
+  title_html(path)
+
+hmac_hash = lambda key, string: hmac.new(key, string.encode('utf-8'), hashlib.sha256).digest()
+
+index_path = lambda path: os.path.join(path, 'index.html')
+
+item_caption_html = lambda key: \
+  '<span class="caption">{}</span>'.format(html.escape(os.path.splitext(os.path.basename(key))[0].split('. ', 1)[1])) \
+    if re.match(r'[\d-]+\. ', os.path.basename(key)) else \
+  ''
+
+item_html = lambda key: \
+  textwrap.dedent('''\
+  <a class="thumbnail" href="#{id}"><span>{thumbnail}{caption}</span></a>
+  <div class="lightbox" id="{id}">
+    {lightbox}{caption}
+    <a class="lightbox-action is-close" href="#" title="Закрыть">&times;</a>
+    <a class="lightbox-action is-next" href="#" title="Следующее">&rarr;</a>
+    <a class="lightbox-action is-previous" href="#" title="Предыдущее">&larr;</a>
+  </div>
+  ''').format(
+    caption=item_caption_html(key),
+    id=html.escape(os.path.basename(key)),
+    lightbox=item_media_html(key),
+    thumbnail=item_media_html(key, True),
+  )
+
+item_index_path = lambda key: index_path(os.path.join(temp_path(), os.path.dirname(key.replace(url_prefix(), '', 1)).replace(' ', space_replacement)))
+
+item_media_html = lambda key, is_thumbnail=False: \
+  '<img class="media" src="{}">'.format(html.escape(item_url(key))) \
+    if os.path.splitext(key)[1] in ('.gif', '.jpeg', '.jpg', '.png') else \
+  '<video class="media"{} src="{}"{}></video>'.format(
+    ' preload="metadata"' if is_thumbnail else '',
+    html.escape(item_url(key)),
+    '' if is_thumbnail else ' controls',
+  ) \
+    if os.path.splitext(key)[1] in ('.mp4', '.ogg', '.ogv', '.webm') else \
+  ''
+
+item_url = lambda key: \
+  'https://{}{}'.format(
+    bucket_hostname(),
+    build_url('/{}'.format(key)),
+  )
+
+main = lambda: \
+  remove_directory(temp_path()) and \
+  request_items(append_item) and \
+  generate_directories() and \
+  process_pages() and \
+  rename_directory(temp_path(), output_path()) or \
+  sys.exit(1)
+
+output_path = lambda: sys.argv[2].rstrip('/')
+
+page_heading = lambda path: \
+  '' \
+    if os.path.dirname(path) == temp_path() else \
+  os.path.basename(os.path.dirname(path)).replace(space_replacement, ' ')
+
+process_lightbox_next = lambda html: re.sub(r' class="lightbox-action is-next" href=".*?#(?=")', lambda match: match.group() + (re.compile(r'(?<= class="lightbox" id=")[^"]+').findall(html, match.start()) + [''])[0], html)
+
+process_lightbox_previous = lambda html: re.sub(r' class="lightbox-action is-previous" href=".*?#(?=")', lambda match: match.group() + ([''] + re.compile(r'(?<= class="lightbox" id=")[^"]+').findall(html, 0, match.start()))[-2], html)
+
+process_page = lambda path: write_file(path, header_html(path) + process_lightbox_previous(process_lightbox_next(read_file(path))))
+
+process_pages = lambda: all(process_page(os.path.join(path, filename)) for path, directories, filenames in os.walk(temp_path()) for filename in filenames if filename == 'index.html')
+
+def read_file(path):
+  with open(path) as file:
+    return file.read()
+
+def remove_directory(path):
+  import shutil
+  shutil.rmtree(path, True)
+  return True
+
+def rename_directory(source, destination):
+  remove_directory(destination)
+  os.rename(source, destination)
+  return destination
+
+def request_items(on_item):
+  import http.client
+  connection = http.client.HTTPSConnection(bucket_hostname())
+  query = {'list-type': 2, 'prefix': url_prefix()}
+  while True:
+    url = build_url('/', query)
+    connection.request('GET', url)
+    response = connection.getresponse()
+    assert response.status == 200
+    token = None
+    for event, element in xml.etree.ElementTree.iterparse(response):
+      if element.tag.endswith('}Key') and not element.text.endswith('/'):
+        on_item(element.text)
+      elif element.tag.endswith('}NextContinuationToken'):
+        token = element.text
+    if token:
+      query['continuation-token'] = token
+    else:
+      break
+  return True
+
+script_html = lambda: \
+  textwrap.dedent('''\
+  <script>
+  function main() {
+    addEventListener('DOMContentLoaded', onURL.bind(null, location.href, ''));
+    addEventListener('hashchange', function(event) {
+      onURL(event.newURL, event.oldURL);
+    });
+    addEventListener('keydown', function(event) {
+      onKeyCode(event.keyCode) && !event.altKey && event.preventDefault();
+    });
+  }
+
+  function onKeyCode(keyCode) {
+    if (queryElement('.lightbox-action')) {
+      if (keyCode === 27) {
+        location = queryElement('.lightbox-action.is-close').href;
+        return true;
+      } else if (keyCode === 32) {
+        var video = queryElement('video');
+        video && (video.paused ? video.play() : video.pause());
+      } else if (keyCode === 37) {
+        location = queryElement('.lightbox-action.is-previous').href;
+      } else if (keyCode === 39) {
+        location = queryElement('.lightbox-action.is-next').href;
+      }
+    }
+  }
+
+  function onURL(url, previousURL) {
+    var video = queryElement('video');
+    video && video.play();
+    var previousVideo = queryElement('video', previousURL);
+    if (previousVideo) {
+      previousVideo.currentTime = 0;
+      previousVideo.pause();
+    }
+  }
+
+  function queryElement(selector, url) {
+    var element = document.getElementById(
+      (url || location.hash).split('#', 2)[1]
+    );
+    return element && element.querySelector(selector);
+  }
+
+  main();
+  </script>
+  ''')
+
+secret_key = lambda: configuration()[4]
+
+signature = lambda path, query={}: \
+  hmac_hash(hmac_hash(hmac_hash(hmac_hash(hmac_hash('AWS4{}'.format(secret_key()).encode('utf-8'), current_date()), bucket_region()), 's3'), 'aws4_request'), 'AWS4-HMAC-SHA256\n{}\n{}\n{}'.format(
+    current_date_time(),
+    signature_scope(),
+    hashlib.sha256(bytes(textwrap.dedent('''\
+    GET
+    {}
+    {}
+    host:{}
+
+    host
+    UNSIGNED-PAYLOAD''').format(
+      urllib.parse.quote(path),
+      canonical_query(query),
+      bucket_hostname(),
+    ), 'utf-8')).hexdigest(),
+  )).hex()
+
+signature_scope = lambda: \
+  '{}/{}/s3/aws4_request'.format(
+    current_date(),
+    bucket_region(),
+  )
+
+sort_directories = lambda directories: \
+  tuple(sorted((directory for directory in directories if re.match(r'[\d-]+($|\.)', directory)), reverse=True)) + \
+  tuple(sorted(directory for directory in directories if not re.match(r'[\d-]+($|\.)', directory)))
+
+space_replacement = '+'
+
+style_html = lambda: \
+  textwrap.dedent('''\
+  <style>
+  body {
+    font-family: sans-serif;
+  }
+
+  .back {
+    font-size: medium;
+    font-weight: normal;
+  }
+
+  .lightbox {
+    background: black;
+    bottom: 0;
+    color: white;
+    display: none;
+    left: 0;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 1;
+  }
+  .lightbox:target {
+    display: block;
+  }
+  .lightbox .media {
+    -webkit-transform: translate(-50%, -50%);
+    left: 50%;
+    max-height: 100vh;
+    max-width: 100vw;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .lightbox .caption {
+    background-color: rgba(0, 0, 0, 0.5);
+    bottom: 0;
+    left: 0;
+    margin-right: 4.8em;
+    padding: 0.25em 0.5em;
+    position: absolute;
+  }
+
+  .lightbox-action {
+    background-color: rgba(0, 0, 0, 0.5);
+    color: inherit;
+    font-size: 2em;
+    position: absolute;
+    text-align: center;
+    text-decoration: none;
+    width: 1.2em;
+  }
+  .lightbox-action.is-close {
+    right: 0;
+    top: 0;
+  }
+  .lightbox-action.is-previous {
+    bottom: 0;
+    right: 1.2em;
+  }
+  .lightbox-action.is-next {
+    bottom: 0;
+    right: 0;
+  }
+
+  .media {
+    background-color: lightgrey;
+  }
+
+  .thumbnail {
+    color: inherit;
+    display: inline-block;
+    margin-bottom: 0.5em;
+    margin-right: 0.25em;
+    text-decoration: none;
+    vertical-align: top;
+  }
+  .thumbnail > * {
+    display: table;
+  }
+  .thumbnail video {
+    border-radius: 0.75em;
+  }
+  .thumbnail .caption {
+    caption-side: bottom;
+    display: table-caption;
+    font-size: smaller;
+  }
+  .thumbnail .media {
+    display: block;
+    max-height: 6em;
+    min-height: 3em;
+    min-width: 3em;
+  }
+  </style>
+  ''')
+
+temp_path = lambda: '{}~'.format(output_path())
+
+title_html = lambda path: \
+  textwrap.dedent('''<h1>{} <a class="back" href="..">Назад</a></h1>''').format(html.escape(page_heading(path))) \
+    if page_heading(path) else \
+  ''
+
+url_prefix = lambda: configuration()[2].lstrip('/')
+
+def write_file(path, content, is_append=False):
+  if not os.path.isdir(os.path.dirname(path)):
+    os.makedirs(os.path.dirname(path))
+  with open(path, 'a' if is_append else 'w') as file:
+    file.write(content)
+  return path
+
+if __name__ == '__main__':
+  main()

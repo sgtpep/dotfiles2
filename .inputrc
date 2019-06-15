@@ -1,0 +1,4 @@
+TAB: menu-complete
+set keyseq-timeout 0
+set menu-complete-display-prefix On
+set show-all-if-ambiguous On

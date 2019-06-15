@@ -1,0 +1,3 @@
+#!/bin/bash
+set -eu
+job-list "$@" | grep -v '/backoffice-graphql-proxy/\|\.graphql$' | exec xargs -r -d '\n' npx eslint

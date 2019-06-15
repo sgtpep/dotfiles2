@@ -1,0 +1,13 @@
+#!/bin/bash
+set -eu
+(
+  if [[ $@ ]]; then
+    printf '%s\n' "$@"
+  else
+    (
+      git diff --cached --name-only
+      git diff --name-only @{upstream}
+      job-diff --name-only
+    ) | xargs ls -1 2> /dev/null || :
+  fi
+) | sort -u

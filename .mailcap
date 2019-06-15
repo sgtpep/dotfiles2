@@ -1,0 +1,8 @@
+image/*; xdg-open %s
+text/html; xdg-open %s
+
+application/msword; antiword -w 0 -; copiousoutput
+application/pdf; pdftotext -nopgbrk - -; copiousoutput
+application/rtf; catdoc -w; copiousoutput
+application/vnd.openxmlformats-officedocument.wordprocessingml.document; docx2txt; copiousoutput
+text/html; w3m -I %{charset} -T text/html -o display_link_number; copiousoutput

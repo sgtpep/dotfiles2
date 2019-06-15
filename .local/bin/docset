@@ -1,0 +1,8 @@
+#!/bin/bash
+set -eu
+path=~/.local/share/docsets/$1.docset
+if [[ ! -d $path ]]; then
+  mkdir -p "${path%/*}"
+  wget -O - https://frankfurt.kapeli.com/feeds/"$1".tgz | tar -xz -C "${path%/*}"
+fi
+exec x-www-browser "$path"/Contents/Resources/Documents/"$(grep -Po '(?<=<key>dashIndexFilePath</key><string>)[^<]*' "$path"/Contents/Info.plist)"

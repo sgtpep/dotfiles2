@@ -1,0 +1,14 @@
+#!/bin/bash
+set -eu
+path=/tmp/${0##*/}.mjs
+if [[ ! -f $path ]]; then
+  cat > "$path" << \EOF
+const url = new URL(`file://${process.cwd()}/`);
+export const resolve = (specifier, parentModuleURL = url) => ({
+  format: 'esm',
+  url: new URL(specifier, parentModuleURL).href,
+});
+EOF
+fi
+output=$(< "$1")
+exec node --experimental-modules --no-warnings --loader="$path" <(echo "$output"$'\n'${2+"console.log($2);"})

@@ -1,0 +1,18 @@
+(session-info "toplevel"
+  (aux-info
+    (left-docks-width "200")
+    (maximized "yes")
+    (right-docks-width "200"))
+  (factory-entry "gimp-single-image-window")
+  (gimp-dock
+    (book
+      (dockable "gimp-channel-list"))
+    (book
+      (dockable "gimp-layer-list"))
+    (side right))
+  (gimp-toolbox
+    (book
+      (dockable "gimp-tool-options"))
+    (side left))
+  (open-on-exit))
+(single-window-mode yes)

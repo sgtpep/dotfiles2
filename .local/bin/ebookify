@@ -1,0 +1,51 @@
+#!/bin/bash
+set -eu
+
+function convert-ebook {
+  ebook-convert "$1"/index.html "$2" --linearize-tables --change-justification=justify --filter-css=color,font-size,margin-left,margin-right
+}
+
+function download-ebooks {
+  local path=/run/media/$USER/Kindle
+  scp -r personal:ebooks "$path"/documents
+  ssh personal 'rm -fr ~/ebooks/*'
+  devmon --unmount "$path"
+}
+
+function download-page {
+  rm -fr "$2"
+  wget -EHkp -P "$2" -T 10 -U 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0' -e robots=off -t 3 -nd --no-check-certificate --show-progress --accept-regex='\.(gif|jpeg|jpg|png|svg)$' "$1" || :
+  [[ -f $2/index.html ]] || ls "$2"/*.{htm,html,html.gz,xml} 2> /dev/null | xargs -r -d '\n' sh -c 'mv "$1" "${1%/*}"/index.html' --
+}
+
+function main {
+  if [[ -v SSH_CONNECTION ]]; then
+    process-urls "$@"
+  elif [[ $@ ]]; then
+    run-script "$@"
+  else
+    download-ebooks
+  fi
+}
+
+function process-urls {
+  local url
+  for url; do
+    local checksum=$(md5sum <<< $url | cut -d ' ' -f 1)
+    local path=~/ebooks
+    if [[ ${url%\?*} == *.pdf ]]; then
+      wget -O "$path"/"$checksum".pdf "$url"
+    else
+      local temp=/tmp/$checksum
+      download-page "$url" "$temp"
+      convert-ebook "$temp" "$path"/"$checksum".mobi
+      rm -r "$temp"
+    fi
+  done
+}
+
+function run-script {
+  ssh -t personal "set -$- -- $(printf '%q ' "$@"); $(< "${BASH_SOURCE[0]}")"
+}
+
+[[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"
