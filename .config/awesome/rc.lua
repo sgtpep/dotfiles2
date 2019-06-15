@@ -2,7 +2,6 @@ local awful = require('awful')
 local beautiful = require('beautiful')
 local gears = require('gears')
 gears.math = require('./math')
-gears.string = require('./string')
 gears.table = require('./table')
 local naughty = require('naughty')
 local wibox = require('wibox')
@@ -77,7 +76,7 @@ function create_keyboard()
         widget = wibox.container.background,
         {
           align = 'center',
-          markup = type(key[2]) == 'string' and gears.string.xml_escape(key[1]) or string.format('<sup>%s</sup> %s <sub>%s</sub>', gears.string.xml_escape(key[1]:sub(2, 2)), gears.string.xml_escape(key[1]:sub(1, 1)), gears.string.xml_escape(key[1]:sub(3))),
+          markup = type(key[2]) == 'string' and key[1] or string.format('<sup>%s</sup> %s <sub>%s</sub>', key[1]:sub(2, 2), key[1]:sub(1, 1), key[1]:sub(3)),
           valign = 'center',
           widget = wibox.widget.textbox,
         },
@@ -142,7 +141,7 @@ end
 keys = {
   { { 'Control', 'Mod1' }, 'Tab', function() naughty.destroy_all_notifications() end },
   { { 'Control', 'Mod1' }, 'a', function() run_or_raise('x-terminal-emulator -e calc', { name = 'calc' }) end },
-  { { 'Control', 'Mod1' }, 'b', function() run_or_raise('x-terminal-emulator -title battery -e bash -c \'battery; read -s -n 1\'', { name = 'battery' }) end },
+  { { 'Control', 'Mod1' }, 'b', function() run_or_raise('x-terminal-emulator -title acpi -e bash -c \'acpi; read -s -n 1\'', { name = 'acpi' }) end },
   { { 'Control', 'Mod1' }, 'c', function() run_or_raise('chromium', { class = 'Chromium' }) end },
   { { 'Control', 'Mod1' }, 'd', function() run_or_raise('x-terminal-emulator -e dictionary', { name = 'dictionary' }) end },
   { { 'Control', 'Mod1' }, 'e', function() run_or_raise('x-terminal-emulator -title mutt -e tmux new-session -Ad -s mutt mutt \\; set-option status off \\; attach-session -t mutt', { name = 'mutt' }) end },
@@ -152,20 +151,19 @@ keys = {
   { { 'Control', 'Mod1' }, 'q', function() run_or_raise('x-terminal-emulator -title sshuttle -e execute-online sshuttle -r personal --dns 0/0', { name = 'sshuttle' }) end },
   { { 'Control', 'Mod1' }, 'r', function() run_or_raise('x-terminal-emulator -e launch', { name = 'launch' }) end },
   { { 'Control', 'Mod1' }, 's', function() run_or_raise('x-terminal-emulator -title sync-data -e bash -c \'execute-online sync-data || read -s\'', { name = 'sync-data' }) end },
-  { { 'Control', 'Mod1' }, 'space', function() run_or_raise('x-terminal-emulator -e enable-wifi', { name = 'enable-wifi' }) end },
   { { 'Control', 'Mod1' }, 't', function() run_or_raise('x-terminal-emulator -e tmux new-session -A -s tmux', { name = 'tmux' }) end },
-  { { 'Control', 'Mod1' }, 'v', function() run_or_raise('x-terminal-emulator -title calendar -e bash -c \'calendar; read -s -n 1\'', { name = 'calendar' }) end },
+  { { 'Control', 'Mod1' }, 'v', function() run_or_raise('x-terminal-emulator -title cal -e bash -c \'ncal -Mb -A 1; read -s -n 1\'', { name = 'cal' }) end },
   { { 'Control', 'Mod1' }, 'w', function() run_or_raise('x-terminal-emulator -title notes -e tmux new-session -Ad -s notes notes \\; set-option status off \\; attach-session -t notes', { name = 'notes' }) end },
-  { { 'Control', 'Mod1' }, 'x', function() run_or_raise('browser', { class = 'Surf' }) end },
   { { 'Control', 'Mod1' }, 'z', function() awful.spawn('slock') end },
-  { { 'Control', 'Mod1', 'Shift' }, 'space', function() run_or_raise('x-terminal-emulator -e enable-wifi false', { name = 'enable-wifi' }) end },
   { { 'Mod1' }, 'Escape', function() tag = root.tags()[1] tag.selected = not tag.selected end },
   { { 'Mod1' }, 'F4', function() if client.focus then client.focus:kill() end end },
   { { 'Mod1' }, 'Tab', function() alt_tab(1) end },
   { { 'Mod1', 'Shift' }, 'Tab', function() alt_tab(-1) end },
+  { { 'Shift' }, 'XF86WLAN', function() run_or_raise('x-terminal-emulator -e toggle-wifi block', { name = 'toggle-wifi' }) end },
   { {}, 'XF86AudioLowerVolume', function() awful.spawn.with_shell('pactl set-sink-mute 0 no; pactl set-sink-volume 0 -10%; pactl set-source-mute 1 no') end },
   { {}, 'XF86AudioMute', function() awful.spawn.with_shell('pactl set-sink-mute 0 no; pactl set-sink-volume 0 0%; pactl set-source-mute 1 yes; pactl set-source-volume 1 25%') end },
   { {}, 'XF86AudioRaiseVolume', function() awful.spawn.with_shell('pactl set-sink-mute 0 no; pactl set-sink-volume 0 +10%; pactl set-source-mute 1 no') end },
+  { {}, 'XF86WLAN', function() run_or_raise('x-terminal-emulator -e toggle-wifi unblock', { name = 'toggle-wifi' }) end },
 }
 
 layout = {
@@ -198,9 +196,9 @@ end
 
 rules = {
   { { class = 'Chromium', type = 'normal' }, { callback = function(client) configure_chromium(client) end } },
-  { { class = 'Gimp', type = 'dialog' }, { callback = function(client) awful.placement.centered(client) end, floating = true } },
   { { class = 'XClipboard' }, { hidden = true } },
   { { name = 'Event Tester' }, { floating = true } },
+  { { type = 'dialog' }, { callback = function(client) awful.placement.centered(client) end } },
 }
 
 function run_or_raise(command, rule, shell)
@@ -241,7 +239,6 @@ function set_rules()
     { properties = { buttons = awful.button({ 'Mod1' }, 1, function(client)
       awful.mouse.client.move(client)
     end) }, rule = { floating = true } },
-    { properties = { floating = false }, rule = { type = 'dialog' } },
   }, gears.table.map(function(rule)
     return { properties = rule[2], rule = rule[1] }
   end, rules))
