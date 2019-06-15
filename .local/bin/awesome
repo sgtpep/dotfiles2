@@ -10,7 +10,7 @@ for url in "${!downloads[@]}"; do
   if [[ ! -f $output ]]; then
     wget -O "$output" "$url"
     [[ $(md5sum "$output") == ${downloads[$url]}\ * ]]
-    sed -i 's/\("\)gears\.\(table"\)/\1.\/\2/' "$output"
+    sed -i 's/\("\)gears\./\1.\//' "$output"
   fi
 done
 path=/usr/bin/${0##*/}

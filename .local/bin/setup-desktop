@@ -57,15 +57,15 @@ function configure-hostname {
 }
 
 function configure-initramfs {
-  local modprobe_path=/etc/modprobe.d
-  local modprobe_checksum=$(cat "$modprobe_path"/* 2> /dev/null | md5sum)
-  local modules_path=/etc/initramfs-tools/modules
-  local modules_checksum=$(md5sum "$modules_path")
+  local modprobe=/etc/modprobe.d
+  local modprobe_checksum=$(cat "$modprobe"/* 2> /dev/null | md5sum)
+  local modules=/etc/initramfs-tools/modules
+  local modules_checksum=$(md5sum "$modules")
   if [[ $(product-name) == 'HP Stream '* ]]; then
-    sudo tee "$modprobe_path"/i2c-hid.conf > /dev/null <<< 'blacklist i2c-hid'
-    grep -qx 'i915' "$modules_path" || sudo tee -a "$modules_path" > /dev/null <<< 'i915'
+    sudo tee "$modprobe"/i2c-hid.conf > /dev/null <<< 'blacklist i2c-hid'
+    grep -qx 'i915' "$modules" || sudo tee -a "$modules" > /dev/null <<< 'i915'
   fi
-  [[ $(cat "$modprobe_path"/* 2> /dev/null | md5sum) == $modprobe_checksum ]] && md5sum -c --status <<< "$modules_checksum" || sudo update-initramfs -u
+  [[ $(cat "$modprobe"/* 2> /dev/null | md5sum) == $modprobe_checksum ]] && md5sum -c --status <<< "$modules_checksum" || sudo update-initramfs -u
 }
 
 function configure-locale {
