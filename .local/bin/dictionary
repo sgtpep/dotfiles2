@@ -1,0 +1,33 @@
+#!/bin/bash
+set -eu
+
+function download-dictionary {
+  [[ $1 == *[А-Яа-я]* ]] || local direction=ER
+  local path=~/.stardict/dic
+  mkdir -p "$path"
+  [[ -d $path/stardict-${direction-RE}-LingvoUniversal-2.4.2 ]] || wget -O - http://download.huzheng.org/lingvo/stardict-${direction-RE}-LingvoUniversal-2.4.2.tar.bz2 | tar -jx -C "$path"
+}
+
+function lookup-words {
+  download-dictionary "$1"
+  while :; do
+    local output=$(sdcv -e "$1" |& sed 's/ \w*\.wav$//' 2>&1)
+    if [[ $output =~ \ совер\.\ от\ ([^$'\n']+)$ ]]; then
+      set -- "${BASH_REMATCH[1]}"
+    else
+      break
+    fi
+  done
+  LESS=Rc exec less <<< $output
+}
+
+function main {
+  [[ $@ ]] || set -- $(prompt-words)
+  [[ ! $@ ]] || lookup-words "$*"
+}
+
+function prompt-words {
+  rlwrap -io -C "${0##*/}" -P '' -S "${0##*/}> " -b '' -g '^ ' -q '([' -s 10000 -w 0 cat
+}
+
+[[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"
