@@ -10,7 +10,6 @@ xrdb ~/.Xresources
 [[ ! -c /dev/vboxguest ]] || (pactl set-sink-mute 0 no; pactl set-sink-volume 0 100%) &
 [[ ! -c /dev/vboxguest ]] || /etc/X11/Xsession.d/98vboxadd-xclient &
 [[ ! -c /dev/vboxguest ]] || xmodmap ~/.Xmodmap-job &
-[[ ! -c /dev/vboxguest ]] || xset s off &
 battery-monitor &
 devmon &> /dev/null &
 eval "$(dbus-launch --exit-with-session --sh-syntax)"

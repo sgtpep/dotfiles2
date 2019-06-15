@@ -34,7 +34,6 @@ declare -A executables=(
   [xprop]=x11-utils
   [xrandr]=x11-xserver-utils
   [xrdb]=x11-xserver-utils
-  [xset]=x11-xserver-utils
 )
 
 function install-packages {
