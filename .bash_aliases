@@ -17,7 +17,7 @@ alias vi=vim
 alias watch='watch '
 
 function git {
-  if [[ ${1-} == pull ]]; then
+  if [[ ${1-} =~ ^(clone|pull)$ ]]; then
     execute-online git "$1"
   else
     command git "$@"

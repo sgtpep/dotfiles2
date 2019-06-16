@@ -215,7 +215,7 @@ function symlink-webroot {
 }
 
 function update-apt {
-  find /var/cache/apt/pkgcache.bin -mtime +7 | xargs -r sudo apt update
+  [[ ! $(find /var/cache/apt/pkgcache.bin -mtime +7 2>&1) ]] || sudo apt update
 }
 
 function upgrade-system {
