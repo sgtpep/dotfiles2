@@ -1,0 +1,83 @@
+#!/bin/bash
+set -eu
+
+characters=fdsagrewcx
+
+function generate-label {
+  local digit
+  while read -r -n 1 digit; do
+    local character=${characters:$digit:1}
+    echo -n "${character^}"
+  done < <(printf "%0${#2}d" "$1")
+}
+
+function hintify-text {
+  local text=$1
+  local urls=("${@:2}")
+  local index
+  for index in "${!urls[@]}"; do
+    local label=$(generate-label "$index" "${#urls[@]}")
+    printf "%s\e[7m%s\e[m%s" "${text%%${urls[$index]}*}" "$label" "${urls[$index]:${#label}}"
+    text=${text#*${urls[$index]}}
+  done
+  echo -n "$text"
+}
+
+function join-text {
+  local columns=$(tput cols)
+  local line
+  while IFS= read -r line; do
+    echo -n "$line"
+    [[ ${#line} == $columns ]] || echo
+  done < "$1"
+  rm "$1"
+}
+
+function main {
+  local text=$(join-text /tmp/"${0##*/}")
+  local urls
+  mapfile -t urls < <(parse-urls "$text")
+  if [[ ${urls[@]} ]]; then
+    output-text "$(hintify-text "$text" "${urls[@]}")"
+    process-input "${urls[@]}"
+  fi
+}
+
+function output-text {
+  printf '\e[?25l%s' "${1%$'\n'}"
+  tmux select-window -t url
+}
+
+function parse-urls {
+  local regex='\bhttps?://[^[:space:]"]*[[:alnum:]/-]'
+  local text=$1
+  while [[ $text =~ $regex ]]; do
+    echo "${BASH_REMATCH[0]}"
+    text=${text#*${BASH_REMATCH[0]}}
+  done
+}
+
+function process-input {
+  local count=$#
+  local number=
+  local index
+  for ((index=0; index < ${#count}; index++)); do
+    local character
+    read -s -n 1 character
+    local lowercase_character=${character,}
+    [[ $characters == *$lowercase_character* ]] || return
+    local tail=${characters%%$lowercase_character*}
+    [[ ${#tail} == 0 && ! $number ]] || number=$number${#tail}
+  done
+  local url=${@:$number + 1:1}
+  if [[ $url ]]; then
+    if [[ $character == $lowercase_character ]]; then
+      setsid x-www-browser "$url" &> /dev/null &
+      sleep 0.1
+    else
+      echo "$url" >> ~/.urls
+    fi
+  fi
+}
+
+[[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"

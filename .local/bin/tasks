@@ -1,0 +1,17 @@
+#!/bin/bash
+set -eu
+if [[ $@ ]]; then
+  IFS=- read -r current_{year,month,day,weekday} < <(date -d "$1" +%F-%a)
+  while IFS=\  read -r date task; do
+    if [[ $date != \#* ]]; then
+      IFS=- read -r year month day <<< $date
+      [[ $year != \* && $year != $current_year || $month != \* && $month != $current_month || $day != \* && $day != $current_day ]] || echo "$task"
+      [[ $date != $current_weekday ]] || echo "$task"
+    fi
+  done < <(cat ~/notes/tasks{,-*})
+else
+  for day in {1..7}; do
+    output=$(bash -"$-" "$0" "$day day")
+    [[ ! $output ]] || printf '%s\n%s\n\n' "$(date -d "$day day" +%A)" "$output"
+  done
+fi
