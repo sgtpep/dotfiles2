@@ -1,0 +1,48 @@
+execute 'filetype <application/json> ' . $EDITOR . ' -- %f'
+filetype <application/x-bzip2,application/x-gzip,application/x-xz> tar -x -f %f
+filetype <application/vnd.debian.binary-package> dpkg -x -- %f .
+filetype <application/x-7z-compressed> 7zr x -- %f
+filetype <application/x-rar-compressed> unrar x -- %f
+filetype <application/zip> unzip -- %f
+fileviewer <application/msword> antiword -w 0 -- %f
+fileviewer <application/pdf> pdftotext -nopgbrk -- %f -
+fileviewer <application/vnd.openxmlformats-officedocument.wordprocessingml.document> docx2txt %f -
+fileviewer <audio/*,image/*,video/*> file -b -- %f
+fileviewer <text/html> w3m -o display_link_number=1 %f
+fileviewer <text/rtf> catdoc -w -- %f
+filextype <application/*,audio/*,image/svg+xml,text/html,text/rtf,video/*> xdg-open %f %i &
+filextype <image/*> bash -c $'paths=$(find "$1" -maxdepth 1 -type f -iregex \'.*\.\(gif\|jpe?g\|png\)\' | LANG=C sort); exec sxiv -i -n "$(grep -Fnx -m 1 "$2" <<< $paths | cut -d : -f 1)" <<< $paths' -- %d %c:p %i &
+highlight Border cterm=none ctermfg=default ctermbg=default
+highlight BrokenLink cterm=none ctermfg=default ctermbg=default
+highlight CmdLine cterm=none ctermfg=default ctermbg=default
+highlight CurrLine cterm=reverse ctermfg=default ctermbg=default
+highlight Device cterm=none ctermfg=default ctermbg=default
+highlight Directory cterm=none ctermfg=default ctermbg=default
+highlight ErrorMsg cterm=reverse ctermfg=default ctermbg=default
+highlight Executable cterm=none ctermfg=default ctermbg=default
+highlight Fifo cterm=none ctermfg=default ctermbg=default
+highlight JobLine cterm=reverse ctermfg=default ctermbg=default
+highlight Link cterm=none ctermfg=default ctermbg=default
+highlight OtherLine cterm=reverse ctermfg=default ctermbg=default
+highlight Selected cterm=reverse ctermfg=default ctermbg=default
+highlight Socket cterm=none ctermfg=default ctermbg=default
+highlight StatusLine cterm=none ctermfg=default ctermbg=default
+highlight SuggestBox cterm=none ctermfg=default ctermbg=default
+highlight TopLine cterm=reverse ctermfg=default ctermbg=default
+highlight TopLineSel cterm=reverse ctermfg=default ctermbg=default
+highlight WildMenu cterm=reverse ctermfg=default ctermbg=default
+highlight Win cterm=none ctermfg=default ctermbg=default
+nnoremap <silent> yd :!echo -n %d | xclip -selection clipboard &<CR>
+nnoremap <silent> yn :!echo -n %c | xclip -selection clipboard &<CR>
+nnoremap <silent> yp :!echo -n %"c:p | xclip -selection clipboard &<CR>
+nnoremap E :edit<CR>
+nnoremap gh :cd ~<CR>
+nnoremap gm :cd /run/media/$USER<CR>
+nnoremap q ZQ
+only
+set classify=@:link:,:dir:/
+set dotdirs=rootparent
+set nohlsearch
+set notrash
+set statusline='%A %u:%g %d %s'
+set tuioptions-=ps
