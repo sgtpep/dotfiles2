@@ -1,0 +1,18 @@
+#!/bin/bash
+set -eu
+path=/tmp/${0##*/}/$1
+if mountpoint -q "$path"; then
+  mounted=1
+else
+  mkdir -p "$path"
+  aws rclone mount s3:"$1" "$path" &
+  until mountpoint -q "$path"; do
+    sleep 1
+  done
+fi
+vifm "$path" || :
+if [[ ! -v mounted ]]; then
+  until fusermount -u "$path"; do
+    sleep 1
+  done
+fi
