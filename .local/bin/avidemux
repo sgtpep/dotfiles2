@@ -6,4 +6,5 @@ if [[ ! -f $path ]]; then
   wget -O "$path" https://sourceforge.net/projects/avidemux/files/avidemux/2.7.2/avidemux_2.7.2.appImage/download || rm -f "$path"
   [[ $(md5sum "$path") == 24876d67402e01eea58c784d3cac5ca9\ * ]]
 fi
+install-packages libglu1-mesa
 exec firejail --appimage "$path"
