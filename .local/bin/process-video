@@ -4,7 +4,7 @@ set -eu
 
 function convert-video {
   install-packages ffmpeg
-  if [[ ! $(ffprobe "$1" 2>&1 | grep ' encoder ') ]]; then
+  if [[ ! $(ffprobe "$1" |& grep ' encoder ') ]]; then
     local path=${1%.*}~.mp4
     ffmpeg -y -i "$1" -vf 'scale=-2:min(ih\, 720)' "$path"
     rm -f "$1"
