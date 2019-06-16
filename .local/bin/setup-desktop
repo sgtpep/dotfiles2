@@ -127,7 +127,7 @@ function configure-timezone {
 function create-raspbian-user {
   id "$username" &> /dev/null || sudo useradd -m -G adm,audio,cdrom,dialout,games,gpio,i2c,input,netdev,plugdev,spi,sudo,users,video -s /bin/bash "$username"
   sudo grep -q "^$username:\\$" /etc/shadow || sudo passwd "$username"
-  gpasswd -d pi sudo || :
+  grep -q '^sudo:.*\bpi\b' /etc/group || gpasswd -d pi sudo
 }
 
 function disable-dhcp-wait {
@@ -194,10 +194,9 @@ function install-firmware {
 }
 
 function install-packages {
-  local package
-  for package in "${@%/*}"; do
-    dpkg -s "$package" &> /dev/null || sudo DEBIAN_FRONTEND=noninteractive apt -y install "$package"
-  done
+  update-apt
+  local packages=("${@%/*}")
+  dpkg -s "${packages[@]}" &> /dev/null || sudo DEBIAN_FRONTEND=noninteractive apt -y install "${packages[@]}"
 }
 
 function main {
@@ -306,9 +305,13 @@ function setup-virtualbox-guest {
   sudo usermod -a -G vboxsf "$USER"
 }
 
+function update-apt {
+  find /var/cache/apt/pkgcache.bin -mtime +7 | xargs -r sudo apt update
+}
+
 function upgrade-system {
   if [[ ! $(zgrep ' full-upgrade\b' /var/log/apt/history.log* || :) ]]; then
-    sudo apt update
+    update-apt
     sudo APT_LISTCHANGES_FRONTEND=none DEBIAN_FRONTEND=noninteractive apt -y -o Dpkg::Options::=--force-confnew full-upgrade
     sudo apt -y autoremove --purge
     reboot-if-needed
