@@ -14,7 +14,6 @@ declare -A executables=(
   [ebook-viewer]=calibre
   [firefox]=firefox-esr
   [gem]=ruby
-  [jpegtran]=libjpeg-turbo-progs
   [mbsync]=isync
   [notify-send]=libnotify-bin
   [pactl]=pulseaudio
