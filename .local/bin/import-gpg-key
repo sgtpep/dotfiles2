@@ -4,3 +4,4 @@ sudo mount /dev/disk/by-label/keys /mnt
 gpg --import /mnt/private-key.asc
 sudo umount /mnt
 gpg --import-ownertrust <<< "$(gpg -k --with-colons | grep -Po -m 1 '(?<=^fpr:::::::::)[^:]+'):6:"
+chmod 700 ~/.gnupg
