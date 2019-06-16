@@ -13,8 +13,8 @@ declare -A executables=(
   [ebook-convert]=calibre
   [ebook-viewer]=calibre
   [firefox]=firefox-esr
+  [firejail]='firejail xpra-'
   [gem]=ruby
-  [mbsync]=isync
   [notify-send]=libnotify-bin
   [pactl]=pulseaudio
   [pdftotext]=poppler-utils
@@ -37,9 +37,10 @@ declare -A executables=(
 )
 
 function install-packages {
-  if ! packages-installed "$@"; then
+  local packages=(${@/*-})
+  if ! packages-installed "${packages[@]}"; then
     run-command sh -c 'find /var/cache/apt/pkgcache.bin -mtime +7 | xargs -r sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt -y install "$@"' -- "$@"
-    until packages-installed "$@"; do
+    until packages-installed "${packages[@]}"; do
       sleep 1
     done
   fi

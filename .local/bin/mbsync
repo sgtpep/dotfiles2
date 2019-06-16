@@ -1,1 +1,6 @@
-install-packages
+#!/bin/bash
+set -eu
+[[ -d ~/mail ]] || mkdir ~/mail
+path=/usr/bin/${0##*/}
+[[ -x $path ]] || install-packages isync
+exec "$path" "$@"

@@ -1,0 +1,9 @@
+#!/bin/bash
+set -eu
+if ping -c 1 "$(grep -Po '(?<= host ).+' ~/.msmtprc)" &> /dev/null; then
+  command=msmtp
+else
+  command=/usr/share/doc/msmtp/msmtpqueue/${0##*/}.sh
+  [[ -x $command ]] || install-packages msmtp
+fi
+exec "$command" "$@"
