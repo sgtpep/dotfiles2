@@ -1,0 +1,5 @@
+#!/bin/bash
+set -eu
+path=/usr/bin/${0##*/}
+[[ -x $path ]] || install-packages "${0##*/}" webext-ublock-origin
+exec "$path" --disable-smooth-scrolling --enable-native-notifications --load-extension=/usr/share/chromium/extensions/ublock-origin "$@"
