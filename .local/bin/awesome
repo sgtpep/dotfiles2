@@ -7,11 +7,11 @@ declare -A downloads=(
   [$base_url/table.lua]=bfdc3169d6178651ae2d3b72b0bad601
 )
 for url in "${!downloads[@]}"; do
-  output=~/.config/awesome/${url##*/}
-  if [[ ! -f $output ]]; then
-    wget -O "$output" "$url"
-    [[ $(md5sum "$output") == ${downloads[$url]}\ * ]]
-    sed -i 's/\("\)gears\./\1.\//' "$output"
+  path=~/.config/awesome/${url##*/}
+  if [[ ! -f $path ]]; then
+    wget -O "$path" "$url" || rm -f "$path"
+    [[ $(md5sum "$path") == ${downloads[$url]}\ * ]] || rm -f "$path"
+    sed -i 's/\("\)gears\./\1.\//' "$path"
   fi
 done
 path=/usr/bin/${0##*/}

@@ -4,7 +4,7 @@ path=~/.local/apps/${0##*/}.AppImage
 if [[ ! -f $path ]]; then
   mkdir -p "${path%/*}"
   wget -O "$path" https://sourceforge.net/projects/avidemux/files/avidemux/2.7.2/avidemux_2.7.2.appImage/download || rm -f "$path"
-  [[ $(md5sum "$path") == 24876d67402e01eea58c784d3cac5ca9\ * ]]
+  [[ $(md5sum "$path") == 24876d67402e01eea58c784d3cac5ca9\ * ]] || rm -f "$path"
 fi
 install-packages libglu1-mesa
 exec firejail --appimage "$path"
