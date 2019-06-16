@@ -1,0 +1,12 @@
+#!/bin/bash
+set -eu
+path=~/.npm/bin/${0##*/}
+if [[ ! -x $path ]]; then
+  temp=/tmp/node.tar.xz
+  wget -O "$temp" https://nodejs.org/dist/v10.16.0/node-v10.16.0-linux-x64.tar.xz || rm -f "$temp"
+  [[ $(md5sum "$temp") == c8222839f80ea586aa24d1ee792e1d93\ * ]] || rm -f "$temp"
+  directory=${path%/*/*}
+  mkdir -p "$directory"
+  tar -x -C "$directory" -f "$temp" --strip-components=1
+fi
+exec "$path" "$@"
