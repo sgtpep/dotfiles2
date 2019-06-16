@@ -53,7 +53,7 @@ function configure_chromium(client)
   local keys = {
     awful.key({ 'Mod1' }, 'e', nil, function() run_or_raise(copy_command .. ' && exec x-terminal-emulator -title ebookify -e bash -c \'ebookify "$(xclip -o -selection clipboard)" || read -s\'', { name = 'ebookify' }, true) end),
     awful.key({ 'Mod1' }, 'm', nil, function() run_or_raise(copy_command:gsub(' alt%+y ', ' alt+shift+y ') .. ' && exec x-terminal-emulator -title send-link -e bash -c \'output=$(xclip -o -selection clipboard); mutt -e "set noabort_unmodified" -i <(echo "${output##* }") -s "Link: ${output% *}"\'', { name = 'send-link' }, true) end),
-    awful.key({ 'Mod1' }, 'p', nil, function() run_or_raise(copy_command .. ' && exec x-terminal-emulator -title pwdhash -e sh -c \'pwdhash "$(xclip -o -selection clipboard)" | xclip -selection clipboard && sleep 0.1\'', { name = 'pwdhash' }, true) end),
+    awful.key({ 'Mod1' }, 'p', nil, function() run_or_raise(copy_command .. ' && exec x-terminal-emulator -title pwdhash -e sh -c \'unset DISPLAY; pwdhash "$(xclip -o -selection clipboard)" | xclip -selection clipboard && sleep 0.1\'', { name = 'pwdhash' }, true) end),
     awful.key({ 'Mod1' }, 'v', nil, function() run_or_raise(copy_close_command .. ' && exec x-terminal-emulator -title mpv -e bash -c \'mpv "$(xclip -o -selection clipboard)" || read -s\'', { class = 'mpv' }, true) end),
     awful.key({ 'Mod1', 'Shift' }, 'p', nil, function() run_or_raise(copy_command .. ' && exec x-terminal-emulator -title pass -e bash -c \'( pass "$(xclip -o -selection clipboard | cut -d / -f 3 | rev | cut -d . -f -2 | rev)" || read -s ) | xclip -selection clipboard && sleep 0.1\'', { name = 'pass' }, true) end),
   }
