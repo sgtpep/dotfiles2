@@ -258,6 +258,11 @@ function setup-debian {
   fi
 }
 
+function setup-nginx {
+  install-packages nginx
+  [[ $(os-release) != raspbian ]] || sudo systemctl disable nginx
+}
+
 function setup-raspbian {
   if [[ $(os-release) == raspbian ]]; then
     configure-console-keyboard
@@ -283,6 +288,7 @@ function setup-system {
   enable-fstrim
   setup-acpid
   setup-debian
+  setup-nginx
   setup-raspbian
   setup-virtualbox
 }
