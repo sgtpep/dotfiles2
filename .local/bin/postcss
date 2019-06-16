@@ -1,0 +1,5 @@
+#!/bin/bash
+set -eu
+path=~/.npm/bin/${0##*/}
+[[ -x $path ]] || npm install -g autoprefixer postcss-cli
+exec "$path" "$@"

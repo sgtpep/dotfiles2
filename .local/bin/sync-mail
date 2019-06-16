@@ -1,0 +1,9 @@
+#!/bin/bash
+set -eu
+if ls ~/.msmtpqueue/* &> /dev/null; then
+  command=/usr/share/doc/msmtp/msmtpqueue/msmtp-runqueue.sh
+  [[ -x $command ]] || install-packages msmtp
+  "$command"
+fi
+set -- "${@/#/default:}"
+mbsync "${@--a}"

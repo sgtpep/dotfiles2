@@ -1,0 +1,37 @@
+#!/bin/bash
+set -eu
+. process-photo
+
+function convert-video {
+  install-packages ffmpeg
+  if [[ ! $(ffprobe "$1" 2>&1 | grep ' encoder ') ]]; then
+    local path=${1%.*}~.mp4
+    ffmpeg -y -i "$1" -vf 'scale=-2:min(ih\, 720)' "$path"
+    rm -f "$1"
+    mv "$path" "${1%.*}".mp4
+  fi
+}
+
+function convert-videos {
+  local path
+  for path; do
+    [[ ! -f $path ]] || convert-video "$path"
+  done
+}
+
+function main {
+  local path
+  for path; do
+    if [[ -d $path ]]; then
+      lowercase-extensions "${path%/}"/*.{3GP,MOV,MP4}
+      set -- "${path%/}"/*.{3gp,mov,mp4}
+    else
+      set -- "$path"
+    fi
+    rename-dated "$@"
+    rename-whatsapp "$@"
+    convert-videos "$@"
+  done
+}
+
+[[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"

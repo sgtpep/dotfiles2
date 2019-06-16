@@ -1,0 +1,64 @@
+#!/bin/bash
+set -eu
+
+function change-extension {
+  rename ."$2" ."$3" "$1"/*."$2" 2> /dev/null || :
+}
+
+function lowercase-extensions {
+  local path
+  for path; do
+    if [[ -f $path ]]; then
+      local extension=${path##*.}
+      mv "$path" "${path%.*}"."${extension,,}"
+    fi
+  done
+}
+
+function normalize-extensions {
+  local path
+  for path; do
+    [[ ! -f $path ]] || mv "$path" "${path%.*}".jpg
+  done
+}
+
+function main {
+  local path
+  for path; do
+    if [[ -d $path ]]; then
+      lowercase-extensions "${path%/}"/*.{JPEG,JPG}
+      normalize-extensions "${path%/}"/*.jpeg
+      set -- "${path%/}"/*.jpg
+    else
+      set -- "$path"
+    fi
+    rename-dated "$@"
+    rename-whatsapp "$@"
+    rotate-photos "$@"
+  done
+}
+
+function rename-dated {
+  exiftool '-FileName<CreateDate' -d '%Y-%m-%d-%H-%M-%S%%+c.%%le' "$@" || :
+}
+
+function rename-whatsapp {
+  local path
+  for path; do
+    if [[ $path =~ /[^-]+-([[:digit:]]{4})([[:digit:]]{2})([[:digit:]]{2})-WA0*[[:digit:]]*\.[^.]+$ ]]; then
+      local destination
+      for destination in "${path%/*}"/"${BASH_REMATCH[1]}"-"${BASH_REMATCH[2]}"-"${BASH_REMATCH[3]}"{,_{1..1000}}."${path##*.}"; do
+        if [[ ! -f $destination ]]; then
+          mv "$path" "$destination"
+          break
+        fi
+      done
+    fi
+  done
+}
+
+function rotate-photos {
+  exiftran -ai "$@"
+}
+
+[[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"
