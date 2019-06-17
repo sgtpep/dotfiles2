@@ -10,4 +10,4 @@ set -eu
       job-diff --name-only
     ) | xargs ls -1 2> /dev/null || :
   fi
-) | sort -u
+) | exec sort -u

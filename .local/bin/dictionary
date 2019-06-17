@@ -14,7 +14,7 @@ function download-dictionary {
 function lookup-words {
   download-dictionary "$1"
   while :; do
-    local output=$(sdcv -e "$1" |& sed 's/ \w*\.wav$//' 2>&1)
+    local output=$(echo 0 | sdcv "$1" |& sed 's/ \w*\.wav$//' 2>&1)
     if [[ $output =~ \ совер\.\ от\ ([^$'\n']+)$ ]]; then
       set -- "${BASH_REMATCH[1]}"
     else

@@ -1,5 +1,10 @@
 #!/bin/bash
 set -eu
-path=/usr/bin/${0##*/}
-[[ -x $path ]] || install-packages "${0##*/}" webext-ublock-origin
+if [[ $(< /etc/os-release) == *ID=raspbian* ]]; then
+  path=/usr/bin/chromium-browser
+  [[ -x $path ]] || install-packages chromium-browser firefox- webext-ublock-origin
+else
+  path=/usr/bin/${0##*/}
+  [[ -x $path ]] || install-packages "${0##*/}" webext-ublock-origin
+fi
 exec "$path" --disable-smooth-scrolling --enable-native-notifications --load-extension=/usr/share/chromium/extensions/ublock-origin "$@"

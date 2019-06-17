@@ -2,7 +2,7 @@
 set -eu
 
 function convert-ebook {
-  ebook-convert "$1"/index.html "$2" --linearize-tables --change-justification=justify --filter-css=color,font-size,margin-left,margin-right
+  ebook-convert "$1"/index.html "$2" --change-justification=justify --filter-css=color,font-size,margin-left,margin-right --linearize-tables
 }
 
 function download-ebooks {
@@ -14,8 +14,8 @@ function download-ebooks {
 
 function download-page {
   rm -fr "$2"
-  wget -EHkp -P "$2" -T 10 -U 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0' -e robots=off -t 3 -nd --no-check-certificate --show-progress --accept-regex='\.(gif|jpeg|jpg|png|svg)$' "$1" || :
-  [[ -f $2/index.html ]] || ls "$2"/*.{htm,html,html.gz,xml} 2> /dev/null | xargs -r -d '\n' sh -c 'mv "$1" "${1%/*}"/index.html' --
+  wget -EHkp -P "$2" -T 10 -U 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0' -e robots=off -t 3 -nd --accept-regex='\.(gif|jpeg|jpg|png|svg)$' --no-check-certificate --show-progress "$1" || :
+  [[ -f $2/index.html ]] || ls "$2"/*.{htm,html,html.gz,xml} 2> /dev/null | xargs -r -d '\n' bash -"$-" -c 'mv "$1" "${1%/*}"/index.html' --
 }
 
 function main {

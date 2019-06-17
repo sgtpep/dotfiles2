@@ -50,14 +50,13 @@ end
 function configure_chromium(client)
   local copy_command = 'xdotool keyup alt shift key alt+y sleep 0.1'
   local copy_close_command = copy_command .. ' key ctrl+w'
-  local keys = {
+  client:keys(gears.table.join(unpack({
     awful.key({ 'Mod1' }, 'e', nil, function() run_or_raise(copy_command .. ' && exec x-terminal-emulator -title ebookify -e bash -c \'ebookify "$(xclip -o -selection clipboard)" || read -s\'', { name = 'ebookify' }, true) end),
-    awful.key({ 'Mod1' }, 'm', nil, function() run_or_raise(copy_command:gsub(' alt%+y ', ' alt+shift+y ') .. ' && exec x-terminal-emulator -title send-link -e bash -c \'output=$(xclip -o -selection clipboard); mutt -e "set noabort_unmodified" -i <(echo "${output##* }") -s "Link: ${output% *}"\'', { name = 'send-link' }, true) end),
-    awful.key({ 'Mod1' }, 'p', nil, function() run_or_raise(copy_command .. ' && exec x-terminal-emulator -title pwdhash -e sh -c \'unset DISPLAY; pwdhash "$(xclip -o -selection clipboard)" | xclip -selection clipboard && sleep 0.1\'', { name = 'pwdhash' }, true) end),
+    awful.key({ 'Mod1' }, 'm', nil, function() run_or_raise(copy_command:gsub(' alt%+y ', ' alt+shift+y ') .. ' && exec x-terminal-emulator -title sending -e bash -c \'output=$(xclip -o -selection clipboard); mutt -e "set noabort_unmodified" -i <(echo "${output##* }") -s "Link: ${output% *}"\'', { name = 'sending' }, true) end),
+    awful.key({ 'Mod1' }, 'p', nil, function() run_or_raise(copy_command .. ' && exec x-terminal-emulator -title pwdhash -e bash -c \'pwdhash "$(xclip -o -selection clipboard)" | xclip -selection clipboard && sleep 0.1\'', { name = 'pwdhash' }, true) end),
     awful.key({ 'Mod1' }, 'v', nil, function() run_or_raise(copy_close_command .. ' && exec x-terminal-emulator -title mpv -e bash -c \'mpv "$(xclip -o -selection clipboard)" || read -s\'', { class = 'mpv' }, true) end),
-    awful.key({ 'Mod1', 'Shift' }, 'p', nil, function() run_or_raise(copy_command .. ' && exec x-terminal-emulator -title pass -e bash -c \'( pass "$(xclip -o -selection clipboard | cut -d / -f 3 | rev | cut -d . -f -2 | rev)" || read -s ) | xclip -selection clipboard && sleep 0.1\'', { name = 'pass' }, true) end),
-  }
-  client:keys(gears.table.join(unpack(keys)))
+    awful.key({ 'Mod1', 'Shift' }, 'p', nil, function() run_or_raise(copy_command .. ' && exec x-terminal-emulator -title pass -e bash -c \'output=$(xclip -o -selection clipboard); hostname=${output#*://}; (pass "${hostname%%/*}" || read -s) | xclip -selection clipboard && sleep 0.1\'', { name = 'pass' }, true) end),
+  })))
 end
 
 function configure_notifications()
@@ -72,7 +71,7 @@ function configure_notifications()
 end
 
 function create_keyboard()
-  keyboard = awful.wibar({ height = 320, ontop = true, position = 'bottom', visible = io.open('/etc/os-release'):read('*all'):find('ID=raspbian') ~= nil })
+  keyboard = awful.wibar({ height = 200, ontop = true, position = 'bottom', visible = io.open('/etc/os-release'):read('*all'):find('ID=raspbian') ~= nil })
   local groups = { Return = {}, space = {} }
   local modifiers = {}
   keyboard:setup(gears.table.join({ layout = wibox.layout.flex.vertical }, gears.table.map(function(keys)
@@ -144,8 +143,8 @@ function create_tag()
 end
 
 keys = {
-
   { { 'Control', 'Mod1' }, 'F1', function() awful.spawn('sudo /etc/acpi/default.sh video/brightnessdown') end },
+  { { 'Control', 'Mod1' }, 'F12', function() awful.spawn('sudo poweroff') end },
   { { 'Control', 'Mod1' }, 'F2', function() awful.spawn('sudo /etc/acpi/default.sh video/brightnessup') end },
   { { 'Control', 'Mod1' }, 'F3', function() change_volume(0) end },
   { { 'Control', 'Mod1' }, 'F4', function() change_volume(-1) end },
@@ -156,15 +155,15 @@ keys = {
   { { 'Control', 'Mod1' }, 'b', function() run_or_raise('x-terminal-emulator -title acpi -e bash -c \'acpi; read -s -n 1\'', { name = 'acpi' }) end },
   { { 'Control', 'Mod1' }, 'c', function() run_or_raise('pgrep -x chromium || chromium', { class = 'Chromium' }, true) end },
   { { 'Control', 'Mod1' }, 'd', function() run_or_raise('x-terminal-emulator -e dictionary', { name = 'dictionary' }) end },
-  { { 'Control', 'Mod1' }, 'e', function() run_or_raise('x-terminal-emulator -title mutt -e tmux new-session -Ad -s mutt mutt \\; set-option status off \\; attach-session -t mutt', { name = 'mutt' }) end },
+  { { 'Control', 'Mod1' }, 'e', function() run_or_raise('x-terminal-emulator -g 300x100 -title mutt -e tmux new-session -Ad -s mutt mutt \\; set-option status off \\; attach-session -t mutt', { name = 'mutt' }) end },
   { { 'Control', 'Mod1' }, 'f', function() awful.spawn.with_shell('mv ~/.urls{,~} && exec xargs -r -a ~/.urls~ -d \'\\n\' x-www-browser') end },
   { { 'Control', 'Mod1' }, 'grave', function() toggle_keyboard() end },
   { { 'Control', 'Mod1' }, 'q', function() run_or_raise('x-terminal-emulator -title sshuttle -e execute-online sshuttle -r personal --dns 0/0', { name = 'sshuttle' }) end },
   { { 'Control', 'Mod1' }, 'r', function() run_or_raise('x-terminal-emulator -e launch', { name = 'launch' }) end },
-  { { 'Control', 'Mod1' }, 's', function() run_or_raise('x-terminal-emulator -title sync -e bash -c \'execute-online sync-all || read -s\'', { name = 'sync' }) end },
+  { { 'Control', 'Mod1' }, 's', function() run_or_raise('x-terminal-emulator -title syncing -e bash -c \'execute-online sync-all || read -s\'', { name = 'syncing' }) end },
   { { 'Control', 'Mod1' }, 't', function() run_or_raise('x-terminal-emulator -e tmux new-session -A -s tmux', { name = 'tmux' }) end },
-  { { 'Control', 'Mod1' }, 'v', function() run_or_raise('x-terminal-emulator -title calendar -e bash -c \'date +%F\\ %a\\ %R; echo; ncal -Mb -A 1; read -s -n 1\'', { name = 'calendar' }) end },
-  { { 'Control', 'Mod1' }, 'w', function() run_or_raise('x-terminal-emulator -title notes -e tmux new-session -Ad -s notes notes \\; set-option status off \\; attach-session -t notes', { name = 'notes' }) end },
+  { { 'Control', 'Mod1' }, 'w', function() run_or_raise('x-terminal-emulator -g 300x100 -title notes -e tmux new-session -Ad -s notes notes \\; set-option status off \\; attach-session -t notes', { name = 'notes' }) end },
+  { { 'Control', 'Mod1' }, 'x', function() run_or_raise('x-terminal-emulator -title calendar -e bash -c \'date +%F\\ %a\\ %R; echo; ncal -Mb -A 1; read -s -n 1\'', { name = 'calendar' }) end },
   { { 'Control', 'Mod1' }, 'z', function() awful.spawn('slock') end },
   { { 'Control', 'Mod1', 'Shift' }, 'F6', function() toggle_wifi('block') end },
   { { 'Mod1' }, 'Escape', function() tag = root.tags()[1] tag.selected = not tag.selected end },
@@ -179,7 +178,7 @@ keys = {
 }
 
 layout = {
-  { { 'Esc', 'Escape' }, { 'F1 ☼', 'F1' }, { 'F2 ☀', 'F2' }, { 'F3 🔇', 'F3' }, { 'F4 🔈', 'F4' }, { 'F5 🔉', 'F5' }, { 'F6 📶', 'F6' }, { 'F7', 'F7' }, { 'F8', 'F8' }, { 'F9', 'F9' }, { 'F10', 'F10' }, { 'F11', 'F11' }, { 'F12', 'F12' }, { 'Home', 'Home' }, { 'End', 'End' }, { 'Ins', 'Insert' }, { 'Del', 'Delete' }, { '×', 'hide' } },
+  { { 'Esc', 'Escape' }, { 'F1 ☼', 'F1' }, { 'F2 ☀', 'F2' }, { 'F3 🔇', 'F3' }, { 'F4 🔈', 'F4' }, { 'F5 🔉', 'F5' }, { 'F6 📶', 'F6' }, { 'F7', 'F7' }, { 'F8', 'F8' }, { 'F9', 'F9' }, { 'F10', 'F10' }, { 'F11', 'F11' }, { 'F12 ☾', 'F12' }, { 'Home', 'Home' }, { 'End', 'End' }, { 'Ins', 'Insert' }, { 'Del', 'Delete' }, { '×', 'hide' } },
   { { '`~', 49 }, { '1!', 10 }, { '2@', 11 }, { '3#', 12 }, { '4$', 13 }, { '5%', 14 }, { '6^', 15 }, { '7&', 16 }, { '8*', 17 }, { '9(', 18 }, { '0)', 19 }, { '-_', 20 }, { '=+', 21 }, { 'Bksp', 'BackSpace' } },
   { { 'Tab', 'Tab' }, { 'Q Й', 24 }, { 'W Ц', 25 }, { 'E У', 26 }, { 'R К', 27 }, { 'T Е', 28 }, { 'Y Н', 29 }, { 'U Г', 30 }, { 'I Ш', 31 }, { 'O Щ', 32 }, { 'P З', 33 }, { '[{Х', 34 }, { ']}Ъ', 35 }, { '\\|', 51 } },
   { { 'Lang', 'ISO_Next_Group' }, { 'A Ф', 38 }, { 'S Ы', 39 }, { 'D В', 40 }, { 'F А', 41 }, { 'G П', 42 }, { 'H Р', 43 }, { 'J О', 44 }, { 'K Л', 45 }, { 'L Д', 46 }, { '; Ж', 47 }, { '\' Э', 48 }, { '', 'Return' }, { 'Enter', 'Return' } },
@@ -254,7 +253,7 @@ end
 
 function setup_root()
   gears.wallpaper.set(gears.color())
-  root.cursor('arrow')
+  root.cursor('cursor')
 end
 
 function toggle_keyboard()

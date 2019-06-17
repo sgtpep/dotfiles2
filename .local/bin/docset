@@ -1,8 +1,9 @@
 #!/bin/bash
 set -eu
+filename=$1.docset
 path=~/.local/share/docsets
-if [[ ! -d $path/$1.docset ]]; then
+if [[ ! -d $path/$filename ]]; then
   mkdir -p "$path"
-  wget -O - https://frankfurt.kapeli.com/feeds/"$1".tgz | tar -xz -C "$path" || rm -fr "$path"/"$1".docset
+  wget -O - https://frankfurt.kapeli.com/feeds/"$1".tgz | tar -xz -C "$path" || rm -fr "$path"/"$filename"
 fi
 exec x-www-browser "$path"/Contents/Resources/Documents/"$(grep -Po '(?<=<key>dashIndexFilePath</key><string>)[^<]*' "$path"/Contents/Info.plist)"

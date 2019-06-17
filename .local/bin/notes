@@ -1,9 +1,6 @@
 #!/bin/bash
 set -eu
-if [[ ! -d ~/notes ]] && ! execute-online sync-notes; then
-  rm -fr ~/notes
-  return 1
-fi
+[[ -d ~/notes ]] || execute-online sync-notes
 read -r -d '' config << \EOF || :
 function s:command(command)
   let output = system(a:command)

@@ -32,7 +32,7 @@ hostname=danil.mobi
 
 function install-packages {
   update-apt
-  dpkg -s "$@" &> /dev/null || sudo DEBIAN_FRONTEND=noninteractive apt -y install "$@"
+  dpkg -s "${@%/*}" &> /dev/null || sudo DEBIAN_FRONTEND=noninteractive apt -y install "$@"
 }
 
 function install-standalone-packages {
@@ -51,6 +51,7 @@ function main {
     configure-apt
     setup-system
     upgrade-system
+    prompt-reboot
   else
     run-actions "$@"
     setup-user
@@ -58,7 +59,7 @@ function main {
   fi
 }
 
-function reboot-if-needed {
+function prompt-reboot {
   if [[ -f /run/reboot-required ]]; then
     read -p 'Reboot? [Y/n] '
     [[ ! $REPLY =~ ^[Yy]*$ ]] || sudo reboot
@@ -105,7 +106,7 @@ function setup-nginx {
   install-packages nginx-light
   setup-certbot
   symlink-webroot
-  grep -q "^adm:.*\b$USER\b" /etc/group || sudo usermod -a -G adm "$USER"
+  sudo usermod -a -G adm "$USER"
   local checksum=$(md5sum /etc/nginx/sites-enabled/default)
   sudo tee /etc/nginx/sites-enabled/default > /dev/null << EOF
 server {
@@ -202,7 +203,7 @@ function setup-user {
     timedatectl set-timezone '$(readlink /etc/localtime | sed 's|/usr/share/zoneinfo/||')'
     ! id debian &> /dev/null || userdel -r debian
     id $USER &> /dev/null || useradd -m -G sudo -s /bin/bash $USER
-    grep -q '^$USER:\$' /etc/shadow || chpasswd -e <<< '$USER:$(sudo grep -Po "(?<=^$USER:)[^:]+" /etc/shadow)'
+    chpasswd -e <<< '$USER:$(sudo grep -Po "(?<=^$USER:)[^:]+" /etc/shadow)'
     cp -r ~/.ssh ~$USER
     chown -R $USER: ~$USER/.ssh
 EOF
@@ -219,11 +220,11 @@ function update-apt {
 }
 
 function upgrade-system {
-  if [[ ! $(zgrep ' full-upgrade\b' /var/log/apt/history.log* || :) ]]; then
+  if [[ ! -f /var/lib/apt/upgraded ]]; then
     update-apt
     sudo APT_LISTCHANGES_FRONTEND=none DEBIAN_FRONTEND=noninteractive apt -y -o Dpkg::Options::=--force-confnew full-upgrade
     sudo apt -y autoremove --purge
-    reboot-if-needed
+    sudo touch /var/lib/apt/upgraded
   fi
 }
 

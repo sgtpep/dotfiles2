@@ -5,6 +5,5 @@ if ls ~/.msmtpqueue/* &> /dev/null; then
   [[ -x $command ]] || install-packages msmtp
   "$command"
 fi
-[[ $TERM != dumb ]] || dumb=1
 set -- "${@/#/default:}"
-mbsync ${dumb+-q} "${@--a}"
+exec mbsync ${CRON+-q} "${@--a}"

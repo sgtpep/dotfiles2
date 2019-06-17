@@ -11,4 +11,4 @@ export const resolve = (specifier, parentModuleURL = url) => ({
 EOF
 fi
 output=$(< "$1")
-exec node --experimental-modules --no-warnings --loader="$path" <(echo "$output"$'\n'${2+"console.log($2);"})
+exec node --experimental-modules --loader="$path" --no-warnings <(echo "$output"$'\n'${2+"console.log($2);"})

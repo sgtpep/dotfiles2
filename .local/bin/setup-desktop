@@ -14,18 +14,6 @@ function clone-dotfiles {
   fi
 }
 
-function configure-brightness {
-  declare -A brightness=(
-    [intel_backlight]=500
-    [rpi_backlight]=25
-  )
-  local dirname
-  for dirname in "${!brightness[@]}"; do
-    local path=/sys/class/backlight/$dirname
-    [[ ! -d $path ]] || sudo tee "$path"/brightness > /dev/null <<< ${brightness[$dirname]}
-  done
-}
-
 function configure-console-font {
   sudo sed -i 's/^\(FONTFACE="\)[^"]*/\1VGA/' /etc/default/console-setup
 }
@@ -75,6 +63,26 @@ function configure-locale {
   sudo tee "$path" > /dev/null <<< 'LANG=en_US.UTF-8'
 }
 
+function configure-networking {
+  local paths=(/sys/class/net/wl*)
+  if [[ -d ${paths[0]} ]]; then
+    local path=/etc/wpa_supplicant/wpa_supplicant.conf
+    if [[ ! -f $path ]]; then
+      sudo tee "$path" > /dev/null << \EOF
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+EOF
+    fi
+    local interface=${paths[0]##*/}
+    sudo tee /etc/network/interfaces.d/"$interface" > /dev/null << EOF
+allow-hotplug $interface
+iface $interface inet manual
+  wpa-roam $path
+iface default inet dhcp
+EOF
+  fi
+}
+
 function configure-nopasswd {
   declare -A commands=(
     [acpi]=/etc/acpi/default.sh
@@ -99,21 +107,27 @@ EOF
 }
 
 function configure-raspbian-config {
+  local path=/boot/config.txt
   declare -A options=(
     [boot_delay]=0
     [disable_splash]=1
     [display_lcd_rotate]=2
-    [dtoverlay]=pi3-disable-bt
   )
   local option
   for option in "${!options[@]}"; do
-    local path=/boot/config.txt
     if grep -q "^$option=" "$path"; then
       sudo sed -i "s/^\($option=\).*/\1${options[$option]}/" "$path"
     else
       sudo tee -a "$path" > /dev/null <<< "$option=${options[$option]}"
     fi
   done
+  local key=dtoverlay
+  sudo sed -i "/^$key=/d" "$path"
+  local overlays=(
+    pi3-disable-bt
+    rpi-ft5406,touchscreen-inverted-x=1,touchscreen-inverted-y=1
+  )
+  printf '%s\n' "${overlays[@]/#/$key=}" | sudo tee -a "$path" > /dev/null
 }
 
 function configure-raspbian-mirror {
@@ -127,7 +141,7 @@ function configure-timezone {
 function create-raspbian-user {
   id "$username" &> /dev/null || sudo useradd -m -G adm,audio,cdrom,dialout,games,gpio,i2c,input,netdev,plugdev,spi,sudo,users,video -s /bin/bash "$username"
   sudo grep -q "^$username:\\$" /etc/shadow || sudo passwd "$username"
-  grep -q '^sudo:.*\bpi\b' /etc/group || gpasswd -d pi sudo
+  gpasswd -d pi sudo || :
 }
 
 function disable-dhcp-wait {
@@ -174,6 +188,20 @@ EOF
   sudo systemctl mask systemd-rfkill
 }
 
+function enable-fontconfig-bgr {
+  local path=~/.config/fontconfig/conf.d/50-bgr.conf
+  mkdir -p "${path%/*}"
+  cat > "$path" << \EOF
+<fontconfig>
+  <match target="font">
+    <edit name="rgba">
+      <const>bgr</const>
+    </edit>
+  </match>
+</fontconfig>
+EOF
+}
+
 function enable-fstrim {
   local path=/usr/share/doc/util-linux/examples/fstrim.service
   sudo ln -fs "$path" /etc/systemd/system
@@ -183,7 +211,7 @@ function enable-fstrim {
 function fix-efi {
   local path=/boot/efi/EFI
   sudo mkdir -p "$path"/boot
-  sudo cp "$path"/{debian/grubx64.efi,boot/bootx64.efi}
+  sudo cp "$path"/{debian/grub,boot/boot}x64.efi
 }
 
 function install-firmware {
@@ -195,19 +223,25 @@ function install-firmware {
 
 function install-packages {
   update-apt
-  local packages=("${@%/*}")
-  dpkg -s "${packages[@]}" &> /dev/null || sudo DEBIAN_FRONTEND=noninteractive apt -y install "${packages[@]}"
+  dpkg -s "${@%/*}" &> /dev/null || sudo DEBIAN_FRONTEND=noninteractive apt -y install "$@"
+}
+
+function install-standalone-packages {
+  local packages=(unattended-upgrades)
+  [[ $(os-release) == raspbian ]] || packages+=(nginx)
+  install-packages "${packages[@]}"
 }
 
 function main {
   if [[ $(os-release) == raspbian ]] && [[ $USER == pi ]]; then
     create-raspbian-user
-    exec sudo -u "$username" bash -"$-" "$0" "$@"
+    run-script
   else
     clone-dotfiles
     setup-system
-    install-packages unattended-upgrades
+    install-standalone-packages
     upgrade-system
+    prompt-reboot
   fi
 }
 
@@ -220,18 +254,22 @@ function product-name {
   [[ ! -f $path ]] || echo "$(< "$path")"
 }
 
-function reboot-if-needed {
-  if [[ -f /run/reboot-required ]]; then
+function prompt-reboot {
+  if [[ $TERM == linux && $XDG_VTNR == 1 ]]; then
     read -p 'Reboot? [Y/n] '
     [[ ! $REPLY =~ ^[Yy]*$ ]] || sudo reboot
   fi
 }
 
-repository=sgtpep/dotfiles2
+repository=sgtpep/dotfiles
+
+function run-script {
+  exec sudo -u "$username" bash -"$-" "$0" "$@"
+}
 
 function schedule-syncing {
-  local command='[ ! -f ~/.ssh/id_rsa ] || flock /tmp/sync-all.lock sync-all'
-  sudo tee /etc/cron.d/sync-all > /dev/null << EOF
+  local command=sync-cron
+  sudo tee /etc/cron.d/"$command" > /dev/null << EOF
 PATH=/usr/bin:/bin:/home/$USER/.local/bin
 0 * * * * $USER $command
 @reboot $USER $command
@@ -255,6 +293,7 @@ if [[ $1 == video/brightness* ]]; then
     expression='* 3 / 2'
   fi
   echo "$(("$(< brightness)" "$expression"))" > brightness
+  [[ $(< brightness) != 0 ]] || echo 2 > brightness
 fi
 EOF
   sudo chmod +x "$path"
@@ -263,12 +302,8 @@ EOF
 function setup-debian {
   if [[ $(os-release) == debian ]]; then
     configure-grub
+    configure-networking
   fi
-}
-
-function setup-nginx {
-  install-packages nginx
-  [[ $(os-release) != raspbian ]] || sudo systemctl disable nginx
 }
 
 function setup-raspbian {
@@ -282,11 +317,11 @@ function setup-raspbian {
     configure-timezone
     disable-dhcp-wait
     enable-block-wifi
+    enable-fontconfig-bgr
   fi
 }
 
 function setup-system {
-  configure-brightness
   configure-console-font
   configure-initramfs
   configure-nopasswd
@@ -294,10 +329,10 @@ function setup-system {
   disable-power-key
   enable-autologin
   enable-fstrim
+  install-firmware
   schedule-syncing
   setup-acpid
   setup-debian
-  setup-nginx
   setup-raspbian
   setup-virtualbox
 }
@@ -320,11 +355,11 @@ function update-apt {
 }
 
 function upgrade-system {
-  if [[ ! $(zgrep ' full-upgrade\b' /var/log/apt/history.log* || :) ]]; then
+  if [[ ! -f /var/lib/apt/upgraded ]]; then
     update-apt
     sudo APT_LISTCHANGES_FRONTEND=none DEBIAN_FRONTEND=noninteractive apt -y -o Dpkg::Options::=--force-confnew full-upgrade
     sudo apt -y autoremove --purge
-    reboot-if-needed
+    sudo touch /var/lib/apt/upgraded
   fi
 }
 

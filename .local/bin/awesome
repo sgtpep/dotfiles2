@@ -2,15 +2,15 @@
 set -eu
 base_url=https://raw.githubusercontent.com/awesomeWM/awesome/v4.3/lib/gears
 declare -A downloads=(
-  [$base_url/math.lua]=0c426fce6df68143a16ae284d7910945
-  [$base_url/string.lua]=226d58477c17c6736b5e1caac02f5257
-  [$base_url/table.lua]=bfdc3169d6178651ae2d3b72b0bad601
+  [$base_url/math.lua]=b4440db05371b4baf6ba8d5fea272c00a74c5ec8f45c5cfe239b01006fade81f
+  [$base_url/string.lua]=963eab95c8e9c053dc43e53de60b38fb0f20fa6eb11f7ade4c840144ab626f16
+  [$base_url/table.lua]=0852d005a91c6df12f897151131bfce72bbd402a138d6436fbfc83b47826ff22
 )
 for url in "${!downloads[@]}"; do
   path=~/.config/awesome/${url##*/}
   if [[ ! -f $path ]]; then
     wget -O "$path" "$url" || rm -f "$path"
-    [[ $(md5sum "$path") == ${downloads[$url]}\ * ]] || rm -f "$path"
+    [[ $(sha256sum "$path") == ${downloads[$url]}\ * ]] || rm -f "$path"
     sed -i 's/\("\)gears\./\1.\//' "$path"
   fi
 done

@@ -39,7 +39,7 @@ declare -A executables=(
 function install-packages {
   local packages=(${@/%*-})
   if ! packages-installed "${packages[@]}"; then
-    run-command bash -c '[[ ! $(find /var/cache/apt/pkgcache.bin -mtime +7 2>&1) ]] || sudo apt update; sudo DEBIAN_FRONTEND=noninteractive apt -y install "$@"' -- "$@"
+    run-command bash -"$-" -c '[[ ! $(find /var/cache/apt/pkgcache.bin -mtime +7 2>&1) ]] || sudo apt update; sudo DEBIAN_FRONTEND=noninteractive apt -y install "$@"' -- "$@"
     until packages-installed "${packages[@]}"; do
       sleep 1
     done
@@ -62,21 +62,18 @@ function packages-installed {
     local paths=(/var/lib/dpkg/info/"$package"{,:*}.list)
     [[ -f ${paths[0]} || -f ${paths[1]} ]] || return 1
   done
+  dpkg -s "$@" &> /dev/null
 }
 
 function run-command {
   local command=(flock /tmp/install-packages.lock execute-online "$@")
-  local detached_command=(bash -"$-" -c '"$@" || read -s' -- "${command[@]}")
-  if [[ -t 1 ]]; then
-    "${command[@]}"
+  local background_command=(bash -"$-" -c '"$@" || read -s' -- "${command[@]}")
+  if [[ ! -t 1 && -v TMUX ]]; then
+    tmux new-window -n installing "${background_command[@]}"
+  elif [[ ! -t 1 && -v DISPLAY && -x /usr/bin/$(readlink ~/.local/bin/x-terminal-emulator) ]]; then
+    x-terminal-emulator -title installing -e "${background_command[@]}"
   else
-    if [[ -v TMUX ]]; then
-      tmux new-window -n installing "${detached_command[@]}"
-    elif [[ -v DISPLAY && -x /usr/bin/$(readlink ~/.local/bin/x-terminal-emulator) ]]; then
-      x-terminal-emulator -title installing -e "${detached_command[@]}"
-    else
-      "${command[@]}"
-    fi
+    "${command[@]}" >&2
   fi
 }
 

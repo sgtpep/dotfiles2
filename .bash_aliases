@@ -19,7 +19,7 @@ alias watch='watch '
 
 function git {
   if [[ ${1-} =~ ^(clone|pull)$ ]]; then
-    execute-online git "$1"
+    execute-online git "$@"
   else
     command git "$@"
   fi

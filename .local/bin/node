@@ -2,9 +2,9 @@
 set -eu
 path=~/.npm/bin/${0##*/}
 if [[ ! -x $path ]]; then
-  temp=/tmp/node.tar.xz
-  wget -O "$temp" https://nodejs.org/dist/v10.16.0/node-v10.16.0-linux-x64.tar.xz || rm -f "$temp"
-  [[ $(md5sum "$temp") == c8222839f80ea586aa24d1ee792e1d93\ * ]] || rm -f "$temp"
+  temp=/tmp/${0##*/}.tar.xz
+  wget -O "$temp" https://nodejs.org/dist/v12.4.0/node-v12.4.0-linux-x64.tar.xz || rm -f "$temp"
+  [[ $(sha256sum "$temp") == 9aec6a2a50c1791704a6069cbda6da62781361e44814d024e8bbaaf0deb41c5e\ * ]] || rm -f "$temp"
   directory=${path%/*/*}
   mkdir -p "$directory"
   tar -x -C "$directory" -f "$temp" --strip-components=1

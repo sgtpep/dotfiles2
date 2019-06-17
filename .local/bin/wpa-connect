@@ -1,6 +1,7 @@
 #!/bin/bash
 set -eu
-command=(sudo wpa_cli -i wlan0)
+paths=(/sys/class/net/wl*)
+command=(sudo wpa_cli -i "${paths[0]##*/}")
 if [[ $@ ]]; then
   local path=/etc/wpa_supplicant/wpa_supplicant.conf
   if [[ $# == 2 ]]; then
@@ -16,11 +17,6 @@ EOF
   "${command[@]}" reconfigure
 else
   "${command[@]}" scan
-  while :; do
-    output=$("${command[@]}" scan_results)
-    if [[ $output ]]; then
-      echo "$output"
-      break
-    fi
-  done
+  sleep 1
+  "${command[@]}" scan_results
 fi

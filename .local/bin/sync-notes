@@ -13,6 +13,7 @@ if [[ -d ~/notes ]]; then
   done
   [[ ! ${tasks[@]} ]] || scp "${tasks[@]/#/~/notes/}" personal:notes
   [[ ! ${commits[@]} ]] || git -C ~/notes push
-else
-  git clone personal:repositories/notes.git ~/notes
+elif ! git clone personal:repositories/notes.git ~/notes; then
+  rm -fr ~/notes
+  exit 1
 fi

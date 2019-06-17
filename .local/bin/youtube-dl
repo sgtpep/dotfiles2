@@ -1,5 +1,5 @@
 #!/bin/bash
 set -eu
 path=$PYTHONUSERBASE/bin/${0##*/}
-[[ -x $path ]] || pip3 install youtube_dl
+[[ -x $path ]] || pip3 install youtube_dl >&2
 exec "$path" "$@"

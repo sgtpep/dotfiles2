@@ -66,7 +66,7 @@ const hintsStyle = () => {
 
 const id = 'gcpccpgdkmihefbjbhkipbjcpfaokokd';
 
-const listenKeyDown = () => {
+const listenKeyDown = () =>
   addEventListener('keydown', event => {
     if (event.altKey && !event.ctrlKey && event.key === 'f') {
       event.preventDefault();
@@ -74,7 +74,6 @@ const listenKeyDown = () => {
       showHints();
     }
   });
-};
 
 const listenLoaded = () =>
   addEventListener('DOMContentLoaded', () => {

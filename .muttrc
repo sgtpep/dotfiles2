@@ -28,6 +28,7 @@ macro index <Space>a '<change-folder>=Archive<Return>'
 macro index <Space>d '<change-folder>=Spam<Return>'
 macro index <Space>e '<change-folder>=Inbox<Return>'
 macro index <Space>f '<change-folder>=Feeds<Return>'
+macro index <Space>w '<change-folder>=Sent<Return>'
 macro index,pager a '<save-message>=Archive<Return><Return><sync-mailbox>'
 set beep_new
 set fast_reply
@@ -48,5 +49,6 @@ set rfc2047_parameters
 set sendmail=msmtp-enqueue
 set sleep_time=0
 set spoolfile==Inbox
+set text_flowed
 set timeout=10
 unset wait_key
