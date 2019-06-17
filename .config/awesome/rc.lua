@@ -164,7 +164,7 @@ keys = {
   { { 'Control', 'Mod1' }, 'r', function() run_or_raise('x-terminal-emulator -e launch', { name = 'launch' }) end },
   { { 'Control', 'Mod1' }, 's', function() run_or_raise('x-terminal-emulator -title sync -e bash -c \'execute-online sync-all || read -s\'', { name = 'sync' }) end },
   { { 'Control', 'Mod1' }, 't', function() run_or_raise('x-terminal-emulator -e tmux new-session -A -s tmux', { name = 'tmux' }) end },
-  { { 'Control', 'Mod1' }, 'v', function() run_or_raise('x-terminal-emulator -title calendar -e bash -c \'date '+%F %a %R'; echo; ncal -Mb -A 1; read -s -n 1\'', { name = 'calendar' }) end },
+  { { 'Control', 'Mod1' }, 'v', function() run_or_raise('x-terminal-emulator -title calendar -e bash -c \'date +%F\\ %a\\ %R; echo; ncal -Mb -A 1; read -s -n 1\'', { name = 'calendar' }) end },
   { { 'Control', 'Mod1' }, 'w', function() run_or_raise('x-terminal-emulator -title notes -e tmux new-session -Ad -s notes notes \\; set-option status off \\; attach-session -t notes', { name = 'notes' }) end },
   { { 'Control', 'Mod1' }, 'z', function() awful.spawn('slock') end },
   { { 'Control', 'Mod1', 'Shift' }, 'F6', function() toggle_wifi('block') end },
