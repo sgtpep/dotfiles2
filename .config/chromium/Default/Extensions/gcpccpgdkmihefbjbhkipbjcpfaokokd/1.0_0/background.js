@@ -11,7 +11,13 @@ const copy = text => {
 };
 chrome.commands.onCommand.addListener(command =>
   chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) =>
-    command === 'copy-title-url'
+    command === 'close-tab'
+      ? chrome.tabs.query({ windowId: tab.windowId }, tabs =>
+          tabs.length > 1
+            ? chrome.tabs.remove(tab.id)
+            : chrome.tabs.update(tab.id, { url: 'chrome://newtab' })
+        )
+      : command === 'copy-title-url'
       ? copy([tab.title, tab.url].filter(Boolean).join(' '))
       : command === 'copy-url'
       ? copy(tab.url)
