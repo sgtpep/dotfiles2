@@ -1,0 +1,66 @@
+#!/bin/bash
+set -eu
+
+function build-url {
+  if [[ $1 =~ ^((https?|chrome)://|about:)[^[:space:]]+$ ]]; then
+    echo "$1"
+  elif [[ -v keywords[$1] ]]; then
+    echo "${keywords[$1]/{\}}"
+  elif [[ $1 == *\ * && -v keywords[${1%% *}] ]]; then
+    echo "${keywords[${1%% *}]/{\}/$(encode-parameter "${1#* }")}"
+  elif [[ $1 =~ [\ \":] || $1 != *.* ]]; then
+    echo "${keywords[g]/{\}/$(encode-parameter "$1")}"
+  else
+    echo "http://$1"
+  fi
+}
+
+function encode-parameter {
+  local parameter=${1//&/%26}
+  echo "${parameter//#/%23}"
+}
+
+hosts=(
+  cloud.digitalocean.com
+  fastmail.com
+  github.com
+  metro.yandex.ru
+  mini.webmoney.ru
+  online.raiffeisen.ru
+  rp5.ru
+)
+
+declare -A keywords=(
+  [ap]='https://www.archlinux.org/packages/?q={}'
+  [aw]='https://wiki.archlinux.org/index.php?search={}'
+  [dd]='https://duckduckgo.com/?q={}'
+  [dp]='https://packages.debian.org/search?keywords={}&searchon=all'
+  [g]='https://www.google.com/search?gl=us&q={}'
+  [gc]='https://webcache.googleusercontent.com/search?q=cache:{}'
+  [gi]='https://www.google.com/searchbyimage?image_url={}'
+  [im]='https://www.imdb.com/find?q={}'
+  [ma]='https://yandex.ru/maps/?text={}'
+  [md]='https://developer.mozilla.org/en-US/search?q={}'
+  [me]='https://metro.yandex.ru/'
+  [mt]='https://www.multitran.com/m.exe?l1=1&l2=2&s={}'
+  [np]='https://www.npmjs.com/search?q={}'
+  [we]='https://en.wikipedia.org/wiki/Special:Search/{}'
+  [wr]='https://ru.wikipedia.org/wiki/Служебная:Поиск/{}'
+)
+
+function main {
+  [[ $@ ]] || set -- $(prompt-query)
+  [[ ! $@ ]] || open-browser "$(build-url "$*")"
+}
+
+function open-browser {
+  setsid execute-online x-www-browser "$1" &> /dev/null &
+  [[ ! ~/.local/bin/x-www-browser -ef ~/.local/bin/chromium ]] || xdotool search --class --sync Chromium > /dev/null
+  sleep 0.1
+}
+
+function prompt-query {
+  rlwrap -o -C "${0##*/}" -P '' -S "${0##*/}> " -b '' -e '' -f <(printf '%s\n' "${hosts[@]}") -g '^ ' -q '([' -s 10000 -w 0 cat
+}
+
+[[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"
