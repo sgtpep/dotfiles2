@@ -85,7 +85,10 @@
     "accept_languages": "en-US,ru"
   },
   "profile": {
-    "block_third_party_cookies": true
+    "block_third_party_cookies": true,
+    "default_content_setting_values": {
+      "javascript": 2
+    }
   },
   "safebrowsing": {
     "enabled": false
@@ -95,6 +98,10 @@
   },
   "session": {
     "restore_on_startup": 1
+  },
+  "signin": {
+    "allowed": false,
+    "allowed_on_next_startup": false
   },
   "spellcheck": {
     "dictionaries": ["en-US", "ru"],
