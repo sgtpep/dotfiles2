@@ -229,6 +229,15 @@ function reboot-if-needed {
 
 repository=sgtpep/dotfiles2
 
+function schedule-syncing {
+  local command='[ ! -f ~/.ssh/id_rsa ] || flock /tmp/sync-all.lock sync-all'
+  sudo tee /etc/cron.d/sync-all > /dev/null << EOF
+PATH=/usr/bin:/bin:/home/$USER/.local/bin
+0 * * * * $USER $command
+@reboot $USER $command
+EOF
+}
+
 function setup-acpid {
   install-packages acpid
   sudo ln -fs /usr/share/doc/acpid/examples/default /etc/acpi/events
@@ -285,6 +294,7 @@ function setup-system {
   disable-power-key
   enable-autologin
   enable-fstrim
+  schedule-syncing
   setup-acpid
   setup-debian
   setup-nginx
