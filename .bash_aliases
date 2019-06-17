@@ -5,7 +5,8 @@ alias dd='dd conv=fsync bs=4M'
 alias df='df -h'
 alias du='du -h'
 alias free='free -h'
-alias json='python -m json.tool |& less'
+alias grep='paginate grep --color'
+alias json='paginate python -m json.tool'
 alias ls='ls -h'
 alias mv='mv -i'
 alias pngquant='pngquant -f --ext=.png'
@@ -24,6 +25,6 @@ function git {
   fi
 }
 
-function grep {
-  command grep --color "$@" |& less
+function paginate {
+  "$@" |& less
 }
