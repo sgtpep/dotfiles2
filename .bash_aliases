@@ -25,5 +25,5 @@ function git {
 }
 
 function grep {
-  grep --color "$@" |& less
+  command grep --color "$@" |& less
 }
