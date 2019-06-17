@@ -14,22 +14,23 @@ function s:define_leader_mappings()
   autocmd FileType css nnoremap <Leader>a :%!postcss<CR>:update<CR>
   nnoremap <Leader> <Nop>
   nnoremap <Leader>D :bdelete!<CR>
-  nnoremap <Leader>E :edit!<CR>
+  nnoremap <Leader>E :edit %:h/
   nnoremap <Leader>N :bnext<CR>
   nnoremap <Leader>P :bprevious<CR>
+  nnoremap <Leader>R :edit!<CR>
   nnoremap <Leader>b :ls<CR>:buffer<Space>
   nnoremap <Leader>e :edit<Space>
+  nnoremap <Leader>f :find<Space>
   nnoremap <Leader>g :grep<Space>
   nnoremap <Leader>n :cnext<CR>
   nnoremap <Leader>p :cprevious<CR>
-  nnoremap <Leader>r :find<Space>
   nnoremap <Leader>t :find todo<CR>
   nnoremap <Leader>w :write<CR>
-  nnoremap <silent> <Leader>R :call <SID>update_path()<CR>
+  nnoremap <silent> <Leader>F :call <SID>update_path()<CR>
   nnoremap <silent> <Leader>V :let @" = system('xclip -o -selection clipboard')<CR>P
   nnoremap <silent> <Leader>c Vy:call system('xclip -selection clipboard', getreg())<CR>
-  nnoremap <silent> <Leader>f :call <SID>format_code()<CR>
   nnoremap <silent> <Leader>h :set hlsearch!<CR>
+  nnoremap <silent> <Leader>r :call <SID>format_code()<CR>
   nnoremap <silent> <Leader>v :let @" = system('xclip -o -selection clipboard')<CR>p
   nnoremap <silent> <Leader>x Vx:call system('xclip -selection clipboard', getreg())<CR>
   nnoremap <silent> <Leader>y :call system('xclip -selection clipboard', expand('%'))<CR>
