@@ -5,7 +5,7 @@ if mountpoint -q "$path"; then
   mounted=1
 else
   mkdir -p "$path"
-  aws rclone mount s3:"$1" "$path" &
+  GPG_TTY=$(tty) aws rclone mount s3:"$1" "$path" &
   until mountpoint -q "$path"; do
     sleep 1
   done
