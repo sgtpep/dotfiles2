@@ -56,6 +56,12 @@ function configure-initramfs {
   [[ $(cat "$modprobe"/* 2> /dev/null | md5sum) == $modprobe_checksum ]] && md5sum -c --status <<< "$modules_checksum" || sudo update-initramfs -u
 }
 
+function configure-inotify {
+  local path=/etc/sysctl.d/50-inotify.conf
+  sudo tee "$path" > /dev/null <<< 'fs.inotify.max_user_watches=524288'
+  sudo sysctl -q -p "$path"
+}
+
 function configure-locale {
   sudo sed -i 's/^#* *\(en_US\.UTF-8 \)/\1/' /etc/locale.gen
   local path=/etc/default/locale
@@ -324,6 +330,7 @@ function setup-raspbian {
 function setup-system {
   configure-console-font
   configure-initramfs
+  configure-inotify
   configure-nopasswd
   disable-pam-mail
   disable-power-key
