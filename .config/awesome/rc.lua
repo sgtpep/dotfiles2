@@ -44,7 +44,8 @@ function alt_tab(offset)
 end
 
 function change_volume(change)
-  awful.spawn.with_shell(change < 0 and 'pactl set-sink-mute 0 no; pactl set-sink-volume 0 -10%; pactl set-source-mute 1 no' or change > 0 and 'pactl set-sink-mute 0 no; pactl set-sink-volume 0 +10%; pactl set-source-mute 1 no' or string.format('pactl set-sink-mute 0 %s; pactl set-sink-volume 0 %d%%; pactl set-source-mute 1 yes; pactl set-source-volume 1 25%%', unpack(product_name:find('^HP Stream ') and { 'no', 0 } or { 'yes', 25 })))
+  local source = product_name():find('^HP Stream ') and 1 or 0
+  awful.spawn.with_shell(change < 0 and string.format('pactl set-sink-mute 0 no; pactl set-sink-volume 0 -10%%; pactl set-source-mute %d no', source) or change > 0 and string.format('pactl set-sink-mute 0 no; pactl set-sink-volume 0 +10%%; pactl set-source-mute %d no', source) or string.format('pactl set-sink-mute 0 %s; pactl set-sink-volume 0 %d%%; pactl set-source-mute %d yes', unpack(product_name():find('^HP Stream ') and { 'no', 0, source } or { 'yes', 25, source })))
 end
 
 function configure_chromium(client)
@@ -205,7 +206,13 @@ naughty.destroy_all_notifications = function()
   end
 end
 
-product_name = io.open('/sys/class/dmi/id/product_name'):read('*all')
+function product_name()
+  if not _product_name then
+    local file = io.open('/sys/class/dmi/id/product_name')
+    _product_name = file and file:read('*all') or ''
+  end
+  return _product_name
+end
 
 rules = {
   { { class = 'Chromium', type = 'normal' }, { callback = function(client) configure_chromium(client) end } },
