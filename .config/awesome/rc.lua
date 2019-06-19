@@ -44,7 +44,7 @@ function alt_tab(offset)
 end
 
 function change_volume(change)
-  awful.spawn.with_shell(change < 0 and 'pactl set-sink-mute 0 no; pactl set-sink-volume 0 -10%; pactl set-source-mute 1 no' or change > 0 and 'pactl set-sink-mute 0 no; pactl set-sink-volume 0 +10%; pactl set-source-mute 1 no' or 'pactl set-sink-mute 0 no; pactl set-sink-volume 0 0%; pactl set-source-mute 1 yes; pactl set-source-volume 1 25%')
+  awful.spawn.with_shell(change < 0 and 'pactl set-sink-mute 0 no; pactl set-sink-volume 0 -10%; pactl set-source-mute 1 no' or change > 0 and 'pactl set-sink-mute 0 no; pactl set-sink-volume 0 +10%; pactl set-source-mute 1 no' or string.format('pactl set-sink-mute 0 %s; pactl set-sink-volume 0 %d%%; pactl set-source-mute 1 yes; pactl set-source-volume 1 25%%', unpack(product_name:find('^HP Stream ') and { 'no', 0 } or { 'yes', 25 })))
 end
 
 function configure_chromium(client)
@@ -204,6 +204,8 @@ naughty.destroy_all_notifications = function()
     end
   end
 end
+
+product_name = io.open('/sys/class/dmi/id/product_name'):read('*all')
 
 rules = {
   { { class = 'Chromium', type = 'normal' }, { callback = function(client) configure_chromium(client) end } },
