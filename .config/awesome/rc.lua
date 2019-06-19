@@ -158,7 +158,7 @@ keys = {
   { { 'Control', 'Mod1' }, 'e', function() run_or_raise('x-terminal-emulator -g 300x100 -title mutt -e tmux new-session -Ad -s mutt mutt \\; set-option status off \\; attach-session -t mutt', { name = 'mutt' }) end },
   { { 'Control', 'Mod1' }, 'f', function() awful.spawn.with_shell('mv ~/.urls{,~} && exec xargs -r -a ~/.urls~ -d \'\\n\' x-www-browser') end },
   { { 'Control', 'Mod1' }, 'grave', function() toggle_keyboard() end },
-  { { 'Control', 'Mod1' }, 'q', function() run_or_raise('x-terminal-emulator -title sshuttle -e execute-online sshuttle -r personal --dns 0/0', { name = 'sshuttle' }) end },
+  { { 'Control', 'Mod1' }, 'q', function() run_or_raise('x-terminal-emulator -title sshuttle -e execute-online bash -c \'while :; do sshuttle -r personal --dns 0/0; [[ $? != 1 ]] || break; sleep 1; done\'', { name = 'sshuttle' }) end },
   { { 'Control', 'Mod1' }, 'r', function() run_or_raise('x-terminal-emulator -e launch', { name = 'launch' }) end },
   { { 'Control', 'Mod1' }, 's', function() run_or_raise('x-terminal-emulator -title syncing -e bash -c \'execute-online sync-all || read -s\'', { name = 'syncing' }) end },
   { { 'Control', 'Mod1' }, 't', function() run_or_raise('x-terminal-emulator -e tmux new-session -A -s tmux', { name = 'tmux' }) end },
