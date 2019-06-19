@@ -48,7 +48,7 @@ endfunction
 
 function s:enable_filetypes()
   filetype plugin on
-  autocmd FileType * let [&l:formatoptions, &l:shiftwidth, &l:softtabstop] = [&g:formatoptions, &g:shiftwidth, &g:softtabstop]
+  autocmd FileType * let [&l:formatoptions, &l:shiftwidth, &l:softtabstop, &l:textwidth] = [&g:formatoptions, &g:shiftwidth, &g:softtabstop, &g:textwidth]
   autocmd FileType * call s:define_comment_mappings()
 endfunction
 
@@ -81,13 +81,12 @@ function s:main()
 endfunction
 
 function s:set_options()
-  autocmd FileType mail setlocal formatoptions+=w
+  autocmd FileType mail setlocal formatoptions+=w textwidth=72
   let &grepprg = !isdirectory('.git') ? 'ag --hidden --vimgrep --' : matchstr(system('git --version'), '[0-9.]\+') >= 2.19 ? 'git grep -In --column --' : 'bash -c ''git ls-files \| xargs -r -d \\n ag --hidden --vimgrep -- "$1" 2> /dev/null'' --'
   set autoindent
   set directory=/var/tmp//
   set expandtab
   set grepformat=%f:%l:%c:%m
-  set modeline
   set noruler
   set nostartofline
   set notitle
