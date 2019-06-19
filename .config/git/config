@@ -1,3 +1,6 @@
+[alias]
+publish = !git push -u origin "$(git rev-parse --abbrev-ref HEAD)"
+
 [core]
 pager = perl /usr/share/doc/git/contrib/diff-highlight/diff-highlight | less
 
