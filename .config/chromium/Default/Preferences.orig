@@ -89,30 +89,17 @@
     "content_settings": {
       "exceptions": {
         "javascript": {
-          "http://localhost:80,*": {
-            "setting": 1
-          },
-          "https://2gis.ru:443,*": {
-            "setting": 1
-          },
-          "https://api.travis-ci.org:443,*": {
-            "setting": 1
-          },
-          "https://app.grammarly.com:443,*": {
-            "setting": 1
-          },
-          "https://github.com:443,*": {
-            "setting": 1
-          },
-          "https://travis-ci.org:443,*": {
-            "setting": 1
-          },
-          "https://www.grammarly.com:443,*": {
-            "setting": 1
-          },
-          "https://www.paypal.com:443,*": {
-            "setting": 1
-          }
+          "http://localhost:80,*": { "setting": 1 },
+          "https://2gis.ru:443,*": { "setting": 1 },
+          "https://api.travis-ci.org:443,*": { "setting": 1 },
+          "https://app.grammarly.com:443,*": { "setting": 1 },
+          "https://github.com:443,*": { "setting": 1 },
+          "https://light.webmoney.ru:443,*": { "setting": 1 },
+          "https://login.wmtransfer.com:443,*": { "setting": 1 },
+          "https://online.raiffeisen.ru:443,*": { "setting": 1 },
+          "https://travis-ci.org:443,*": { "setting": 1 },
+          "https://www.grammarly.com:443,*": { "setting": 1 },
+          "https://www.paypal.com:443,*": { "setting": 1 }
         }
       }
     },
