@@ -82,7 +82,7 @@ endfunction
 
 function s:set_options()
   autocmd FileType mail setlocal formatoptions+=w textwidth=72
-  let &grepprg = !isdirectory('.git') ? 'ag --hidden --vimgrep --' : matchstr(system('git --version'), '[0-9.]\+') >= 2.19 ? 'git grep -In --column --' : 'bash -c ''git ls-files \| xargs -r -d \\n ag --hidden --vimgrep -- "$1" 2> /dev/null'' --'
+  let &grepprg = !isdirectory('.git') ? 'ag -s --hidden --vimgrep --' : matchstr(system('git --version'), '[0-9.]\+') >= 2.19 ? 'git grep -In --column --' : 'bash -c ''git ls-files \| xargs -r -d \\n ag -s --hidden --vimgrep -- "$1" 2> /dev/null'' --'
   set autoindent
   set directory=/var/tmp//
   set expandtab
