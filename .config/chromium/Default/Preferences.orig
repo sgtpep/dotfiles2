@@ -98,6 +98,7 @@
           "https://login.wmtransfer.com:443,*": { "setting": 1 },
           "https://online.raiffeisen.ru:443,*": { "setting": 1 },
           "https://travis-ci.org:443,*": { "setting": 1 },
+          "https://www.fastmail.com:443,*": { "setting": 1 },
           "https://www.grammarly.com:443,*": { "setting": 1 },
           "https://www.paypal.com:443,*": { "setting": 1 }
         }
