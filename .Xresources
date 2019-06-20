@@ -14,7 +14,7 @@ URxvt.color6: White
 URxvt.color7: White
 URxvt.color8: White
 URxvt.color9: White
-URxvt.cutchars: '`"\'&()*,;<=>?@[]^{|}:.'
+URxvt.cutchars: '`"\'&()*,;<=>?@[]^{|}:'
 URxvt.font: xft:monospace:size=14
 URxvt.internalBorder: 0
 URxvt.iso14755: False
