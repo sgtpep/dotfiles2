@@ -191,9 +191,9 @@ function main()
   configure_notifications()
   create_keyboard()
   create_tag()
+  set_background()
   set_keys()
   set_rules()
-  setup_root()
 end
 
 naughty.destroy_all_notifications = function()
@@ -235,6 +235,10 @@ function run_or_raise(command, rule, shell)
   end
 end
 
+function set_background()
+  gears.wallpaper.set(gears.color())
+end
+
 function set_keys()
   root.keys(gears.table.join(unpack(gears.table.map(function(arguments)
     return awful.key(unpack(arguments))
@@ -258,11 +262,6 @@ function set_rules()
   }, gears.table.map(function(rule)
     return { properties = rule[2], rule = rule[1] }
   end, rules))
-end
-
-function setup_root()
-  gears.wallpaper.set(gears.color())
-  root.cursor('cursor')
 end
 
 function toggle_keyboard()
