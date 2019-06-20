@@ -2,6 +2,9 @@
 set -eu
 if [[ $1 =~ ^https?:// ]]; then
   exec x-www-browser -- "$1"
+elif [[ $1 =~ ^mailto: ]]; then
+  value=${1#*:}
+  exec x-terminal-emulator -e mutt "${value%%\?*}"
 else
   declare -A commands=(
     [application/msword]='libreoffice "$1"'
