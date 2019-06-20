@@ -6,7 +6,7 @@ function convert-ebook {
 }
 
 function download-ebooks {
-  local path=/run/media/$USER/Kindle
+  local path=/media/$USER/Kindle
   scp -r personal:ebooks "$path"/documents
   ssh personal 'rm -fr ~/ebooks/*'
   devmon --unmount "$path"

@@ -34,7 +34,7 @@ highlight WildMenu cterm=reverse ctermfg=default ctermbg=default
 highlight Win cterm=none ctermfg=default ctermbg=default
 nnoremap E :edit<CR>
 nnoremap gh :cd ~<CR>
-nnoremap gm :cd /run/media/$USER<CR>
+nnoremap gm :cd /media/$USER<CR>
 nnoremap q ZQ
 nnoremap yd :!echo -n %d | xclip -selection clipboard &<CR>
 nnoremap yn :!echo -n %c | xclip -selection clipboard &<CR>
