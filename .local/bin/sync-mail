@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eu
 if ls ~/.msmtpqueue/* &> /dev/null; then
-  command=/usr/share/doc/msmtp/msmtpqueue/msmtp-runqueue.sh
+  command=/usr/share/doc/msmtp/examples/msmtpqueue/msmtp-runqueue.sh
   [[ -x $command ]] || install-packages msmtp
   "$command"
 fi
