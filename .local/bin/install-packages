@@ -7,6 +7,7 @@ declare -A executables=(
   [aria2c]=aria2
   [calc]=apcalc
   [convert]=imagemagick
+  [cwebp]=webp
   [dbus-launch]=dbus-x11
   [devmon]=udevil
   [dig]=dnsutils
