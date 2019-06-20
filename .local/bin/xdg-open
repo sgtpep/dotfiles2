@@ -15,6 +15,7 @@ else
     [audio/*]='mpv -- "$1"'
     [image/*]='sxiv -- "$1"'
     [image/svg]='x-www-browser -- "$1"'
+    [image/webp]='x-www-browser -- "$1"'
     [text/html]='x-www-browser -- "$1"'
     [text/rtf]='libreoffice "$1"'
     [video/*]='mpv -- "$1"'
