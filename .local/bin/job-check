@@ -1,5 +1,5 @@
 #!/bin/bash
 set -eu
 for command in job-{prettier,tsc,eslint,jest}; do
-  CI=1 "$command" "$@"
+  "$command" "$@"
 done

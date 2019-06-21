@@ -1,6 +1,6 @@
 #!/bin/bash
 set -eu
-NODE_PATH=src exec xargs -r -a <(
+CI=1 NODE_PATH=src exec xargs -r -a <(
   (
     job-list "$@" | grep '/__tests__/\|\.test\.' || :
     (
