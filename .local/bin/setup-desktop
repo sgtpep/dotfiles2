@@ -285,20 +285,22 @@ function setup-acpid {
   install-packages acpid
   sudo ln -fs /usr/share/doc/acpid/examples/default /etc/acpi/events
   local path=/etc/acpi/default.sh
-  sudo tee "$path" > /dev/null << \EOF
+  sudo tee "$path" > /dev/null << EOF
 #!/bin/bash
 set -eu
-if [[ $1 == video/brightness* ]]; then
+if [[ \$1 == button/lid ]]; then
+  rm -f /home/"$USER"/.ssh/ssh-*
+elif [[ \$1 == video/brightness* ]]; then
   for path in /sys/class/backlight/*; do
-    ! cd "$path" 2> /dev/null || break
+    ! cd "\$path" 2> /dev/null || break
   done
-  if [[ $1 == *down ]]; then
+  if [[ \$1 == *down ]]; then
     expression='/ 3 * 2'
-  elif [[ $1 == *up ]]; then
+  elif [[ \$1 == *up ]]; then
     expression='* 3 / 2'
   fi
-  echo "$(("$(< brightness)" "$expression"))" > brightness
-  [[ $(< brightness) != 0 ]] || echo 2 > brightness
+  echo "\$(("\$(< brightness)" "\$expression"))" > brightness
+  [[ \$(< brightness) != 0 ]] || echo 2 > brightness
 fi
 EOF
   sudo chmod +x "$path"
