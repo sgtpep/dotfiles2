@@ -1,5 +1,5 @@
 #!/bin/bash
 set -eu
 path=~/.npm/bin/${0##*/}
-[[ -x $path ]] || npm install -g autoprefixer postcss-cli >&2
+[[ -x $path ]] || eval "npm install -g autoprefixer postcss-cli ${VIM+2> /dev/null} >&2"
 exec "$path" "$@"
