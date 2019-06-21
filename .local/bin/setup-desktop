@@ -276,7 +276,7 @@ function schedule-syncing {
   local command=sync-cron
   sudo tee /etc/cron.d/"$command" > /dev/null << EOF
 PATH=/usr/bin:/bin:/home/$USER/.local/bin
-0 * * * * $USER $command
+10 * * * * $USER $command
 @reboot $USER $command
 EOF
 }
