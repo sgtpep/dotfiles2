@@ -1,6 +1,9 @@
 const closeTab = tab =>
   chrome.tabs.query({ windowId: tab.windowId, windowType: 'normal' }, tabs =>
-    tabs.length > 1 || !tabs.length || tab.url === 'chrome://newtab/'
+    tabs.length > 1 ||
+    !tabs.length ||
+    tab.incognito ||
+    tab.url === 'chrome://newtab/'
       ? chrome.tabs.remove(tab.id)
       : chrome.tabs.update(tab.id, { url: 'chrome://newtab/' })
   );
