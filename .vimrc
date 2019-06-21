@@ -48,8 +48,9 @@ endfunction
 
 function s:enable_filetypes()
   filetype plugin on
-  autocmd FileType * let [&l:formatoptions, &l:shiftwidth, &l:softtabstop, &l:textwidth] = [&g:formatoptions, &g:shiftwidth, &g:softtabstop, &g:textwidth]
+  autocmd BufRead * if getline(1) =~# '^#!.\+[/ ]node\($\| \)' | set filetype=javascript | endif
   autocmd FileType * call s:define_comment_mappings()
+  autocmd FileType * let [&l:formatoptions, &l:shiftwidth, &l:softtabstop, &l:textwidth] = [&g:formatoptions, &g:shiftwidth, &g:softtabstop, &g:textwidth]
 endfunction
 
 function s:format_code()
