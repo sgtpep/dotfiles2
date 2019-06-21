@@ -234,7 +234,6 @@ function install-packages {
 
 function install-standalone-packages {
   local packages=(unattended-upgrades)
-  [[ $(os-release) == raspbian ]] || packages+=(nginx)
   install-packages "${packages[@]}"
 }
 
@@ -309,7 +308,16 @@ function setup-debian {
   if [[ $(os-release) == debian ]]; then
     configure-grub
     configure-networking
+    setup-nginx
   fi
+}
+
+function setup-nginx {
+  install-packages nginx
+  local path=/etc/nginx/sites-enabled/default
+  local checksum=$(md5sum "$path")
+  grep -q '^\s*add_header ' "$path" || sudo sed -i '/^server /a \'$'\t''add_header Cache-Control no-cache;' "$path"
+  md5sum -c --status <<< "$checksum" || sudo systemctl reload nginx
 }
 
 function setup-raspbian {
