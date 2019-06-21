@@ -7,5 +7,5 @@ else
 fi
 path=/usr/bin/$name
 [[ -x $path ]] || install-packages "$name" webext-ublock-origin
-[[ ! -f ~/.job ]] || set -- --disable-notifications "$@"
+[[ -f ~/.job ]] || set -- --disable-notifications "$@"
 exec "$path" --disable-smooth-scrolling --enable-native-notifications --load-extension=/usr/share/chromium/extensions/ublock-origin "$@"
