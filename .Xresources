@@ -21,7 +21,7 @@ URxvt.iso14755: False
 URxvt.keysym.C-V: eval:paste_clipboard
 URxvt.letterSpace: -2
 URxvt.lineSpace: 2
-URxvt.perl-ext-common: eval,selection-to-clipboard
+URxvt.perl-ext-common: eval,matcher,selection-to-clipboard
 URxvt.pointerBlank: True
 URxvt.reverseVideo: True
 URxvt.saveLines: 0
