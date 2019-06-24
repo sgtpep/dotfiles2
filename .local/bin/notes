@@ -1,17 +1,5 @@
 #!/bin/bash
 set -eu
 [[ -d ~/notes ]] || execute-online sync-notes
-read -r -d '' config << \EOF || :
-function s:command(command)
-  let output = system(a:command)
-  if v:shell_error
-    echo output
-  endif
-endfunction
-autocmd BufWritePost * call s:command(printf('if ! git diff --no-ext-diff --quiet || [[ $(git ls-files --exclude-standard --others) ]]; then git add %s && git commit -m %s; fi', shellescape(expand('%')), shellescape(printf('Update %s', expand('%')))))
 cd ~/notes
-nnoremap <Leader>T :find tasks<CR>
-nnoremap <Leader>W :find job<CR>
-nnoremap <silent> <Leader>s :update \| call <SID>command('execute-online sync-notes') \| checktime<CR>
-EOF
-exec vim -S <(echo "$config")
+exec vim "$@"

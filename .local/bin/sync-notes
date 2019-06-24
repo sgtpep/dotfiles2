@@ -1,18 +1,19 @@
 #!/bin/bash
 set -eu
 if [[ -d ~/notes ]]; then
-  if output=$(git -C ~/notes pull 2>&1); then
-    echo "$output" >&2
-  else
-    git -C ~/notes pull
+  command=(git -C ~/notes)
+  mapfile -t paths < <("${command[@]}" diff --name-only)
+  if [[ ${paths[@]} ]]; then
+    tasks=()
+    for path in "${paths[@]}"; do
+      [[ ! $path =~ ^(tasks(|-[[:alnum:]]+))$ ]] || tasks+=("${BASH_REMATCH[1]}")
+    done
+    [[ ! ${tasks[@]} ]] || scp "${tasks[@]/#/~/notes/}" personal:notes
+    "${command[@]}" add -A
+    "${command[@]}" commit -m 'Update notes'
   fi
-  mapfile -t commits < <(git -C ~/notes cherry -v)
-  tasks=()
-  for commit in "${commits[@]}"; do
-    [[ ! $commit =~ \ (tasks(|-[[:alnum:]]+))$ ]] || tasks+=("${BASH_REMATCH[1]}")
-  done
-  [[ ! ${tasks[@]} ]] || scp "${tasks[@]/#/~/notes/}" personal:notes
-  [[ ! ${commits[@]} ]] || git -C ~/notes push
+  "${command[@]}" pull
+  [[ ! ${paths[@]} ]] || "${command[@]}" push
 elif ! git clone personal:repositories/notes.git ~/notes; then
   rm -fr ~/notes
   exit 1
