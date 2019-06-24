@@ -54,9 +54,9 @@ function configure_chromium(client)
   client:keys(gears.table.join(unpack({
     awful.key({ 'Mod1' }, 'e', nil, function() run_or_raise(copy_command .. ' && exec x-terminal-emulator -title ebookify -e bash -c \'ebookify "$(xclip -o -selection clipboard)" || read -s\'', { name = 'ebookify' }, true) end),
     awful.key({ 'Mod1' }, 'm', nil, function() run_or_raise(copy_command:gsub(' alt%+y ', ' alt+shift+y ') .. ' && exec x-terminal-emulator -title sending -e bash -c \'output=$(xclip -o -selection clipboard); mutt -e "set noabort_unmodified" -i <(echo "${output##* }") -s "Link: ${output% *}"\'', { name = 'sending' }, true) end),
-    awful.key({ 'Mod1' }, 'p', nil, function() run_or_raise(copy_command .. ' && exec x-terminal-emulator -title pwdhash -e bash -c \'output=$(xclip -o -selection clipboard); hostname=${output#*://}; pwdhash "${hostname%%/*}" 2> /dev/null | xclip -selection clipboard && sleep 0.1\'', { name = 'pwdhash' }, true) end),
+    awful.key({ 'Mod1' }, 'p', nil, function() run_or_raise(copy_command .. ' && exec x-terminal-emulator -title pwdhash -e bash -c \'output=$(xclip -o -selection clipboard); hostname=${output#*://}; pwdhash "${hostname%%/*}" 2> /dev/null | xclip -selection clipboard && xdotool key --delay=100 alt+Tab key ctrl+v\'', { name = 'pwdhash' }, true) end),
     awful.key({ 'Mod1' }, 'v', nil, function() run_or_raise(copy_close_command .. ' && exec x-terminal-emulator -title mpv -e bash -c \'mpv "$(xclip -o -selection clipboard)" || read -s\'', { class = 'mpv' }, true) end),
-    awful.key({ 'Mod1', 'Shift' }, 'p', nil, function() run_or_raise(copy_command .. ' && exec x-terminal-emulator -title pass -e bash -c \'output=$(xclip -o -selection clipboard); hostname=${output#*://}; (pass "${hostname%%/*}" || read -s) | xclip -selection clipboard && sleep 0.1\'', { name = 'pass' }, true) end),
+    awful.key({ 'Mod1', 'Shift' }, 'p', nil, function() run_or_raise(copy_command .. ' && exec x-terminal-emulator -title pass -e bash -c \'output=$(xclip -o -selection clipboard); hostname=${output#*://}; (pass "${hostname%%/*}" || read -s) | xclip -selection clipboard && xdotool key --delay=100 alt+Tab key ctrl+v\'', { name = 'pass' }, true) end),
   })))
 end
 
