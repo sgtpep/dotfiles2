@@ -143,6 +143,11 @@ function create_tag()
   awful.tag({ 0 }, awful.screen.focused(), awful.layout.suit.max)
 end
 
+function format_geometry(string)
+  geometry = awful.screen.focused().geometry
+  return string.format(string, geometry.width / 11, geometry.height / 24)
+end
+
 keys = {
   { { 'Control', 'Mod1' }, 'F1', function() awful.spawn('sudo /etc/acpi/default.sh video/brightnessdown') end },
   { { 'Control', 'Mod1' }, 'F12', function() awful.spawn('sudo poweroff') end },
@@ -156,14 +161,14 @@ keys = {
   { { 'Control', 'Mod1' }, 'b', function() run_or_raise('x-terminal-emulator -title acpi -e bash -c \'acpi; read -s -n 1\'', { name = 'acpi' }) end },
   { { 'Control', 'Mod1' }, 'c', function() run_or_raise('pgrep -x chromium || chromium', { class = 'Chromium' }, true) end },
   { { 'Control', 'Mod1' }, 'd', function() run_or_raise('x-terminal-emulator -e dictionary', { name = 'dictionary' }) end },
-  { { 'Control', 'Mod1' }, 'e', function() run_or_raise('x-terminal-emulator -g 300x100 -title mutt -e tmux new-session -Ad -s mutt mutt \\; set-option status off \\; attach-session -t mutt', { name = 'mutt' }) end },
+  { { 'Control', 'Mod1' }, 'e', function() run_or_raise(format_geometry('x-terminal-emulator -g %dx%d -title mutt -e tmux new-session -Ad -s mutt mutt \\; set-option status off \\; attach-session -t mutt'), { name = 'mutt' }) end },
   { { 'Control', 'Mod1' }, 'f', function() awful.spawn.with_shell('mv ~/.urls{,~} && exec xargs -r -a ~/.urls~ -d \'\\n\' x-www-browser') end },
   { { 'Control', 'Mod1' }, 'grave', function() toggle_keyboard() end },
   { { 'Control', 'Mod1' }, 'q', function() run_or_raise('x-terminal-emulator -title sshuttle -e execute-online bash -c \'while :; do sshuttle -r personal --dns 0/0; [[ $? != 1 ]] || break; sleep 1; done\'', { name = 'sshuttle' }) end },
   { { 'Control', 'Mod1' }, 'r', function() run_or_raise('x-terminal-emulator -e launch', { name = 'launch' }) end },
   { { 'Control', 'Mod1' }, 's', function() run_or_raise('x-terminal-emulator -title syncing -e bash -c \'execute-online sync-all || read -s\'', { name = 'syncing' }) end },
   { { 'Control', 'Mod1' }, 't', function() run_or_raise('x-terminal-emulator -e tmux new-session -A -s tmux', { name = 'tmux' }) end },
-  { { 'Control', 'Mod1' }, 'w', function() run_or_raise('x-terminal-emulator -g 300x100 -title notes -e tmux new-session -Ad -s notes notes \\; set-option status off \\; attach-session -t notes', { name = 'notes' }) end },
+  { { 'Control', 'Mod1' }, 'w', function() run_or_raise(format_geometry('x-terminal-emulator -g %dx%d -title notes -e tmux new-session -Ad -s notes notes \\; set-option status off \\; attach-session -t notes'), { name = 'notes' }) end },
   { { 'Control', 'Mod1' }, 'x', function() run_or_raise('x-terminal-emulator -title calendar -e bash -c \'date +%F\\ %a\\ %R; echo; ncal -Mb -A 1; read -s -n 1\'', { name = 'calendar' }) end },
   { { 'Control', 'Mod1' }, 'z', function() awful.spawn('slock') end },
   { { 'Control', 'Mod1', 'Shift' }, 'F6', function() toggle_wifi('block') end },
