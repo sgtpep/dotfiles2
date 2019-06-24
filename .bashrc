@@ -14,6 +14,6 @@ HISTCONTROL=ignoreboth
 HISTFILESIZE=-1
 HISTSIZE=10000
 PROMPT_COMMAND=': $?; [[ $_ == 0 ]] || echo -e "\e[4mExit status: $_\e[m" >&2; history -a'
-PS1=$'$([[ $PWD == ~ || ! -d .git ]] || ! command -v __git_ps1 > /dev/null || __git_ps1 \'(%s) \')'$PS1
+PS1=$'$([[ $PWD == ~ || ! -d .git && ! -d ../.git && ! -d ../../.git ]] || ! command -v __git_ps1 > /dev/null || __git_ps1 \'(%s) \')'$PS1
 shopt -s autocd
 stty -ixon
