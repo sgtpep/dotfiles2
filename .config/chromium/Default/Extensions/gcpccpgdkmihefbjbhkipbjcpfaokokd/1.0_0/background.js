@@ -20,7 +20,18 @@ const copyText = text => {
   document.execCommand('copy');
 };
 
-const main = () =>
+const insertCSS = () =>
+  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (changeInfo.status === 'loading') {
+      const { host } = new URL(tab.url);
+      styles[host] &&
+        chrome.tabs.insertCSS(tabId, {
+          code: styles[host].replace(/;/g, ' !important$&'),
+        });
+    }
+  });
+
+const listenCommands = () =>
   chrome.commands.onCommand.addListener(command =>
     chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) =>
       command === 'close-tab'
@@ -35,7 +46,15 @@ const main = () =>
     )
   );
 
-const togglePinnedTab = tab =>
-  chrome.tabs.update(null, { pinned: !tab.pinned });
+const main = () => {
+  insertCSS();
+  listenCommands();
+};
+
+const styles = {
+  'stackoverflow.com': `body, .top-bar { margin-top: 0; } #js-gdpr-consent-banner, #noscript-warning { display: none; }`,
+};
+
+const togglePinnedTab = tab => chrome.tabs.update({ pinned: !tab.pinned });
 
 main();
