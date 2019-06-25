@@ -5,7 +5,7 @@ for path in src/@types/*; do
   paths=(node_modules/@*/"${filename%.d.ts}")
   [[ ! -d ${paths[0]} ]] || cp -u "$path" "${paths[0]}"/index.d.ts
 done
-job-list "$@" | grep '\.\(jsx\?\|tsx\?\)$' | grep -v '^packages/\|/__tests__/\|\.test\.' | exec xargs -r -d '\n' bash -"$-" -c $'
+job-list "$@" | grep '\.\(jsx\?\|tsx\?\)$' | grep -v '/__tests__/\|\.test\.' | exec xargs -r -d '\n' bash -"$-" -c $'
 sed \'s|\("include":\s*\)\[[^]]*\]|"files":\'"$(node -p \'JSON.stringify(process.argv.slice(1))\' -- "$@")"\'|\' tsconfig.json > .tsconfig.json
 npx tsc -p .tsconfig.json || status=$?
 rm .tsconfig.json

@@ -8,6 +8,6 @@ set -eu
       git diff --cached --name-only
       git diff --name-only @{upstream}
       job-diff --name-only
-    ) | xargs ls -1 2> /dev/null || :
+    ) | grep '^packages/[^/]*-ui/' | sed 's/^[^\/]*\/[^\/]*\///' | xargs ls -1 2> /dev/null || :
   fi
 ) | exec sort -u
