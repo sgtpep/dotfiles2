@@ -15,7 +15,7 @@ function clone-dotfiles {
 }
 
 function configure-console-font {
-  sudo sed -i 's/^\(FONTFACE="\)[^"]*/\1VGA/' /etc/default/console-setup
+  sudo sed -i 's/^\(FONTFACE=\).*/\1/' /etc/default/console-setup
 }
 
 function configure-console-keyboard {
