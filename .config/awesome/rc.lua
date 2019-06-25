@@ -50,13 +50,14 @@ end
 
 function configure_chromium(client)
   local copy_command = 'xdotool keyup alt shift key alt+y sleep 0.1'
-  local copy_close_command = copy_command .. ' key ctrl+w'
+  local copy_close_command = string.format('%s key ctrl+w', copy_command)
+  local copy_paste_command = 'xclip -selection clipboard && xdotool key --delay=300 alt+Tab key ctrl+v'
   client:keys(gears.table.join(unpack({
-    awful.key({ 'Mod1' }, 'e', nil, function() run_or_raise(copy_command .. ' && exec x-terminal-emulator -title ebookify -e bash -c \'ebookify "$(xclip -o -selection clipboard)" || read -s\'', { name = 'ebookify' }, true) end),
-    awful.key({ 'Mod1' }, 'm', nil, function() run_or_raise(copy_command:gsub(' alt%+y ', ' alt+shift+y ') .. ' && exec x-terminal-emulator -title sending -e bash -c \'output=$(xclip -o -selection clipboard); mutt -e "set noabort_unmodified" -i <(echo "${output##* }") -s "Link: ${output% *}"\'', { name = 'sending' }, true) end),
-    awful.key({ 'Mod1' }, 'p', nil, function() run_or_raise(copy_command .. ' && exec x-terminal-emulator -title pwdhash -e bash -c \'output=$(xclip -o -selection clipboard); hostname=${output#*://}; pwdhash "${hostname%%/*}" 2> /dev/null | xclip -selection clipboard && xdotool key --delay=300 alt+Tab key ctrl+v\'', { name = 'pwdhash' }, true) end),
-    awful.key({ 'Mod1' }, 'v', nil, function() run_or_raise(copy_close_command .. ' && exec x-terminal-emulator -title mpv -e bash -c \'mpv "$(xclip -o -selection clipboard)" || read -s\'', { class = 'mpv' }, true) end),
-    awful.key({ 'Mod1', 'Shift' }, 'p', nil, function() run_or_raise(copy_command .. ' && exec x-terminal-emulator -title pass -e bash -c \'output=$(xclip -o -selection clipboard); hostname=${output#*://}; (pass "${hostname%%/*}" || read -s) | xclip -selection clipboard && xdotool key --delay=300 alt+Tab key ctrl+v\'', { name = 'pass' }, true) end),
+    awful.key({ 'Mod1' }, 'e', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title ebookify -e bash -c \'ebookify "$(xclip -o -selection clipboard)" || read -s\'', copy_command), { name = 'ebookify' }, true) end),
+    awful.key({ 'Mod1' }, 'm', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title sending -e bash -c \'output=$(xclip -o -selection clipboard); mutt -e "set noabort_unmodified" -i <(echo "${output##* }") -s "Link: ${output%% *}"\'', copy_command:gsub(' alt%+y ', ' alt+shift+y ')), { name = 'sending' }, true) end),
+    awful.key({ 'Mod1' }, 'p', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title pwdhash -e bash -c \'output=$(xclip -o -selection clipboard); hostname=${output#*://}; pwdhash "${hostname%%%%/*}" 2> /dev/null | %s\'', copy_command, copy_paste_command), { name = 'pwdhash' }, true) end),
+    awful.key({ 'Mod1' }, 'v', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title mpv -e bash -c \'mpv "$(xclip -o -selection clipboard)" || read -s\'', copy_close_command), { class = 'mpv' }, true) end),
+    awful.key({ 'Mod1', 'Shift' }, 'p', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title pass -e bash -c \'output=$(xclip -o -selection clipboard); hostname=${output#*://}; (pass "${hostname%%%%/*}" || read -s) | %s\'', copy_command, copy_paste_command), { name = 'pass' }, true) end),
   })))
 end
 
@@ -277,7 +278,7 @@ function toggle_keyboard()
 end
 
 function toggle_wifi(command)
-  run_or_raise('x-terminal-emulator -e toggle-wifi ' .. command, { name = 'toggle-wifi' })
+  run_or_raise(string.format('x-terminal-emulator -e toggle-wifi %s', command), { name = 'toggle-wifi' })
 end
 
 main()
