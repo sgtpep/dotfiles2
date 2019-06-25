@@ -21,7 +21,7 @@ folder-hook Feeds 'macro pager f "<pipe-message>grep -Po '\''(?<=\^X-RSS-URL: ).
 macro attach s '<save-entry><kill-line>~/Downloads/<Return>y'
 macro index <Space>e '<change-folder>=Inbox<Return>'
 macro index <Space>f '<change-folder>=Feeds<Return>'
-macro index <Space>s '<shell-escape>printf \\ec; execute-online sync-mail Feeds; printf \\ec<Return>'
+macro index <Space>s '<shell-escape>printf \\ec; execute-online sync-mail; printf \\ec<Return>'
 set beep_new
 set fast_reply
 set folder=~/mail
