@@ -5,6 +5,7 @@
 [[ ! -f /usr/lib/git-core/git-sh-prompt ]] || . /usr/lib/git-core/git-sh-prompt
 [[ -v BASH_COMPLETION_COMPAT_DIR ]] || . /usr/share/bash-completion/bash_completion
 
+((COLUMNS < 80)) && unset MANWIDTH || export MANWIDTH=80
 COMP_KNOWN_HOSTS_WITH_HOSTFILE=
 GIT_PS1_SHOWDIRTYSTATE=1
 GIT_PS1_SHOWSTASHSTATE=1

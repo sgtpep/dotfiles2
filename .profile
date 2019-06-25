@@ -1,4 +1,3 @@
-[ "${COLUMNS-0}" -le 80 ] && unset MANWIDTH || export MANWIDTH=80
 [ "${PATH/~}" != "$PATH" ] || export PATH=~/.gem/ruby/2.6.0/bin:~/.npm/bin:~/.pip/bin:~/.local/bin:$PATH:node_modules/.bin
 export EDITOR=vim
 export LESS='-FRX -j 3'
