@@ -1,5 +1,5 @@
 #!/bin/bash
 set -eu
-path=$PYTHONUSERBASE/bin/${0##*/}
-[[ -x $path ]] || pip3 install "${0##*/}" >&2
-exec "$path" "$@"
+set -- "$PYTHONUSERBASE"/bin/"${0##*/}" "$@"
+[[ -x $1 ]] || pip3 install "${0##*/}" >&2
+exec "$@"

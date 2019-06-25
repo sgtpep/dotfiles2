@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eu
-path=~/.npm/bin/${0##*/}
-if [[ ! -x $path ]]; then
+set -- ~/.npm/bin/"${0##*/}" "$@"
+if [[ ! -x $1 ]]; then
   temp=/tmp/${0##*/}.tar.xz
   wget -O "$temp" https://nodejs.org/dist/v12.4.0/node-v12.4.0-linux-x64.tar.xz || rm -f "$temp"
   [[ $(sha256sum "$temp") == 9aec6a2a50c1791704a6069cbda6da62781361e44814d024e8bbaaf0deb41c5e\ * ]] || rm -f "$temp"
@@ -9,4 +9,4 @@ if [[ ! -x $path ]]; then
   mkdir -p "$directory"
   tar -x -C "$directory" -f "$temp" --strip-components=1
 fi
-exec "$path" "$@"
+exec "$@"

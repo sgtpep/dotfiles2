@@ -1,12 +1,13 @@
 #!/bin/bash
 set -eu
-path=~/.local/apps/${0##*/}
-if [[ ! -d $path ]]; then
+set -- ~/.local/apps/"${0##*/}"/Popcorn-Time "$@"
+if [[ ! -x $1 ]]; then
   temp=/tmp/${0##*/}.tar.xz
   wget -O "$temp" https://mirror02.popcorntime.sh/build/Popcorn-Time-0.3.10-Linux-64.tar.xz || rm -f "$temp"
   [[ $(sha256sum "$temp") == b7f789c2e2f3b0f7e3408a437080404f8a2aa7ce4a41858cf891b02cda8c37a5\ * ]] || rm -f "$temp"
-  mkdir -p "$path"
-  tar -x -C "$path" -f "$temp"
+  directory=${1%/*}
+  mkdir -p "$directory"
+  tar -x -C "$directory" -f "$temp"
 fi
 install-packages libgconf-2-4
-exec firejail --protocol=inet,inet6,netlink,unix "$path"/Popcorn-Time
+exec firejail --protocol=inet,inet6,netlink,unix "$@"

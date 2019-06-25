@@ -1,5 +1,5 @@
 #!/bin/bash
 set -eu
-path=/usr/bin/${0##*/}
-[[ -x $path ]] || install-packages "${0##*/}"
+set -- /usr/bin/"${0##*/}" "$@"
+[[ -x $1 ]] || install-packages "${0##*/}"
 XDG_CACHE_HOME=/tmp exec "$path" -bf "$@"

@@ -14,6 +14,6 @@ for url in "${!downloads[@]}"; do
     sed -i 's/\("\)gears\./\1.\//' "$path"
   fi
 done
-path=/usr/bin/${0##*/}
-[[ -x $path ]] || install-packages "${0##*/}"
-exec "$path" "$@"
+set -- /usr/bin/"${0##*/}" "$@"
+[[ -x $1 ]] || install-packages "${0##*/}"
+exec "$@"

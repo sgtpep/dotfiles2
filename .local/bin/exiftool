@@ -1,5 +1,5 @@
 #!/bin/bash
 set -eu
-path=/usr/bin/vendor_perl/${0##*/}
-[[ -x $path ]] || install-packages perl-image-exiftool
-exec "$path" "$@"
+set -- /usr/bin/vendor_perl/"${0##*/}" "$@"
+[[ -x $1 ]] || install-packages perl-image-exiftool
+exec "$@"

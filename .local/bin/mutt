@@ -2,6 +2,6 @@
 set -eu
 [[ -d ~/Downloads ]] || mkdir ~/Downloads
 [[ -d ~/mail/Inbox ]] || mbsync -a
-path=/usr/bin/${0##*/}
-[[ -x $path ]] || install-packages "${0##*/}"
-exec "$path" "$@"
+set -- /usr/bin/"${0##*/}" "$@"
+[[ -x $1 ]] || install-packages "${0##*/}"
+exec "$@"

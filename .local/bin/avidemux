@@ -1,10 +1,10 @@
 #!/bin/bash
 set -eu
-path=~/.local/apps/${0##*/}.AppImage
-if [[ ! -f $path ]]; then
-  mkdir -p "${path%/*}"
-  wget -O "$path" https://sourceforge.net/projects/avidemux/files/avidemux/2.7.2/avidemux_2.7.2.appImage/download || rm -f "$path"
-  [[ $(sha256sum "$path") == 90c2058b152f9286984f9a9b8d5ea2f929a2a6c6ade066991c52bfe6a04b36ae\ * ]] || rm -f "$path"
+set -- ~/.local/apps/"${0##*/}".AppImage "$@"
+if [[ ! -f $1 ]]; then
+  mkdir -p "${1%/*}"
+  wget -O "$1" https://sourceforge.net/projects/avidemux/files/avidemux/2.7.2/avidemux_2.7.2.appImage/download || rm -f "$1"
+  [[ $(sha256sum "$1") == 90c2058b152f9286984f9a9b8d5ea2f929a2a6c6ade066991c52bfe6a04b36ae\ * ]] || rm -f "$1"
 fi
 install-packages libglu1-mesa
-exec firejail --appimage "$path"
+exec firejail --appimage "$@"
