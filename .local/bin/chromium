@@ -5,8 +5,7 @@ if [[ $(< /etc/os-release) == *ID=raspbian* ]]; then
 else
   name=chromium
 fi
-set -- --disable-smooth-scrolling --enable-native-notifications --load-extension=/usr/share/chromium/extensions/ublock-origin "$@"
 [[ -f ~/.job ]] || set -- --disable-notifications "$@"
-set -- /usr/bin/"$name" "$@"
+set -- /usr/bin/"$name" --disable-smooth-scrolling --enable-native-notifications --load-extension=/usr/share/chromium/extensions/ublock-origin "$@"
 [[ -x $1 ]] || install-packages "$name" webext-ublock-origin
 exec "$@"
