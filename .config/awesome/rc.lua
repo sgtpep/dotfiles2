@@ -155,7 +155,7 @@ keys = {
   { { 'Control', 'Mod1' }, 'Tab', function() naughty.destroy_all_notifications() end },
   { { 'Control', 'Mod1' }, 'a', function() run_or_raise('x-terminal-emulator -e calc', { name = 'calc' }) end },
   { { 'Control', 'Mod1' }, 'b', function() run_or_raise('x-terminal-emulator -title acpi -e bash -c \'acpi; read -s -n 1\'', { name = 'acpi' }) end },
-  { { 'Control', 'Mod1' }, 'c', function() run_or_raise('pgrep -x chromium || chromium', { class = 'Chromium' }, true) end },
+  { { 'Control', 'Mod1' }, 'c', function() run_or_raise('pgrep -x chromium > /dev/null || chromium', { class = 'Chromium' }, true) end },
   { { 'Control', 'Mod1' }, 'd', function() run_or_raise('x-terminal-emulator -e dictionary', { name = 'dictionary' }) end },
   { { 'Control', 'Mod1' }, 'e', function() run_or_raise(tmux_command('mutt'), { name = 'mutt' }) end },
   { { 'Control', 'Mod1' }, 'f', function() run_or_raise(tmux_command('mutt -f =Feeds', 'feeds'), { name = 'feeds' }) end },
