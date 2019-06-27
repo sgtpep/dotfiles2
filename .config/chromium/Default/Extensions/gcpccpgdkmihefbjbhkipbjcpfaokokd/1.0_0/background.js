@@ -11,10 +11,7 @@ const closeTab = tab =>
 const copyText = text => {
   addEventListener(
     'copy',
-    event => {
-      event.preventDefault();
-      event.clipboardData.setData('text/plain', text);
-    },
+    event => event.clipboardData.setData('text/plain', text),
     { once: true }
   );
   document.execCommand('copy');
