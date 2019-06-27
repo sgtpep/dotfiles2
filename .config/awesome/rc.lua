@@ -51,7 +51,7 @@ end
 function configure_chromium(client)
   local copy_command = 'xdotool keyup alt shift key alt+y sleep 0.1'
   local copy_close_command = string.format('%s key ctrl+w', copy_command)
-  local copy_paste_command = 'xclip -selection clipboard && xdotool key --delay=300 alt+Tab ctrl+v'
+  local copy_paste_command = 'xclip -selection clipboard && xdotool key --delay=100 alt+Tab ctrl+v'
   client:keys(gears.table.join(unpack({
     awful.key({ 'Mod1' }, 'e', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title ebookify -e bash -c \'ebookify "$(xclip -o -selection clipboard)" || read -s\'', copy_command), { name = 'ebookify' }, true) end),
     awful.key({ 'Mod1' }, 'm', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title sending -e bash -c \'output=$(xclip -o -selection clipboard); mutt -e "set noabort_unmodified" -i <(echo "${output##* }") -s "Link: ${output%% *}"\'', copy_command:gsub(' alt%+y ', ' alt+shift+y ')), { name = 'sending' }, true) end),
