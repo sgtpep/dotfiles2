@@ -33,6 +33,7 @@ set noabort_unmodified
 set nocrypt_use_gpgme
 set nohelp
 set nomarkers
+set norecord
 set pager_stop
 set postponed==Drafts
 set query_command='echo; sed -n '\''s/\(.*'\''%s'\''.*\) <\(.*\)>/\2\t\1/ip; s/\(.*\) <\(.*'\''%s'\''.*\)>/\2\t\1/ip'\'' ~/notes/emails'
