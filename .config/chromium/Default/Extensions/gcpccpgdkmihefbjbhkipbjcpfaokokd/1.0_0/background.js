@@ -11,7 +11,10 @@ const closeTab = tab =>
 const copyText = text => {
   addEventListener(
     'copy',
-    event => event.clipboardData.setData('text/plain', text),
+    event => {
+      event.preventDefault();
+      event.clipboardData.setData('text/plain', text);
+    },
     { once: true }
   );
   document.execCommand('copy');
@@ -19,7 +22,7 @@ const copyText = text => {
 
 const insertCSS = () =>
   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === 'loading') {
+    if (tab.url && changeInfo.status === 'loading') {
       const { host } = new URL(tab.url);
       styles[host] &&
         chrome.tabs.insertCSS(tabId, {
