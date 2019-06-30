@@ -281,7 +281,7 @@ EOF
 
 function setup-acpid {
   install-packages acpid
-  sudo systemctl enable acpid
+  sudo ln -fs /lib/systemd/system/acpid.service /etc/systemd/system/multi-user.target.wants
   sudo ln -fs /usr/share/doc/acpid/examples/default /etc/acpi/events
   local path=/etc/acpi/default.sh
   sudo tee "$path" > /dev/null << \EOF
