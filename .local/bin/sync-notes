@@ -3,18 +3,18 @@ set -eu
 path=~/notes
 if [[ -d $path ]]; then
   command=(git -C "$path")
-  mapfile -t paths < <("${command[@]}" diff --name-only)
-  if [[ ${paths[@]} ]]; then
-    tasks=()
-    for path in "${paths[@]}"; do
-      [[ ! $path =~ ^(tasks($|-) ]] || tasks+=("${BASH_REMATCH[1]}")
+  mapfile -t notes < <("${command[@]}" diff --name-only)
+  if [[ ${notes[@]} ]]; then
+    paths=()
+    for note in "${notes[@]}"; do
+      [[ ! $note =~ ^tasks($|-) ]] || paths+=("$path/$note")
     done
-    [[ ! ${tasks[@]} ]] || scp "${tasks[@]/#/$path/}" personal:notes
+    [[ ! ${paths[@]} ]] || scp "${paths[@]}" personal:notes
     "${command[@]}" add -A
     "${command[@]}" commit -m 'Update notes'
   fi
   "${command[@]}" pull
-  [[ ! ${paths[@]} ]] || "${command[@]}" push
+  [[ ! ${notes[@]} ]] || "${command[@]}" push
 elif ! git clone personal:repositories/notes.git "$path"; then
   rm -fr "$path"
   exit 1
