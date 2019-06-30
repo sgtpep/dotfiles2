@@ -1,11 +1,13 @@
 #!/bin/bash
 set -eu
-sudo mount /dev/disk/by-label/keys /mnt
-mkdir -p ~/.ssh
-cp /mnt/id_rsa ~/.ssh
-sudo umount /mnt
-chmod 600 ~/.ssh/id_rsa
+mountpoint=/mnt
+sudo mount /dev/disk/by-label/keys "$mountpoint"
+path=~/.ssh/id_rsa
+mkdir -p "${path%/*}"
+cp "$mountpoint"/"${path##*/}" "$path"
+sudo umount "$mountpoint"
+chmod 600 "$path"
 sed -i 's/\bhttps:\/\/.*\(@github\.com\)\//git\1:/' ~/.git/config
-until ssh-keygen -p -N '' -f ~/.ssh/id_rsa; do
+until ssh-keygen -p -N '' -f "$path"; do
   :
 done

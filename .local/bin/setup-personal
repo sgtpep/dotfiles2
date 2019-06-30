@@ -11,19 +11,27 @@ EOF
 }
 
 function configure-ssh-server {
-  local checksum=$(md5sum /etc/ssh/sshd_config)
-  [[ ! $(tail -c 1 /etc/ssh/sshd_config) ]] || sudo tee -a /etc/ssh/sshd_config > /dev/null <<< ''
-  grep -q '^GatewayPorts ' /etc/ssh/sshd_config || sudo tee -a /etc/ssh/sshd_config > /dev/null <<< 'GatewayPorts yes'
-  grep -q '^UseDNS ' /etc/ssh/sshd_config || sudo tee -a /etc/ssh/sshd_config > /dev/null <<< 'UseDNS no'
+  local path=/etc/ssh/sshd_config
+  local checksum=$(md5sum "$path")
+  [[ ! $(tail -c 1 "$path") ]] || sudo tee -a "$path" > /dev/null <<< ''
+  lines=(
+    'GatewayPorts yes'
+    'UseDNS no'
+  )
+  local line
+  for line in "${lines[@]}"; do
+    grep -Fqx "$line" "$path" || sudo tee -a "$path" > /dev/null <<< $line
+  done
   md5sum -c --status <<< $checksum || sudo systemctl reload sshd
 }
 
 function download-dotfile {
-  if [[ ! -f ~/$1 ]]; then
-    [[ $1 != */* ]] || mkdir -p ~/"${1%/*}"
-    wget -O ~/"$1" https://raw.githubusercontent.com/sgtpep/dotfiles/master/"$1"
+  local path=~/$1
+  if [[ ! -f $path ]]; then
+    mkdir -p "${path%/*}"
+    wget -O "$path" https://raw.githubusercontent.com/sgtpep/dotfiles/master/"$1"
   fi
-  [[ $1 != .local/bin/* ]] || chmod +x ~/"$1"
+  [[ $path != ~/.local/bin/* ]] || chmod +x "$path"
 }
 
 email=mail'@'danil.mobi
@@ -32,7 +40,7 @@ hostname=danil.mobi
 
 function install-packages {
   update-apt
-  dpkg -s "${@%/*}" &> /dev/null || sudo DEBIAN_FRONTEND=noninteractive apt -y install "$@"
+  dpkg -s "${@%/*}" &> /dev/null || sudo apt -y install "$@"
 }
 
 function install-standalone-packages {
@@ -68,10 +76,12 @@ function prompt-reboot {
 
 function run-actions {
   if [[ $@ ]]; then
+    local options=(-FOahvz --progress)
+    local path=~/Downloads/personal
     if [[ $1 == backup ]]; then
-      exec rsync -FOahvz --delete --progress personal: ~/Downloads/personal
+      exec rsync "${options[@]}" --delete personal: "$path"
     elif [[ $1 == restore ]]; then
-      exec rsync -FOahuvz --progress ~/Downloads/personal/ personal:
+      exec rsync "${options[@]}" -u "$path"/ personal:
     else
       return 1
     fi
@@ -84,21 +94,24 @@ function run-script {
 
 function setup-gallery {
   install-packages python3
-  download-dotfile .local/bin/generate-gallery
-  sudo tee /etc/cron.d/gallery > /dev/null << EOF
+  local command=generate-gallery
+  download-dotfile .local/bin/"$command"
+  sudo tee /etc/cron.d/"$command" > /dev/null << EOF
 PATH=/usr/bin:/bin:/home/$USER/.local/bin
-0 0 */5 * * $USER generate-gallery ~/.config/gallery/config ~/www/gallery
-0 0 */5 * * $USER generate-gallery ~/.config/ksenia-gallery/config ~/www/ksenia-gallery
+0 0 */5 * * $USER $command ~/.config/gallery/config ~/www/gallery
+0 0 */5 * * $USER $command ~/.config/ksenia-gallery/config ~/www/ksenia-gallery
 EOF
 }
 
 function setup-msmtp {
   install-packages msmtp-mta
   sudo tee /etc/aliases > /dev/null <<< "default: $email"
-  download-dotfile .local/bin/netrc-password
-  download-dotfile .msmtprc
-  sed -i "s|\( \)\(netrc-password \)|\1$HOME/.local/bin/\2|" ~/.msmtprc
-  sudo ln -fs ~/.msmtprc /etc/msmtprc
+  local command=netrc-password
+  download-dotfile .local/bin/"$command"
+  local path=~/.msmtprc
+  download-dotfile "${path#~/}"
+  sed -i "s|\( \)\($command \)|\1$HOME/.local/bin/\2|" "$path"
+  sudo ln -fs "$path" /etc/msmtprc
   sudo ln -fs ~/.netrc /etc/netrc
 }
 
@@ -107,8 +120,10 @@ function setup-nginx {
   setup-certbot
   symlink-webroot
   sudo usermod -a -G adm "$USER"
-  local checksum=$(md5sum /etc/nginx/sites-enabled/default)
-  sudo tee /etc/nginx/sites-enabled/default > /dev/null << EOF
+  local path=/etc/nginx/sites-enabled/default
+  local checksum=$(md5sum "$path")
+  local ssl_path=/etc/letsencrypt/live/$hostname
+  sudo tee "$path" > /dev/null << EOF
 server {
   listen 80 default_server;
   listen [::]:80 default_server;
@@ -121,8 +136,8 @@ server {
   listen 443 ssl default_server;
   listen [::]:443 ssl default_server;
   root /var/www/html;
-  ssl_certificate /etc/letsencrypt/live/$hostname/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/$hostname/privkey.pem;
+  ssl_certificate $ssl_path/fullchain.pem;
+  ssl_certificate_key $ssl_path/privkey.pem;
 
   location ~ ^/(favicon\.ico|robots\.txt)$ {
     access_log off;
@@ -145,18 +160,21 @@ EOF
 
 function setup-rss2email {
   install-packages rss2email
-  sudo tee /etc/cron.d/rss2email > /dev/null << EOF
-0 */3 * * * $USER r2e run > /dev/null 2>&1
-0 1 * * 0 $USER r2e run 2>&1 | grep -v '^\(HTTP status 5\|sax parsing error:\)'
+  local command=(r2e run)
+  sudo tee /etc/cron.d/"${command[0}" > /dev/null << EOF
+0 */3 * * * $USER ${command[@]} > /dev/null 2>&1
+0 1 * * 0 $USER ${command[@]} 2>&1 | grep -v '^\(HTTP status 5\|sax parsing error:\)'
 EOF
 }
 
 function setup-certbot {
   install-packages certbot
-  [[ ! $(tail -c 1 /etc/letsencrypt/cli.ini) ]] || sudo tee -a /etc/letsencrypt/cli.ini > /dev/null <<< ''
-  grep -q '^post-hook ' /etc/letsencrypt/cli.ini || echo 'post-hook = systemctl reload nginx' | sudo tee -a /etc/letsencrypt/cli.ini > /dev/null
-  [[ -d /etc/letsencrypt/live ]] || sudo certbot certonly -d "$hostname" -m "$email" -w /var/www/html --agree-tos --no-eff-email --webroot
-  sudo rm -fr /var/www/html/.well-known
+  local path=/etc/letsencrypt/cli.ini
+  [[ ! $(tail -c 1 "$path") ]] || sudo tee -a "$path" > /dev/null <<< ''
+  grep -q '^post-hook ' "$path" || echo 'post-hook = systemctl reload nginx' | sudo tee -a "$path" > /dev/null
+  local root=/var/www/html
+  [[ -d ${path%/*}/live ]] || sudo certbot certonly -d "$hostname" -m "$email" -w "$root" --agree-tos --no-eff-email --webroot
+  sudo rm -fr "$root"/.well-known
 }
 
 function setup-system {
@@ -172,13 +190,15 @@ function setup-system {
 }
 
 function setup-tasks {
-  download-dotfile .local/bin/tasks
+  local command=tasks
+  download-dotfile .local/bin/"$command"
   install-packages bsd-mailx
-  sudo tee /etc/cron.d/tasks > /dev/null << EOF
+  local mail='mail -E -a "Date: $(date -R)"'
+  sudo tee /etc/cron.d/"$command" > /dev/null << EOF
 PATH=/usr/bin:/bin:/home/$USER/.local/bin
-0 5 * * * $USER tasks today | mail -E -a "Date: \$(date -R)" -s Today $USER
-0 5 * * * $USER tasks tomorrow | mail -E -a "Date: \$(date -R)" -s Tomorrow $USER
-0 5 * * 0 $USER tasks | mail -E -a "Date: \$(date -R)" -s Week $USER
+0 5 * * * $USER $command today | $mail -s Today $USER
+0 5 * * * $USER $command tomorrow | $mail -s Tomorrow $USER
+0 5 * * 0 $USER $command | $mail -s Week $USER
 EOF
 }
 
@@ -201,18 +221,21 @@ function setup-user {
   if ! ssh personal '[[ -d ~/.ssh ]]'; then
     ssh root@personal bash -"$-" << EOF
     timedatectl set-timezone '$(readlink /etc/localtime | sed 's|/usr/share/zoneinfo/||')'
-    ! id debian &> /dev/null || userdel -r debian
+    local user=debian
+    ! id "\$user" &> /dev/null || userdel -r "\$user"
     id $USER &> /dev/null || useradd -m -G sudo -s /bin/bash $USER
     chpasswd -e <<< '$USER:$(sudo grep -Po "(?<=^$USER:)[^:]+" /etc/shadow)'
-    cp -r ~/.ssh ~$USER
-    chown -R $USER: ~$USER/.ssh
+    local dirname=.ssh
+    cp -r ~/"\$dirname" ~$USER
+    chown -R $USER: ~$USER/"\$dirname"
 EOF
   fi
 }
 
 function symlink-webroot {
-  sudo rm -fr /var/www/html
-  sudo ln -fs ~/www /var/www/html
+  local path=/var/www/html
+  sudo rm -fr "$path"
+  sudo ln -fs ~/www "$path"
 }
 
 function update-apt {
@@ -220,11 +243,12 @@ function update-apt {
 }
 
 function upgrade-system {
-  if [[ ! -f /var/lib/apt/upgraded ]]; then
+  local path=/var/lib/apt/upgraded
+  if [[ ! -f $path ]]; then
     update-apt
     sudo APT_LISTCHANGES_FRONTEND=none DEBIAN_FRONTEND=noninteractive apt -y -o Dpkg::Options::=--force-confnew full-upgrade
     sudo apt -y autoremove --purge
-    sudo touch /var/lib/apt/upgraded
+    sudo touch "$path"
   fi
 }
 

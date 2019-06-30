@@ -1,14 +1,14 @@
 #!/bin/bash
 set -eu
 CI=1 NODE_PATH=src exec xargs -r -a <(
-  (
+  {
     job-list "$@" | grep '/__tests__/\|\.test\.' || :
-    (
+    {
       job-list "$@" | sed 's|/[^/]*$|/__tests__\0|'
-      (
+      {
         job-list "$@"
         job-list "$@" | sed 's|/[^/]*$|/__tests__\0|'
-      ) | sed 's/\.[^.]*$/.test\0/'
-    ) | xargs -d '\n' ls -d 2> /dev/null || :
-  ) | sort -u
+      } | sed 's/\.[^.]*$/.test\0/'
+    } | xargs -d '\n' ls -d 2> /dev/null || :
+  } | sort -u
 ) -d '\n' npx react-scripts test

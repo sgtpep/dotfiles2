@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eu
 
-declare -A executables=(
+declare -A commands=(
   [7zr]=p7zip
   [ag]=silversearcher-ag
   [aria2c]=aria2
@@ -13,9 +13,9 @@ declare -A executables=(
   [dig]=dnsutils
   [ebook-convert]=calibre
   [ebook-viewer]=calibre
+  [exiftool]=libimage-exiftool-perl
   [firefox]=firefox-esr
   [firejail]='firejail xpra-'
-  [gem]=ruby
   [notify-send]=libnotify-bin
   [pactl]=pulseaudio
   [pdftotext]=poppler-utils
@@ -40,20 +40,21 @@ declare -A executables=(
 function install-packages {
   local packages=(${@/%*-})
   if ! packages-installed "${packages[@]}"; then
-    run-command bash -"$-" -c '[[ ! $(find /var/cache/apt/pkgcache.bin -mtime +7 2>&1) ]] || sudo apt update; sudo DEBIAN_FRONTEND=noninteractive apt -y install "$@"' -- "$@"
-    until packages-installed "${packages[@]}" && ! pgrep -x dpkg; do
+    run-command bash -"$-" -c '[[ ! $(find /var/cache/apt/pkgcache.bin -mtime +7 2>&1) ]] || sudo apt update && sudo apt -y install "$@"' -- "$@"
+    until packages-installed "${packages[@]}" && ! pgrep -x dpkg > /dev/null; do
       sleep 1
     done
   fi
 }
 
 function main {
-  local executable=${0##*/}
-  if [[ $executable == install-packages ]]; then
+  local command=${0##*/}
+  if [[ $command == install-packages ]]; then
     install-packages "$@"
   else
-    [[ -x /usr/bin/$executable ]] || install-packages ${executables[$executable]-"$executable"}
-    exec /usr/bin/"$executable" "$@"
+    set -- /usr/bin/"$command" "$@"
+    [[ -x $1 ]] || install-packages ${commands[$command]-"$command"}
+    exec "$@"
   fi
 }
 
@@ -66,12 +67,13 @@ function packages-installed {
 }
 
 function run-command {
-  local command=(flock /tmp/install-packages.lock execute-online "$@")
-  local background_command=(bash -"$-" -c '"$@" || read -s' -- "${command[@]}")
+  local command=(flock /tmp/install-packages.lock online "$@")
+  local detached_command=(bash -"$-" -c '"$@" || read -s' -- "${command[@]}")
+  local title=installing
   if [[ ! -t 1 && -v TMUX ]]; then
-    tmux new-window -n installing "${background_command[@]}"
+    tmux new-window -n "$title" "${detached_command[@]}"
   elif [[ ! -t 1 && -v DISPLAY && -x /usr/bin/$(readlink ~/.local/bin/x-terminal-emulator) ]]; then
-    x-terminal-emulator -title installing -e "${background_command[@]}"
+    x-terminal-emulator -title "$title" -e "${detached_command[@]}"
   else
     "${command[@]}" >&2
   fi

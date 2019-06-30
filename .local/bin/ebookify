@@ -31,14 +31,13 @@ function main {
 function process-urls {
   local url
   for url; do
-    local checksum=$(md5sum <<< $url | cut -d ' ' -f 1)
-    local path=~/ebooks
+    local path=~/ebooks/$(md5sum <<< $url | cut -d ' ' -f 1)
     if [[ ${url%\?*} == *.pdf ]]; then
-      wget -O "$path"/"$checksum".pdf "$url"
+      wget -O "$path".pdf "$url"
     else
-      local temp=/tmp/$checksum
+      local temp=/tmp/${path##*/}
       download-page "$url" "$temp"
-      convert-ebook "$temp" "$path"/"$checksum".mobi
+      convert-ebook "$temp" "$path".mobi
       rm -r "$temp"
     fi
   done

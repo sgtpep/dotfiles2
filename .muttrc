@@ -13,15 +13,13 @@ color tilde default default
 color tree default default
 folder-hook . 'bind index D noop'
 folder-hook . 'bind pager F flag-message'
-folder-hook . 'bind pager f forward-message'
 folder-hook . 'push <first-entry>'
 folder-hook Feeds 'macro index D "<first-entry><delete-pattern>~m-`echo "$(($(tput lines) - 2))"`<Return><sync-mailbox><Return>"'
 folder-hook Feeds 'macro pager F "<pipe-message>grep -Po '\''(?<=\^X-RSS-URL: ).+'\'' >> ~/.urls<Return>"'
-folder-hook Feeds 'macro pager f "<pipe-message>grep -Po '\''(?<=\^X-RSS-URL: ).+'\'' | xargs x-www-browser<Return>"'
 macro attach s '<save-entry><kill-line>~/Downloads/<Return>y'
 macro index <Space>e '<change-folder>=Inbox<Return>'
 macro index <Space>f '<change-folder>=Feeds<Return>'
-macro index <Space>s '<shell-escape>printf \\ec; execute-online sync-mail; printf \\ec<Return>'
+macro index <Space>s '<shell-escape>printf \\ec; online sync-mail; printf \\ec<Return>'
 set beep_new
 set fast_reply
 set folder=~/mail

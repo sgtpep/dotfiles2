@@ -32,13 +32,13 @@ highlight TopLine cterm=reverse ctermfg=default ctermbg=default
 highlight TopLineSel cterm=reverse ctermfg=default ctermbg=default
 highlight WildMenu cterm=reverse ctermfg=default ctermbg=default
 highlight Win cterm=none ctermfg=default ctermbg=default
-nnoremap E :edit<CR>
-nnoremap gh :cd ~<CR>
-nnoremap gm :cd /media/$USER<CR>
+nnoremap <silent> E :edit<CR>
+nnoremap <silent> gh :cd ~<CR>
+nnoremap <silent> gm :cd /media/$USER<CR>
+nnoremap <silent> yd :!echo -n %d | xclip -selection clipboard &<CR>
+nnoremap <silent> yn :!echo -n %c | xclip -selection clipboard &<CR>
+nnoremap <silent> yp :!echo -n %"c:p | xclip -selection clipboard &<CR>
 nnoremap q ZQ
-nnoremap yd :!echo -n %d | xclip -selection clipboard &<CR>
-nnoremap yn :!echo -n %c | xclip -selection clipboard &<CR>
-nnoremap yp :!echo -n %"c:p | xclip -selection clipboard &<CR>
 only
 set classify=@:link:,:dir:/
 set dotdirs=rootparent

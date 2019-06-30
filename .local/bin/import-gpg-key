@@ -1,7 +1,8 @@
 #!/bin/bash
 set -eu
-sudo mount /dev/disk/by-label/keys /mnt
-gpg --import /mnt/private-key.asc
-sudo umount /mnt
+mountpoint=/mnt
+sudo mount /dev/disk/by-label/keys "$mountpoint"
+gpg --import "$mountpoint"/private-key.asc
+sudo umount "$mountpoint"
 gpg --import-ownertrust <<< "$(gpg -k --with-colons | grep -Po -m 1 '(?<=^fpr:::::::::)[^:]+'):6:"
 chmod 700 ~/.gnupg

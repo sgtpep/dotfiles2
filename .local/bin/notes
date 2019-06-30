@@ -1,5 +1,6 @@
 #!/bin/bash
 set -eu
-[[ -d ~/notes ]] || execute-online sync-notes
-cd ~/notes
+path=~/notes
+[[ -d $path ]] || online sync-notes
+cd "$path"
 exec vim "$@"

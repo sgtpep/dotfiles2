@@ -2,13 +2,13 @@
 publish = !git push -u origin "$(git rev-parse --abbrev-ref HEAD)"
 
 [core]
-pager = perl /usr/share/doc/git/contrib/diff-highlight/diff-highlight | less
+pager = diff-highlight | less
 
 [credential]
 helper = cache
 
 [interactive]
-diffFilter = perl /usr/share/doc/git/contrib/diff-highlight/diff-highlight
+diffFilter = diff-highlight
 
 [pull]
 rebase = true

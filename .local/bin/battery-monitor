@@ -1,9 +1,11 @@
 #!/bin/bash
 set -eu
 if [[ $(pgrep -cf " ${BASH_SOURCE[0]}$") == 1 ]]; then
-  cd /sys/class/power_supply/*
+  for path in /sys/class/power_supply/*/capacity; do
+    [[ -f $path ]] || exit 1
+  done
   while :; do
-    [[ $(< status) == Charging ]] || (($(< capacity) > 5)) || x-terminal-emulator -T battery -e bash -"$-" -c $'read -s -p \'Low battery...\'' || :
+    (($(< "$path") > 5)) || [[ $(< "${path%/*}"/status) == Charging ]] || x-terminal-emulator -T battery -e bash -"$-" -c $'read -s -p \'Low battery...\'' || :
     sleep 3m
   done
 fi

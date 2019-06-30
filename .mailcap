@@ -1,5 +1,5 @@
-image/*; xdg-open %s
-text/html; xdg-open %s
+image/*; xdg-open %s 2> /dev/null >&2
+text/html; mv %s %s.html && xdg-open %s.html 2> /dev/null >&2
 
 application/msword; antiword -w 0 -; copiousoutput
 application/pdf; pdftotext -nopgbrk - -; copiousoutput

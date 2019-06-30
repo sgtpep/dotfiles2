@@ -14,6 +14,7 @@ elif [[ $1 == y ]]; then
   head -c -1 | xclip -selection clipboard
 elif [[ $1 == m ]]; then
   mapfile -t
-  x-terminal-emulator -e vifm --choose-dir=/tmp/sxiv-vifm "${MAPFILE[0]%/*/*}"
-  mv "${MAPFILE[@]}" "$(< /tmp/sxiv-vifm)"
+  path=/tmp/sxiv-vifm
+  x-terminal-emulator -e vifm --choose-dir="$path" "${MAPFILE[0]%/*/*}"
+  mv "${MAPFILE[@]}" "$(< "$path")"
 fi

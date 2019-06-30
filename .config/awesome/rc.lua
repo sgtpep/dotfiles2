@@ -1,9 +1,6 @@
 local awful = require('awful')
 local beautiful = require('beautiful')
 local gears = require('gears')
-gears.math = require('./math')
-gears.string = require('./string')
-gears.table = require('./table')
 local naughty = require('naughty')
 local wibox = require('wibox')
 require('awful.autofocus')
@@ -19,49 +16,56 @@ function activate_history_client(offset, focus)
   end
 end
 
-function alt_tab(offset)
-  local grabber
-  local reorder
-  grabber = awful.keygrabber.run(function(modifiers, key, event)
-    if key == 'Alt_L' and event == 'release' then
-      awful.keygrabber.stop(grabber)
-      if client.focus then
-        awful.client.focus.history.add(client.focus)
-      end
-      if reorder then
-        gears.table.map(function(client)
-          client:emit_signal('request::activate', 'alt_tab', { raise = true })
-        end, gears.table.reverse(awful.client.focus.history.list))
-      end
-      awful.client.focus.history.enable_tracking()
-    elseif key == 'Tab' and event == 'press' then
-      reorder = true
-      activate_history_client(offset)
+function bind_alt_tab()
+  local count
+  local modifier = 'Mod1'
+  awful.keygrabber({ export_keybindings = true, keybindings = {
+    { { modifier }, 'Tab', function()
+      count = count + 1
+      activate_history_client(1)
+    end },
+    { { modifier, 'Shift' }, 'Tab', function()
+      count = count + 1
+      activate_history_client(-1)
+    end },
+  }, start_callback = function()
+    count = 0
+    awful.client.focus.history.disable_tracking()
+  end, stop_callback = function()
+    if client.focus then
+      awful.client.focus.history.add(client.focus)
     end
-  end)
-  awful.client.focus.history.disable_tracking()
-  activate_history_client(offset)
+    if count > 1 then
+      gears.table.map(function(client)
+        client:emit_signal('request::activate', 'bind_alt_tab', { raise = true })
+      end, gears.table.reverse(awful.client.focus.history.list))
+    end
+    awful.client.focus.history.enable_tracking()
+  end, stop_event = 'release', stop_key = modifier })
 end
 
 function change_volume(change)
-  local source = product_name():find('^HP Stream ') and 1 or 0
-  awful.spawn.with_shell(change < 0 and string.format('pactl set-sink-mute 0 no; pactl set-sink-volume 0 -10%%; pactl set-source-mute %d no', source) or change > 0 and string.format('pactl set-sink-mute 0 no; pactl set-sink-volume 0 +10%%; pactl set-source-mute %d no', source) or string.format('pactl set-sink-mute 0 %s; pactl set-sink-volume 0 %d%%; pactl set-source-mute %d yes', unpack(product_name():find('^HP Stream ') and { 'no', 0, source } or { 'yes', 25, source })))
+  local source = hp_stream_product() and 1 or 0
+  awful.spawn.with_shell(change < 0 and string.format('pactl set-sink-mute 0 no; pactl set-sink-volume 0 -10%%; pactl set-source-mute %d no', source) or change > 0 and string.format('pactl set-sink-mute 0 no; pactl set-sink-volume 0 +10%%; pactl set-source-mute %d no', source) or string.format('pactl set-sink-mute 0 %s; pactl set-sink-volume 0 %d%%; pactl set-source-mute %d yes', table.unpack(gears.table.merge(hp_stream_product() and { 'no', 0 } or { 'yes', 25 }, { source }))))
 end
 
 function configure_chromium(client)
-  local copy_command = 'xdotool keyup alt shift key alt+y sleep 0.1'
-  local copy_close_command = string.format('%s key ctrl+w', copy_command)
-  local copy_paste_command = 'xclip -selection clipboard && xdotool key --delay=100 alt+Tab ctrl+v'
-  client:keys(gears.table.join(unpack({
-    awful.key({ 'Mod1' }, 'e', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title ebookify -e bash -c \'ebookify "$(xclip -o -selection clipboard)" || read -s\'', copy_command), { name = 'ebookify' }, true) end),
-    awful.key({ 'Mod1' }, 'm', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title sending -e bash -c \'output=$(xclip -o -selection clipboard); mutt -e "set noabort_unmodified" -i <(echo "${output##* }") -s "Link: ${output%% *}"\'', copy_command:gsub(' alt%+y ', ' alt+shift+y ')), { name = 'sending' }, true) end),
-    awful.key({ 'Mod1' }, 'p', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title pwdhash -e bash -c \'output=$(xclip -o -selection clipboard); hostname=${output#*://}; pwdhash "${hostname%%%%/*}" 2> /dev/null | %s\'', copy_command, copy_paste_command), { name = 'pwdhash' }, true) end),
-    awful.key({ 'Mod1' }, 'v', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title mpv -e bash -c \'mpv "$(xclip -o -selection clipboard)" || read -s\'', copy_close_command), { class = 'mpv' }, true) end),
-    awful.key({ 'Mod1', 'Shift' }, 'p', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title pass -e bash -c \'output=$(xclip -o -selection clipboard); hostname=${output#*://}; (pass "${hostname%%%%/*}" || read -s) | %s\'', copy_command, copy_paste_command), { name = 'pass' }, true) end),
+  local copy = 'xdotool keyup alt shift key alt+y sleep 0.1'
+  local copy_close = string.format('%s key ctrl+w', copy)
+  local copy_paste = 'xclip -selection clipboard && xdotool key --delay=100 alt+Tab ctrl+v'
+  client:keys(gears.table.join(table.unpack({
+    awful.key({ 'Mod1' }, 'e', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title ebookify -e bash -c \'ebookify "$(xclip -o -selection clipboard)" || read -s\'', copy), { name = 'ebookify' }, true) end),
+    awful.key({ 'Mod1' }, 'm', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title sharing -e bash -c $\'output=$(xclip -o -selection clipboard); mutt -e \\\'set noabort_unmodified\\\' -i <(echo "${output##* }") -s "Link: ${output%% *}"\'', copy:gsub(' alt%+y ', ' alt+shift+y ')), { name = 'sharing' }, true) end),
+    awful.key({ 'Mod1' }, 'p', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title pwdhash -e bash -c \'output=$(xclip -o -selection clipboard); hostname=${output#*://}; pwdhash "${hostname%%%%/*}" 2> /dev/null | %s\'', copy, copy_paste), { name = 'pwdhash' }, true) end),
+    awful.key({ 'Mod1' }, 'v', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title mpv -e bash -c \'mpv "$(xclip -o -selection clipboard)" || read -s\'', copy_close), { class = 'mpv' }, true) end),
+    awful.key({ 'Mod1', 'Shift' }, 'p', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title pass -e bash -c \'output=$(xclip -o -selection clipboard); hostname=${output#*://}; { pass "${hostname%%%%/*}" || read -s; } | %s\'', copy, copy_paste), { name = 'pass' }, true) end),
   })))
 end
 
 function configure_notifications()
+  local max_size = 600
+  beautiful.notification_max_height = max_size
+  beautiful.notification_max_width = max_size
   naughty.config.defaults.bg = 'Black'
   naughty.config.defaults.border_color = '#ffffff'
   naughty.config.defaults.border_width = 1
@@ -73,7 +77,7 @@ function configure_notifications()
 end
 
 function create_keyboard()
-  keyboard = awful.wibar({ height = 200, ontop = true, position = 'bottom', visible = io.open('/etc/os-release'):read('*all'):find('ID=raspbian') ~= nil })
+  keyboard = awful.wibar({ height = 200, ontop = true, position = 'bottom', visible = raspbian_os() })
   local groups = { Return = {}, space = {} }
   local modifiers = {}
   keyboard:setup(gears.table.join({ layout = wibox.layout.flex.vertical }, gears.table.map(function(keys)
@@ -96,7 +100,7 @@ function create_keyboard()
           end
           if key[2] == 'ISO_Next_Group' then
             for _, arguments in ipairs({ { 'key_press', 'Shift_L' }, { 'key_press', 'Shift_R' }, { 'key_release', 'Shift_R' }, { 'key_release', 'Shift_L' } }) do
-              root.fake_input(unpack(arguments))
+              root.fake_input(table.unpack(arguments))
             end
           else
             root.fake_input('key_press', key[2])
@@ -144,14 +148,11 @@ function create_tag()
   awful.tag({ 0 }, awful.screen.focused(), awful.layout.suit.max)
 end
 
+function hp_stream_product()
+  return product_name():find('^HP Stream ') ~= nil
+end
+
 keys = {
-  { { 'Control', 'Mod1' }, 'F1', function() awful.spawn('sudo /etc/acpi/default.sh video/brightnessdown') end },
-  { { 'Control', 'Mod1' }, 'F12', function() awful.spawn('sudo poweroff') end },
-  { { 'Control', 'Mod1' }, 'F2', function() awful.spawn('sudo /etc/acpi/default.sh video/brightnessup') end },
-  { { 'Control', 'Mod1' }, 'F3', function() change_volume(0) end },
-  { { 'Control', 'Mod1' }, 'F4', function() change_volume(-1) end },
-  { { 'Control', 'Mod1' }, 'F5', function() change_volume(1) end },
-  { { 'Control', 'Mod1' }, 'F6', function() toggle_wifi('unblock') end },
   { { 'Control', 'Mod1' }, 'Tab', function() naughty.destroy_all_notifications() end },
   { { 'Control', 'Mod1' }, 'a', function() run_or_raise('x-terminal-emulator -e calc', { name = 'calc' }) end },
   { { 'Control', 'Mod1' }, 'b', function() run_or_raise('x-terminal-emulator -title acpi -e bash -c \'acpi; read -s -n 1\'', { name = 'acpi' }) end },
@@ -161,18 +162,23 @@ keys = {
   { { 'Control', 'Mod1' }, 'f', function() run_or_raise(tmux_command('mutt -f =Feeds', 'feeds'), { name = 'feeds' }) end },
   { { 'Control', 'Mod1' }, 'g', function() awful.spawn.with_shell('mv ~/.urls{,~} && exec xargs -r -a ~/.urls~ -d \'\\n\' x-www-browser') end },
   { { 'Control', 'Mod1' }, 'grave', function() toggle_keyboard() end },
-  { { 'Control', 'Mod1' }, 'q', function() run_or_raise('x-terminal-emulator -title sshuttle -e execute-online bash -c \'while :; do sshuttle -r personal --dns 0/0; [[ $? != 1 ]] || break; sleep 1; done\'', { name = 'sshuttle' }) end },
+  { { 'Control', 'Mod1' }, 'q', function() run_or_raise('x-terminal-emulator -title sshuttle -e online bash -c \'while :; do sshuttle -r danil.mobi --dns 0/0; [[ $? != 1 ]] || break; sleep 1; done\'', { name = 'sshuttle' }) end },
   { { 'Control', 'Mod1' }, 'r', function() run_or_raise('x-terminal-emulator -e launch', { name = 'launch' }) end },
-  { { 'Control', 'Mod1' }, 's', function() run_or_raise('x-terminal-emulator -title syncing -e bash -c \'execute-online sync-all || read -s\'', { name = 'syncing' }) end },
+  { { 'Control', 'Mod1' }, 's', function() run_or_raise('x-terminal-emulator -title syncing -e bash -c \'online sync-all || read -s\'', { name = 'syncing' }) end },
   { { 'Control', 'Mod1' }, 't', function() run_or_raise('x-terminal-emulator -e tmux new-session -A -s tmux', { name = 'tmux' }) end },
   { { 'Control', 'Mod1' }, 'w', function() run_or_raise(tmux_command('notes'), { name = 'notes' }) end },
-  { { 'Control', 'Mod1' }, 'x', function() run_or_raise('x-terminal-emulator -title calendar -e bash -c \'date +%F\\ %a\\ %R; echo; ncal -Mb -A 1; read -s -n 1\'', { name = 'calendar' }) end },
+  { { 'Control', 'Mod1' }, 'x', function() run_or_raise('x-terminal-emulator -title calendar -e bash -c $\'date \\\'+%F %a %R\\\'; echo; ncal -Mb -A 1; read -s -n 1\'', { name = 'calendar' }) end },
   { { 'Control', 'Mod1' }, 'z', function() awful.spawn('slock') end },
-  { { 'Control', 'Mod1', 'Shift' }, 'F6', function() toggle_wifi('block') end },
   { { 'Mod1' }, 'Escape', function() tag = root.tags()[1] tag.selected = not tag.selected end },
   { { 'Mod1' }, 'F4', function() if client.focus then client.focus:kill() end end },
-  { { 'Mod1' }, 'Tab', function() alt_tab(1) end },
-  { { 'Mod1', 'Shift' }, 'Tab', function() alt_tab(-1) end },
+  { { 'Mod4' }, 'F1', function() awful.spawn('sudo /etc/acpi/default.sh video/brightnessdown') end },
+  { { 'Mod4' }, 'F12', function() awful.spawn('sudo poweroff') end },
+  { { 'Mod4' }, 'F2', function() awful.spawn('sudo /etc/acpi/default.sh video/brightnessup') end },
+  { { 'Mod4' }, 'F3', function() change_volume(0) end },
+  { { 'Mod4' }, 'F4', function() change_volume(-1) end },
+  { { 'Mod4' }, 'F5', function() change_volume(1) end },
+  { { 'Mod4' }, 'F6', function() toggle_wifi('unblock') end },
+  { { 'Mod4', 'Shift' }, 'F6', function() toggle_wifi('block') end },
   { { 'Shift' }, 'XF86WLAN', function() toggle_wifi('block') end },
   { {}, 'XF86AudioLowerVolume', function() change_volume(-1) end },
   { {}, 'XF86AudioMute', function() change_volume(0) end },
@@ -190,6 +196,7 @@ layout = {
 }
 
 function main()
+  bind_alt_tab()
   configure_notifications()
   create_keyboard()
   create_tag()
@@ -198,22 +205,16 @@ function main()
   set_rules()
 end
 
-naughty.destroy_all_notifications = function()
-  for _, positions in pairs(naughty.notifications) do
-    for _, notifications in pairs(positions) do
-      while #notifications > 0 do
-        naughty.destroy(notifications[1])
-      end
-    end
-  end
-end
-
 function product_name()
   if not _product_name then
     local file = io.open('/sys/class/dmi/id/product_name')
     _product_name = file and file:read('*all') or ''
   end
   return _product_name
+end
+
+function raspbian_os()
+  return io.open('/etc/os-release'):read('*all'):find('ID=raspbian') ~= nil
 end
 
 rules = {
@@ -242,11 +243,11 @@ function set_background()
 end
 
 function set_keys()
-  root.keys(gears.table.join(unpack(gears.table.map(function(arguments)
-    return awful.key(unpack(arguments))
-  end, gears.table.join(keys, gears.table.map(function(key)
+  root.keys(gears.table.join(table.unpack(gears.table.map(function(arguments)
+    return awful.key(table.unpack(arguments))
+  end, gears.table.join(keys, raspbian_os() and gears.table.map(function(key)
     return #key[1] == 2 and gears.table.hasitem(key[1], 'Control') and gears.table.hasitem(key[1], 'Mod1') and { { 'Mod4' },  key[2], key[3] } or nil
-  end, keys))))))
+  end, keys) or {})))))
 end
 
 function set_rules()

@@ -48,7 +48,6 @@ endfunction
 
 function s:enable_filetypes()
   filetype plugin on
-  autocmd BufRead * if getline(1) =~# '^#!.\+[/ ]node\($\| \)' | set filetype=javascript | endif
   autocmd FileType * call s:define_comment_mappings()
   autocmd FileType * let [&l:formatoptions, &l:shiftwidth, &l:softtabstop, &l:textwidth] = [&g:formatoptions, &g:shiftwidth, &g:softtabstop, &g:textwidth]
 endfunction
@@ -83,7 +82,7 @@ endfunction
 
 function s:set_options()
   autocmd FileType mail setlocal formatoptions+=w textwidth=72
-  let &grepprg = !isdirectory('.git') ? 'ag -s --hidden --vimgrep --' : matchstr(system('git --version'), '[0-9.]\+') >= 2.19 ? 'git grep -In --column --' : 'bash -c ''git ls-files \| xargs -r -d \\n ag -s --hidden --vimgrep -- "$1" 2> /dev/null'' --'
+  let &grepprg = isdirectory('.git') ? 'git ls-files | xargs -r -d ''\n'' ag -s --vimgrep --' : 'ag -s --hidden --vimgrep --'
   set autoindent
   set directory=/var/tmp//
   set expandtab

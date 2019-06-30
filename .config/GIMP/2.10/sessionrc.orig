@@ -15,4 +15,3 @@
       (dockable "gimp-tool-options"))
     (side left))
   (open-on-exit))
-(single-window-mode yes)

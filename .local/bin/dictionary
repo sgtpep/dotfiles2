@@ -2,12 +2,15 @@
 set -eu
 
 function download-dictionary {
-  [[ $1 == *[А-Яа-я]* ]] || local direction=ER
-  local dirname=stardict-${direction-RE}-LingvoUniversal-2.4.2
-  local path=~/.stardict/dic
-  if [[ ! -d $path/$dirname ]]; then
-    mkdir -p "$path"
-    wget -O - http://download.huzheng.org/lingvo/"$dirname".tar.bz2 | tar -jx -C "$path" || rm -fr "$path"/"$dirname"
+  if [[ $1 == *[А-Яа-я]* ]]; then
+    local direction=RE
+  else
+    local direction=ER
+  fi
+  local path=~/.stardict/dic/stardict-$direction-LingvoUniversal-2.4.2
+  if [[ ! -d $path ]]; then
+    mkdir -p "${path%/*}"
+    wget -O - http://download.huzheng.org/lingvo/"${path##*/}".tar.bz2 | tar -jx -C "${path%/*}" || rm -fr "$path"
   fi
 }
 

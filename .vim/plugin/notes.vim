@@ -1,7 +1,7 @@
 if getcwd() ==# expand('~/notes')
   function s:sync_notes()
     update
-    let output = system('execute-online sync-notes')
+    let output = system('online sync-notes')
     if v:shell_error
       echo output
     endif
