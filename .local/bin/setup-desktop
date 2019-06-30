@@ -218,9 +218,8 @@ function install-packages {
   dpkg -s "${@%/*}" &> /dev/null || sudo apt -y install "$@"
 }
 
-function install-standalone-packages {
-  local packages=(unattended-upgrades)
-  install-packages "${packages[@]}"
+function install-unattended-upgrades {
+  install-packages unattended-upgrades
 }
 
 function main {
@@ -230,7 +229,6 @@ function main {
   else
     clone-dotfiles
     setup-system
-    install-standalone-packages
     upgrade-system
     prompt-reboot
   fi
@@ -357,6 +355,7 @@ function setup-system {
   enable-autologin
   enable-fstrim
   install-firmware
+  install-unattended-upgrades
   schedule-syncing
   setup-acpid
   setup-debian
