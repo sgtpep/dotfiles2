@@ -272,7 +272,7 @@ function tmux_command(command, title)
   if not title then
     title = command
   end
-  return string.format('x-terminal-emulator -g %dx%d -title %s -e tmux new-session -Ad -s %s %s \\; set-option status off \\; attach-session -t %s', geometry.width / 11, geometry.height / 24, title, title, command, title)
+  return string.format('x-terminal-emulator -g %dx%d -title %s -e tmux new-session -Ad -s %s %s \\; set-option status off \\; attach-session -t %s', geometry.width // 11, geometry.height // 24, title, title, command, title)
 end
 
 function toggle_keyboard()
