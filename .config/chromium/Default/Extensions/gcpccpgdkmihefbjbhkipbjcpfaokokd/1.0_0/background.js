@@ -1,12 +1,11 @@
 const closeTab = tab =>
-  chrome.tabs.query({ windowId: tab.windowId, windowType: 'normal' }, tabs =>
-    tabs.length > 1 ||
-    !tabs.length ||
-    tab.incognito ||
-    tab.url === 'chrome://newtab/'
-      ? chrome.tabs.remove(tab.id)
-      : chrome.tabs.update(tab.id, { url: 'chrome://newtab/' })
-  );
+  chrome.tabs.query({ windowId: tab.windowId, windowType: 'normal' }, tabs => {
+    tabs.length === 1 &&
+      tab.url !== 'chrome://newtab/' &&
+      !tab.incognito &&
+      chrome.tabs.create({});
+    chrome.tabs.remove(tab.id);
+  });
 
 const copyText = text => {
   addEventListener(
