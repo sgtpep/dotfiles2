@@ -3,7 +3,7 @@ set -eu
 paths=(/sys/class/net/wl*)
 command=(sudo wpa_cli -i "${paths[0]##*/}")
 if [[ $@ ]]; then
-  local path=/etc/wpa_supplicant/wpa_supplicant.conf
+  path=/etc/wpa_supplicant/wpa_supplicant.conf
   if [[ $# == 2 ]]; then
     wpa_passphrase "$1" "$2" | sudo tee -a "$path" > /dev/null
   else
