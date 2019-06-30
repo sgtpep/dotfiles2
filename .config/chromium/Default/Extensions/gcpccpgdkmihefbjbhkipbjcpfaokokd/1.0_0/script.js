@@ -5,16 +5,14 @@ const clickElement = (element, ctrlKey = false) => {
     var { target } = element;
     element.removeAttribute('target');
   }
-  element.dispatchEvent(
-    new MouseEvent('click', {
-      bubbles: true,
-      cancelable: true,
-      ctrlKey,
-      view: window,
-    })
-  );
+  element.click();
   target && (element.target = target);
-  element.focus();
+  elementVisible(element) && element.focus();
+};
+
+const elementVisible = element => {
+  const rects = element.getClientRects();
+  return rects.length && rects[0].bottom >= 0 && rects[0].top <= innerHeight;
 };
 
 const generateLabel = (index, length) =>
@@ -131,9 +129,6 @@ const visibleElements = () =>
     ...document.querySelectorAll(
       'a, button, input:not([type=hidden]), select, textarea'
     ),
-  ].filter(element => {
-    const rects = element.getClientRects();
-    return rects.length && rects[0].bottom >= 0 && rects[0].top <= innerHeight;
-  });
+  ].filter(element => elementVisible(element));
 
 main();
