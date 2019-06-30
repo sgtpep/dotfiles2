@@ -69,6 +69,7 @@ update_config=1
 EOF
     fi
     local interface=${paths[0]##*/}
+    ! hp-stream-product || interface=wlo1
     sudo tee /etc/network/interfaces.d/"$interface" > /dev/null << EOF
 allow-hotplug $interface
 iface $interface inet manual
