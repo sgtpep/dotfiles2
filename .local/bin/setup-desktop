@@ -132,6 +132,14 @@ function configure-timezone {
   sudo ln -fs /usr/share/zoneinfo/Europe/Moscow /etc/localtime
 }
 
+function configure-xorg {
+  if hp-stream-product; then
+    local path=/etc/X11/xorg.conf.d
+    mkdir -p "$path"
+    sudo ln -fs /usr/share/doc/xserver-xorg-video-intel/xorg.conf "$path"/50-intel.conf
+  fi
+}
+
 function create-raspbian-user {
   id "$username" &> /dev/null || sudo useradd -m -G adm,audio,cdrom,dialout,games,gpio,i2c,input,netdev,plugdev,spi,sudo,users,video -s /bin/bash "$username"
   sudo grep -q "^$username:\\$" /etc/shadow || sudo passwd "$username"
@@ -351,6 +359,7 @@ function setup-system {
   configure-console-font
   configure-inotify
   configure-nopasswd
+  configure-xorg
   disable-power-key
   enable-autologin
   enable-fstrim
