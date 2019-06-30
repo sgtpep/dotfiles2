@@ -67,6 +67,7 @@ function configure-networking {
 ctrl_interface=DIR=/run/wpa_supplicant GROUP=netdev
 update_config=1
 EOF
+      sudo chmod 600 "$path"
     fi
     local interface=${paths[0]##*/}
     ! hp-stream-product || interface=wlo1
