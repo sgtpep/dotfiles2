@@ -30,3 +30,7 @@ function git {
 function paginate {
   "$@" |& less
 }
+
+function pwdhash {
+  command "${FUNCNAME[0]}" "$@" | xclip -selection clipboard
+}
