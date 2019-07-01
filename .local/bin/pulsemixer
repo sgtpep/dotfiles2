@@ -1,5 +1,1 @@
-#!/bin/bash
-set -eu
-set -- "$PYTHONUSERBASE"/bin/"${0##*/}" "$@"
-[[ -x $1 ]] || pip3 install "${0##*/}" >&2
-exec "$@"
+install-packages
