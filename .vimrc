@@ -76,8 +76,17 @@ function s:main()
   call s:configure_netrw()
   call s:define_mappings()
   call s:enable_filetypes()
+  call s:patch_matchparen()
   call s:set_options()
   call s:update_path()
+endfunction
+
+function s:patch_matchparen()
+  let path = expand('~/.vim/plugin/matchparen.vim')
+  if !filereadable(path)
+    call mkdir(fnamemodify(path, ':h'), 'p')
+    call writefile(map(readfile(printf('%s/plugin/%s', $VIMRUNTIME, fnamemodify(path, ':t'))), {_, line -> substitute(line, ' || (&t_Co .*\|\[c_lnum,[^]]*], ', '', '')}), path)
+  endif
 endfunction
 
 function s:set_options()
