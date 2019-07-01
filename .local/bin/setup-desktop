@@ -87,6 +87,7 @@ function configure-nopasswd {
     [apt-update]='/usr/bin/apt update'
     [poweroff]=/usr/sbin/poweroff
     [rfkill]=/usr/sbin/rfkill
+    [sshuttle]='/usr/bin/env PYTHONPATH=/usr/lib/python3/dist-packages /usr/bin/python3 /usr/bin/sshuttle --method auto --firewall'
   )
   local name
   for name in "${!commands[@]}"; do
