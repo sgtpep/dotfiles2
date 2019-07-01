@@ -19,10 +19,11 @@ alias vi=vim
 alias watch='watch '
 
 function git {
+  set -- "${FUNCNAME[0]}" "$@"
   if [[ ${1-} =~ ^(clone|pull)$ ]]; then
-    online git "$@"
+    online "$@"
   else
-    command git "$@"
+    command "$@"
   fi
 }
 
