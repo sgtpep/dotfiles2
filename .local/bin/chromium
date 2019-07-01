@@ -1,11 +1,11 @@
 #!/bin/bash
 set -eu
+[[ -f ~/.job ]] || set -- --disable-notifications "$@"
 if [[ $(< /etc/os-release) == *ID=raspbian* ]]; then
   executable=chromium-browser
 else
   executable=chromium
 fi
-[[ -f ~/.job ]] || set -- --disable-notifications "$@"
 set -- /usr/bin/"$executable" --disable-smooth-scrolling --enable-native-notifications --load-extension=/usr/share/chromium/extensions/ublock-origin "$@"
 [[ -x $1 ]] || install-packages "$executable" webext-ublock-origin
 exec "$@"

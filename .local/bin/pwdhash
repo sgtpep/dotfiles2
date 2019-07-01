@@ -1,6 +1,6 @@
 #!/bin/bash
 set -eu
+unset DISPLAY
 set -- "$PYTHONUSERBASE"/bin/"${0##*/}" "$@"
 [[ -x $1 ]] || pip3 install pwdhash.py >&2
-unset DISPLAY
 exec "$@"
