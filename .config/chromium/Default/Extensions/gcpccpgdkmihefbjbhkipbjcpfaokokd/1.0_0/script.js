@@ -5,7 +5,14 @@ const clickElement = (element, ctrlKey = false) => {
     var { target } = element;
     element.removeAttribute('target');
   }
-  element.click();
+  element.dispatchEvent(
+    new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      ctrlKey,
+      view: window,
+    })
+  );
   target && (element.target = target);
   elementVisible(element) && element.focus();
 };
