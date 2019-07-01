@@ -4,6 +4,7 @@ export LESS='-FRXi -j 3'
 export MANWIDTH=80
 export NODE_PATH=~/.npm/lib/node_modules
 export PYTHONUSERBASE=~/.pip
+export RIPGREP_CONFIG_PATH=~/.ripgreprc
 [ "${PATH/~}" != "$PATH" ] || export PATH=$GEM_HOME/bin:${NODE_PATH%/*/*}/bin:$PYTHONUSERBASE/bin:~/.local/bin:$PATH
 
 if [ "$TERM" = linux ] && [ "$XDG_VTNR" = 1 ]; then
