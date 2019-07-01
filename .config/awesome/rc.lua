@@ -167,7 +167,7 @@ keys = {
   { { 'Control', 'Mod1' }, 's', function() run_or_raise('x-terminal-emulator -title syncing -e bash -c \'online sync-all || read -s\'', { name = 'syncing' }) end },
   { { 'Control', 'Mod1' }, 't', function() run_or_raise('x-terminal-emulator -e tmux new-session -A -s tmux', { name = 'tmux' }) end },
   { { 'Control', 'Mod1' }, 'w', function() run_or_raise(tmux_command('notes'), { name = 'notes' }) end },
-  { { 'Control', 'Mod1' }, 'x', function() run_or_raise('x-terminal-emulator -title calendar -e bash -c $\'date \\\'+%F %a %R\\\'; echo; ncal -Mb -A 1; read -s -n 1\'', { name = 'calendar' }) end },
+  { { 'Control', 'Mod1' }, 'x', function() run_or_raise('x-terminal-emulator -title calendar -e bash -c $\'date \\\'+%F %a %R\\\'; echo; ncal -Mb -A 1; read -s -n 1\'', { name = 'calendar' }, true) end },
   { { 'Control', 'Mod1' }, 'z', function() awful.spawn('slock') end },
   { { 'Mod1' }, 'Escape', function() tag = root.tags()[1] tag.selected = not tag.selected end },
   { { 'Mod1' }, 'F4', function() if client.focus then client.focus:kill() end end },
