@@ -1,0 +1,12 @@
+#!/bin/bash
+set -eu
+path=~/.local/apps/${0##*/}
+set -- firejail --whitelist="$path" "$path"/google-chrome --disable-infobars --no-sandbox "$@"
+if [[ ! -x $3 ]]; then
+  path=/tmp/${0##*/}
+  wget -O "$path" https://dl.google.com/linux/direct/"${0##*/}"-stable_current_amd64.deb || rm -f "$path"
+  directory=${3%/*}
+  mkdir -p "$directory"
+  dpkg --fsys-tarfile "$path" | tar -x -C "$directory" --strip-components=4
+fi
+exec "$@"
