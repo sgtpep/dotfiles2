@@ -42,7 +42,9 @@ nnoremap q ZQ
 only
 set classify=@:link:,:dir:/
 set dotdirs=rootparent
+set ignorecase
 set nohlsearch
 set notrash
+set smartcase
 set statusline='%A %u:%g %d %s'
 set tuioptions-=ps

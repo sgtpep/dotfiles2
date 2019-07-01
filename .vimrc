@@ -87,11 +87,13 @@ function s:set_options()
   set directory=/var/tmp//
   set expandtab
   set grepformat=%f:%l:%c:%m
+  set ignorecase
   set noruler
   set nostartofline
   set notitle
   set shiftwidth=2
   set shortmess+=I
+  set smartcase
   set smartindent
   set softtabstop=2
   set t_Co=0
