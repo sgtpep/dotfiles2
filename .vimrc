@@ -87,6 +87,7 @@ function s:patch_matchparen()
     call mkdir(fnamemodify(path, ':h'), 'p')
     call writefile(map(readfile(printf('%s/plugin/%s', $VIMRUNTIME, fnamemodify(path, ':t'))), {_, line -> substitute(line, ' || (&t_Co .*\|\[c_lnum,[^]]*], ', '', '')}), path)
   endif
+  highlight MatchParen term=underline
 endfunction
 
 function s:set_options()
