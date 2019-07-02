@@ -1,3 +1,3 @@
 #!/bin/bash
 set -eu
-[[ ! -f ~/.ssh/id_rsa ]] || ! ping -c 1 danil.mobi &> /dev/null || CRON=1 exec flock /tmp/"${0%%/*}".lock sync-all
+[[ ! -f ~/.ssh/id_rsa ]] || ! ping -c 1 danil.mobi &> /dev/null || CRON=1 exec sync-all
