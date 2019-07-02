@@ -1,5 +1,5 @@
 execute 'filetype <application/json> ' . $EDITOR . ' -- %f'
-filetype <application/gzip,application/x-bzip2,application/x-xz> tar -x -f %f
+filetype <application/gzip,application/x-bzip2,application/x-tar,application/x-xz> tar -x -f %f
 filetype <application/vnd.debian.binary-package> dpkg -x -- %f .
 filetype <application/x-7z-compressed> 7zr x -- %f
 filetype <application/x-rar-compressed> unrar x -- %f
