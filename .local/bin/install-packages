@@ -68,7 +68,7 @@ function packages-installed {
 }
 
 function run-command {
-  local command=(flock /tmp/install-packages.lock online "$@")
+  local command=(flock ~/.local/bin/install-packages online "$@")
   local detached_command=(bash -"$-" -c '"$@" || read -s' -- "${command[@]}")
   local title=installing
   if [[ ! -t 1 && -v TMUX ]]; then
