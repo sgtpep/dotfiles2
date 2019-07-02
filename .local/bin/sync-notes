@@ -1,5 +1,6 @@
 #!/bin/bash
 set -eu
+[[ ${FLOCK-} == $0 ]] || FLOCK=$0 exec flock "$0" "$0" "$@"
 path=~/notes
 if [[ -d $path ]]; then
   command=(git -C "$path")

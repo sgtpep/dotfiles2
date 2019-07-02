@@ -1,6 +1,5 @@
 #!/bin/bash
 set -eu
-[[ ${FLOCK-} == $0 ]] || FLOCK=$0 exec flock "$0" "$0" "$@"
 if ! output=$(sync-notes 2>&1); then
   echo "$output" >&2
   failed=1
