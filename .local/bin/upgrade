@@ -1,9 +1,11 @@
 #!/bin/bash
 set -eu
 sudo apt update
-sudo APT_LISTCHANGES_FRONTEND=none DEBIAN_FRONTEND=noninteractive apt -y -o Dpkg::Options::=--force-confnew full-upgrade
-sudo apt -y autoremove --purge
-if [[ -f /run/reboot-required ]]; then
-  read -p 'Reboot? [Y/n] '
-  [[ ! $REPLY =~ ^[Yy]*$ ]] || sudo reboot
+if [[ $(apt list --upgradable 2> /dev/null) != 'Listing...' ]]; then
+  sudo APT_LISTCHANGES_FRONTEND=none DEBIAN_FRONTEND=noninteractive apt -y -o Dpkg::Options::=--force-confnew full-upgrade
+  sudo apt -y autoremove --purge
+  if [[ -f /run/reboot-required ]]; then
+    read -p 'Reboot? [Y/n] '
+    [[ ! $REPLY =~ ^[Yy]*$ ]] || sudo reboot
+  fi
 fi
