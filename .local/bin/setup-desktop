@@ -14,7 +14,10 @@ function clone-dotfiles {
 }
 
 function configure-console-font {
-  sudo sed -i 's/^\(FONTFACE="\)[^"]*/\1VGA/' /etc/default/console-setup
+  local path=/etc/default/console-setup
+  local checksum=$(md5sum "$path")
+  sudo sed -i 's/^\(FONTFACE="\)[^"]*/\1VGA/' "$path"
+  md5sum -c --status <<< $checksum || sudo setupcon --save-only
 }
 
 function configure-console-keyboard {
