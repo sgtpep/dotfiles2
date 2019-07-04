@@ -17,6 +17,14 @@
   "enable_do_not_track": true,
   "extensions": {
     "commands": {
+      "linux:Alt+H": {
+        "command_name": "history-back",
+        "extension": "gcpccpgdkmihefbjbhkipbjcpfaokokd"
+      },
+      "linux:Alt+L": {
+        "command_name": "history-forward",
+        "extension": "gcpccpgdkmihefbjbhkipbjcpfaokokd"
+      },
       "linux:Alt+Shift+Y": {
         "command_name": "copy-title-url",
         "extension": "gcpccpgdkmihefbjbhkipbjcpfaokokd"
@@ -57,6 +65,12 @@
             },
             "copy-url": {
               "description": "Copy a URL"
+            },
+            "history-back": {
+              "description": "Back in history"
+            },
+            "history-forward": {
+              "description": "Forward in history"
             },
             "toggle-pinned": {
               "description": "Pin/unpin a tab"

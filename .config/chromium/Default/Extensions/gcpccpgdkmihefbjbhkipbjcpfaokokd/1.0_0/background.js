@@ -39,6 +39,10 @@ const listenCommands = () =>
         ? copyText([tab.title, tab.url].filter(Boolean).join(' '))
         : command === 'copy-url'
         ? copyText(tab.url)
+        : command === 'history-back'
+        ? chrome.tabs.executeScript({ code: 'history.back()' })
+        : command === 'history-forward'
+        ? chrome.tabs.executeScript({ code: 'history.forward()' })
         : command === 'toggle-pinned'
         ? togglePinnedTab(tab)
         : undefined
