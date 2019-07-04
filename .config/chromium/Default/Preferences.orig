@@ -25,6 +25,10 @@
         "command_name": "history-forward",
         "extension": "gcpccpgdkmihefbjbhkipbjcpfaokokd"
       },
+      "linux:Alt+S": {
+        "command_name": "enable-javascript",
+        "extension": "gcpccpgdkmihefbjbhkipbjcpfaokokd"
+      },
       "linux:Alt+Shift+Y": {
         "command_name": "copy-title-url",
         "extension": "gcpccpgdkmihefbjbhkipbjcpfaokokd"
@@ -45,6 +49,7 @@
     "settings": {
       "gcpccpgdkmihefbjbhkipbjcpfaokokd": {
         "granted_permissions": {
+          "api": ["contentSettings"],
           "scriptable_host": ["<all_urls>"]
         },
         "incognito": true,
@@ -66,6 +71,9 @@
             "copy-url": {
               "description": "Copy a URL"
             },
+            "enable-javascript": {
+              "description": "Enable JavaScript"
+            },
             "history-back": {
               "description": "Back in history"
             },
@@ -86,7 +94,7 @@
           "key": "FGkXUYJ6otzjRPtG23pzlY6hn04N+lHoRqsM/WPa06I=",
           "manifest_version": 2,
           "name": "Customizations",
-          "permissions": ["<all_urls>", "activeTab"],
+          "permissions": ["<all_urls>", "activeTab", "contentSettings"],
           "version": "1.0"
         },
         "newAllowFileAccess": true,
@@ -105,7 +113,6 @@
         "javascript": {
           "http://localhost:631,*": { "setting": 1 },
           "http://localhost:80,*": { "setting": 1 },
-          "https://2gis.ru:443,*": { "setting": 1 },
           "https://api.travis-ci.org:443,*": { "setting": 1 },
           "https://app.grammarly.com:443,*": { "setting": 1 },
           "https://cloud.digitalocean.com:443,*": { "setting": 1 },

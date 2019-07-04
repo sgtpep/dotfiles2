@@ -19,6 +19,18 @@ const copyText = text => {
   document.execCommand('copy');
 };
 
+const enableJavaScript = (url, incognito = false) =>
+  chrome.contentSettings.javascript.set(
+    {
+      primaryPattern: /^file:/.test(url)
+        ? url
+        : `${url.match(/^https?:\/\/([^\/]+)/)[0]}/*`,
+      scope: incognito ? 'incognito_session_only' : 'regular',
+      setting: 'allow',
+    },
+    () => chrome.tabs.reload()
+  );
+
 const insertCSS = () =>
   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (tab.url && changeInfo.status === 'loading') {
@@ -39,6 +51,8 @@ const listenCommands = () =>
         ? copyText([tab.title, tab.url].filter(Boolean).join(' '))
         : command === 'copy-url'
         ? copyText(tab.url)
+        : command === 'enable-javascript'
+        ? enableJavaScript(tab.url, tab.incognito)
         : command === 'history-back'
         ? chrome.tabs.executeScript({ code: 'history.back()' })
         : command === 'history-forward'
