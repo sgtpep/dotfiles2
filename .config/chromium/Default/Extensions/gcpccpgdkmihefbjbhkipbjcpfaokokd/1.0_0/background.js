@@ -57,7 +57,8 @@ const main = () => {
 const styles = {
   'stackoverflow.com':
     'body, .top-bar { margin-top: 0; } #js-gdpr-consent-banner, #noscript-warning { display: none; }',
-  'www.reddit.com': '.kkVTOP { max-height: none; } .kkVTOP::before { display: none; }',
+  'www.reddit.com':
+    '.kkVTOP { max-height: none; } .kkVTOP::before { display: none; }',
 };
 
 const togglePinnedTab = tab => chrome.tabs.update({ pinned: !tab.pinned });
