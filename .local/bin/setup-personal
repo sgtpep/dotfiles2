@@ -106,11 +106,7 @@ EOF
 function setup-msmtp {
   install-packages msmtp-mta
   sudo tee /etc/aliases > /dev/null <<< "default: $email"
-  local command=netrc-password
-  download-dotfile .local/bin/"$command"
-  local path=~/.msmtprc
-  download-dotfile "${path#~/}"
-  sed -i "s|\( \)\($command \)|\1$HOME/.local/bin/\2|" "$path"
+  download-dotfile .msmtprc
   sudo ln -fs "$path" /etc/msmtprc
   sudo ln -fs ~/.netrc /etc/netrc
 }

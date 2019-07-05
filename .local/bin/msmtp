@@ -1,1 +1,6 @@
-install-packages
+#!/bin/bash
+set -eu
+netrc-password
+set -- /usr/bin/"${0##*/}" "$@"
+[[ -x $1 ]] || install-packages "${0##*/}"
+exec "$@"
