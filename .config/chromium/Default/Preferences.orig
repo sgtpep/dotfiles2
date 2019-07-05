@@ -40,10 +40,6 @@
       "linux:Alt+Y": {
         "command_name": "copy-url",
         "extension": "gcpccpgdkmihefbjbhkipbjcpfaokokd"
-      },
-      "linux:Ctrl+W": {
-        "command_name": "close-tab",
-        "extension": "gcpccpgdkmihefbjbhkipbjcpfaokokd"
       }
     },
     "settings": {
@@ -62,9 +58,6 @@
             "newtab": "tab.html"
           },
           "commands": {
-            "close-tab": {
-              "description": "Close a tab"
-            },
             "copy-title-url": {
               "description": "Copy a title and URL"
             },
