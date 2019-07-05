@@ -1,6 +1,6 @@
 #!/bin/bash
 set -eu
-[[ ${FLOCK-} == $0 ]] || FLOCK=$0 exec flock "$0" "$0" "$@"
+[[ ${FLOCK-} == $0 ]] || FLOCK=$0 exec flock "$0" bash -"$-" "$0" "$@"
 if ls ~/.msmtpqueue/* &> /dev/null; then
   command=/usr/share/doc/msmtp/examples/msmtpqueue/msmtp-runqueue.sh
   [[ -x $command ]] || install-packages msmtp
