@@ -1,0 +1,3 @@
+#!/bin/bash
+set -eu
+job-list "$@" | grep '\.\(jsx\?\|tsx\?\)$' | exec xargs -r -d '\n' npx eslint
