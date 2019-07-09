@@ -74,7 +74,7 @@ function configure_notifications()
 end
 
 function create_keyboard()
-  keyboard = awful.wibar({ height = 200, ontop = true, position = 'bottom', visible = raspbian_os() })
+  keyboard = awful.wibar({ height = 200, ontop = true, position = 'bottom', visible = false })
   local groups = { Return = {}, space = {} }
   local modifiers = {}
   keyboard:setup(gears.table.join({ layout = wibox.layout.flex.vertical }, gears.table.map(function(keys)
@@ -210,10 +210,6 @@ function product_name()
   return _product_name
 end
 
-function raspbian_os()
-  return io.open('/etc/os-release'):read('*all'):find('ID=raspbian') ~= nil
-end
-
 rules = {
   { { class = 'Chromium', type = 'normal' }, { callback = function(client) configure_chromium(client) end } },
   { { class = 'XClipboard' }, { hidden = true } },
@@ -242,9 +238,9 @@ end
 function set_keys()
   root.keys(gears.table.join(table.unpack(gears.table.map(function(arguments)
     return awful.key(table.unpack(arguments))
-  end, gears.table.join(keys, raspbian_os() and gears.table.map(function(key)
+  end, gears.table.join(keys, gears.table.map(function(key)
     return #key[1] == 2 and gears.table.hasitem(key[1], 'Control') and gears.table.hasitem(key[1], 'Mod1') and { { 'Mod4' },  key[2], key[3] } or nil
-  end, keys) or {})))))
+  end, keys))))))
 end
 
 function set_rules()

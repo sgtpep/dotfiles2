@@ -7,7 +7,6 @@ xrdb ~/.Xresources
 [[ ! -c /dev/vboxguest ]] || { pactl set-sink-mute 0 no; pactl set-sink-volume 0 100%; } &
 [[ ! -c /dev/vboxguest ]] || /opt/VBoxGuestAdditions-*/other/98vboxadd-xclient &
 [[ ! -c /dev/vboxguest || ! -f ~/.job ]] || xmodmap ~/.Xmodmap-job &
-[[ $(< /etc/os-release) != *ID=raspbian* ]] || xrdb -merge <<< 'Xft.dpi: 86'
 battery-monitor &
 devmon &
 eval "$(dbus-launch --exit-with-session --sh-syntax)"

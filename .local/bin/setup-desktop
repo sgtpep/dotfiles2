@@ -20,10 +20,6 @@ function configure-console-font {
   md5sum -c --status <<< $checksum || sudo setupcon --save-only
 }
 
-function configure-console-keyboard {
-  sudo sed -i 's/^\(XKBLAYOUT="\)[^"]*/\1us/' /etc/default/keyboard
-}
-
 function configure-dotfiles {
   [[ ! -f ~/.ssh/id_rsa ]] || git -C ~ remote set-url origin git@github.com:"$repository".git
   git -C ~ config status.showUntrackedFiles no
@@ -45,20 +41,8 @@ EOF
   md5sum -c --status <<< $checksum || sudo update-grub
 }
 
-function configure-hostname {
-  sudo hostnamectl set-hostname localhost
-}
-
 function configure-inotify {
   sudo tee /etc/sysctl.d/50-inotify.conf > /dev/null <<< 'fs.inotify.max_user_watches=524288'
-}
-
-function configure-locale {
-  local locale=en_US.UTF-8
-  sudo sed -i "s/^#* *\(${locale/./\\.} \)/\1/" /etc/locale.gen
-  local path=/etc/default/locale
-  [[ $(< "$path") == *=$locale ]] || sudo locale-gen
-  sudo tee "$path" > /dev/null <<< "LANG=$locale"
 }
 
 function configure-networking {
@@ -98,62 +82,12 @@ function configure-nopasswd {
   done
 }
 
-function configure-raspbian-cmdline {
-  ! dpkg -s plymouth &> /dev/null || sudo apt -y purge plymouth
-  sudo sed -i -f - /boot/cmdline.txt << \EOF
-s/\b\(console=tty\)[^ ]*/\16/
-s/ rootwait$/\0 loglevel=3 logo.nologo/
-EOF
-}
-
-function configure-raspbian-config {
-  declare -A options=(
-    [boot_delay]=0
-    [disable_splash]=1
-    [display_lcd_rotate]=2
-  )
-  local path=/boot/config.txt
-  local option
-  for option in "${!options[@]}"; do
-    if grep -q "^$option=" "$path"; then
-      sudo sed -i "s/^\($option=\).*/\1${options[$option]}/" "$path"
-    else
-      sudo tee -a "$path" > /dev/null <<< "$option=${options[$option]}"
-    fi
-  done
-  local key=dtoverlay
-  sudo sed -i "/^$key=/d" "$path"
-  local overlays=(
-    pi3-disable-bt
-    rpi-ft5406,touchscreen-inverted-x=1,touchscreen-inverted-y=1
-  )
-  printf '%s\n' "${overlays[@]/#/$key=}" | sudo tee -a "$path" > /dev/null
-}
-
-function configure-raspbian-mirror {
-  sudo sed -i 's/\braspbian\.raspberrypi\.org\b/mirrordirector.raspbian.org/' /etc/apt/sources.list
-}
-
-function configure-timezone {
-  sudo ln -fs /usr/share/zoneinfo/Europe/Moscow /etc/localtime
-}
-
 function configure-xorg {
   if hp-stream-product; then
     local path=/etc/X11/xorg.conf.d
     mkdir -p "$path"
     sudo ln -fs /usr/share/doc/xserver-xorg-video-intel/xorg.conf "$path"/50-intel.conf
   fi
-}
-
-function create-raspbian-user {
-  id "$username" &> /dev/null || sudo useradd -m -G adm,audio,cdrom,dialout,games,gpio,i2c,input,netdev,plugdev,spi,sudo,users,video -s /bin/bash "$username"
-  sudo grep -q "^$username:\\$" /etc/shadow || sudo passwd "$username"
-  gpasswd -d pi sudo || :
-}
-
-function disable-dhcp-wait {
-  sudo rm -f /etc/systemd/system/dhcpcd.service.d/wait.conf
 }
 
 function disable-power-key {
@@ -175,34 +109,6 @@ function enable-autologin {
 [Service]
 ExecStart=
 ExecStart=-/usr/sbin/agetty -a $USER %I
-EOF
-}
-
-function enable-block-wifi {
-  local name=block-wifi
-  sudo tee /etc/systemd/system/"$name".service > /dev/null << \EOF
-[Install]
-WantedBy=multi-user.target
-
-[Service]
-ExecStart=/usr/sbin/rfkill block wifi
-Type=oneshot
-EOF
-  sudo systemctl enable "$name"
-  sudo systemctl mask systemd-rfkill
-}
-
-function enable-fontconfig-bgr {
-  local path=~/.config/fontconfig/conf.d/50-bgr.conf
-  mkdir -p "${path%/*}"
-  cat > "$path" << \EOF
-<fontconfig>
-  <match target="font">
-    <edit name="rgba">
-      <const>bgr</const>
-    </edit>
-  </match>
-</fontconfig>
 EOF
 }
 
@@ -237,15 +143,10 @@ function install-unattended-upgrades {
 }
 
 function main {
-  if raspbian-os && [[ $USER == pi ]]; then
-    create-raspbian-user
-    run-script
-  else
-    clone-dotfiles
-    setup-system
-    upgrade-system
-    prompt-reboot
-  fi
+  clone-dotfiles
+  setup-system
+  upgrade-system
+  prompt-reboot
 }
 
 function product-name {
@@ -260,19 +161,11 @@ function prompt-reboot {
   fi
 }
 
-function raspbian-os {
-  [[ $(< /etc/os-release) == *ID=raspbian* ]]
-}
-
 function release-name {
   lsb_release -cs
 }
 
 repository=sgtpep/dotfiles
-
-function run-script {
-  exec sudo -u "$username" bash -"$-" "$0" "$@"
-}
 
 function schedule-syncing {
   local command=sync-cron
@@ -317,15 +210,6 @@ function setup-cups {
   fi
 }
 
-function setup-debian {
-  if ! raspbian-os; then
-    configure-grub
-    configure-networking
-    setup-cups
-    setup-nginx
-  fi
-}
-
 function setup-nginx {
   install-packages nginx
   local line=$'\t''add_header Cache-Control no-cache;'
@@ -347,24 +231,11 @@ function setup-printer {
   fi
 }
 
-function setup-raspbian {
-  if raspbian-os; then
-    configure-console-keyboard
-    configure-hostname
-    configure-locale
-    configure-raspbian-cmdline
-    configure-raspbian-config
-    configure-raspbian-mirror
-    configure-timezone
-    disable-dhcp-wait
-    enable-block-wifi
-    enable-fontconfig-bgr
-  fi
-}
-
 function setup-system {
   configure-console-font
+  configure-grub
   configure-inotify
+  configure-networking
   configure-nopasswd
   configure-xorg
   disable-power-key
@@ -374,8 +245,8 @@ function setup-system {
   install-unattended-upgrades
   schedule-syncing
   setup-acpid
-  setup-debian
-  setup-raspbian
+  setup-cups
+  setup-nginx
   setup-virtualbox
 }
 

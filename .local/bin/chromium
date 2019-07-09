@@ -5,11 +5,6 @@ key=content_settings
 path=$directory/Default/Preferences
 [[ -h $directory/SingletonLock || $(< "$path") != *"\"$key\":[{"* ]] || sed -i 's/\("'"$key"'":\[\){[^]]*\(]\)/\1\2/' "$path"
 [[ -f ~/.job ]] || set -- --disable-notifications "$@"
-if [[ $(< /etc/os-release) == *ID=raspbian* ]]; then
-  executable=chromium-browser
-else
-  executable=chromium
-fi
-set -- /usr/bin/"$executable" --disable-infobars --disable-smooth-scrolling --enable-native-notifications --load-extension=/usr/share/chromium/extensions/ublock-origin "$@"
-[[ -x $1 ]] || install-packages "$executable" webext-ublock-origin
+set -- /usr/bin/"${0##*/}" --disable-infobars --disable-smooth-scrolling --enable-native-notifications --load-extension=/usr/share/chromium/extensions/ublock-origin "$@"
+[[ -x $1 ]] || install-packages "${0##*/}" webext-ublock-origin
 exec "$@"
