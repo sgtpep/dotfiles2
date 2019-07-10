@@ -33,7 +33,8 @@ function main {
 }
 
 function prompt-words {
-  rlwrap -io -C "${0##*/}" -P '' -S "${0##*/}> " -b '' -g '^ ' -q '([' -s 10000 -w 0 cat
+  local command=${0##*/}
+  rlwrap -io -C "$command" -P '' -S "$command> " -b '' -g '^ ' -q '([' -s 10000 -w 0 cat
 }
 
 [[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"

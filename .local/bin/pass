@@ -2,6 +2,7 @@
 set -eu
 path=~/.password-store
 [[ -d $path ]] || git clone personal:repositories/pass.git "$path"
-set -- /usr/bin/"${0##*/}" "$@"
-[[ -x $1 ]] || install-packages "${0##*/}"
+command=${0##*/}
+set -- /usr/bin/"$command" "$@"
+[[ -x $1 ]] || install-packages "$command"
 exec "$@"

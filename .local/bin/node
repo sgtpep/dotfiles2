@@ -1,8 +1,9 @@
 #!/bin/bash
 set -eu
-set -- "${NODE_PATH%/*/*}"/bin/"${0##*/}" "$@"
+command=${0##*/}
+set -- "${NODE_PATH%/*/*}"/bin/"$command" "$@"
 if [[ ! -x $1 ]]; then
-  path=/tmp/${0##*/}
+  path=/tmp/$command
   version=12.4.0
   wget -O "$path" https://nodejs.org/dist/v"$version"/node-v"$version"-linux-x64.tar.xz || rm -f "$path"
   [[ $(sha256sum "$path") == 9aec6a2a50c1791704a6069cbda6da62781361e44814d024e8bbaaf0deb41c5e\ * ]] || rm -f "$path"

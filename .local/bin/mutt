@@ -3,6 +3,7 @@ set -eu
 path=~/Downloads
 [[ -d $path ]] || mkdir "$path"
 [[ -d ~/mail/Inbox ]] || mbsync -a
-set -- /usr/bin/"${0##*/}" "$@"
-[[ -x $1 ]] || install-packages "${0##*/}"
+command=${0##*/}
+set -- /usr/bin/"$command" "$@"
+[[ -x $1 ]] || install-packages "$command"
 exec "$@"

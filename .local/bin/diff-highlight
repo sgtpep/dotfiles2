@@ -1,4 +1,5 @@
 #!/bin/bash
 set -eu
-path=/usr/share/doc/git/contrib/${0##*/}
-exec perl -I "$path" -MDiffHighlight "$path"/"${0##*/}".perl
+command=${0##*/}
+path=/usr/share/doc/git/contrib/$command
+exec perl -I "$path" -MDiffHighlight "$path"/"$command".perl
