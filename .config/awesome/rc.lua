@@ -50,12 +50,14 @@ function change_volume(change)
 end
 
 function configure_chromium(client)
-  local copy = 'xdotool key --clearmodifiers alt+y sleep 0.1'
+  local copy = function()
+    fake_input({'Alt_L', 'y'})
+  end
   client:keys(gears.table.join(table.unpack({
-    awful.key({ 'Mod1' }, 'e', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title ebookify -e bash -c \'ebookify "$(xclip -o -selection clipboard)" || read -s\'', copy), { name = 'ebookify' }, true) end),
-    awful.key({ 'Mod1' }, 'm', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title sharing -e bash -c $\'output=$(xclip -o -selection clipboard); mutt -e \\\'set noabort_unmodified\\\' -i <(echo "${output##* }") -s "Link: ${output%% *}"\'', copy:gsub(' alt%+y ', ' alt+shift+y ')), { name = 'sharing' }, true) end),
-    awful.key({ 'Mod1' }, 'p', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title password -e bash -c \': "$(xclip -o -selection clipboard)"; : "${_#*://}"; hostname=${_%%%%/*}; if [[ -f ~/.password-store/$hostname.gpg ]]; then pass "$hostname"; else pwdhash "$hostname" 2> /dev/null; fi | xclip -selection clipboard && xdotool key --delay=100 alt+Tab ctrl+v\'', copy), { name = 'password' }, true) end),
-    awful.key({ 'Mod1' }, 'v', nil, function() run_or_raise(string.format('%s key ctrl+w && exec x-terminal-emulator -title mpv -e bash -c \'mpv "$(xclip -o -selection clipboard)" || read -s\'', copy), { class = 'mpv' }, true) end),
+    awful.key({ 'Mod1' }, 'e', nil, function() copy() run_or_raise('x-terminal-emulator -title ebookify -e bash -c \'ebookify "$(xclip -o -selection clipboard)" || read -s\'', { name = 'ebookify' }) end),
+    awful.key({ 'Mod1' }, 'm', nil, function() fake_input({'Alt_L', 'Shift_L', 'y'}) run_or_raise('x-terminal-emulator -title sharing -e bash -c $\'output=$(xclip -o -selection clipboard); mutt -e \\\'set noabort_unmodified\\\' -i <(echo "${output##* }") -s "Link: ${output% *}"\'', { name = 'sharing' }) end),
+    awful.key({ 'Mod1' }, 'p', nil, function() copy() run_or_raise('x-terminal-emulator -title password -e bash -c \': "$(xclip -o -selection clipboard)"; : "${_#*://}"; hostname=${_%%/*}; if [[ -f ~/.password-store/$hostname.gpg ]]; then pass "$hostname"; else pwdhash "$hostname" 2> /dev/null; fi | xclip -selection clipboard; awesome-client <<< $1\' -- "fake_input({\'Alt_L\', \'Tab\'}) require(\'gears\').timer.start_new(0.1, function() fake_input({\'Control_L\', \'v\'}) require(\'awful\').spawn.with_shell(\'xclip -selection clipboard <<< \\\'\\\'\') end)"', { name = 'password' }) end),
+    awful.key({ 'Mod1' }, 'v', nil, function() copy() run_or_raise('x-terminal-emulator -title mpv -e bash -c \'mpv "$(xclip -o -selection clipboard)" || read -s\'', { class = 'mpv' }) end),
   })))
 end
 
@@ -143,6 +145,17 @@ end
 
 function create_tag()
   awful.tag({ 0 }, awful.screen.focused(), awful.layout.suit.max)
+end
+
+function fake_input(...)
+  for _, group in ipairs({...}) do
+    for _, key in ipairs(group) do
+      root.fake_input('key_press', key)
+    end
+    for _, key in ipairs(group) do
+      root.fake_input('key_release', key)
+    end
+  end
 end
 
 function hp_stream_product()
