@@ -1,9 +1,14 @@
 #!/bin/bash
 set -eu
 directory=~/.config/chromium
-key=content_settings
-path=$directory/Default/Preferences
-[[ -h $directory/SingletonLock || $(< "$path") != *"\"$key\":[{"* ]] || sed -i 's/\("'"$key"'":\[\){[^]]*\(]\)/\1\2/' "$path"
+if [[ ! -h $directory/SingletonLock ]]; then
+  path=$directory/Default/Preferences
+  content=$(< "$path")
+  key=content_settings
+  [[ $content != *"\"$key\":[{"* ]] || sed -i 's/\("'"$key"'":\[\){[^]]*\(]\)/\1\2/' "$path"
+  key=per_host_zoom_levels
+  [[ $content != *"\"$key\":{\""* ]] || sed -i 's/\("'"$key"'":{\).*"zoom_level":[0-9.]*}}/\1/' "$path"
+fi
 [[ -f ~/.job ]] || set -- --disable-notifications "$@"
 command=chromium
 set -- /usr/bin/"$command" --disable-infobars --disable-smooth-scrolling --enable-native-notifications --load-extension=/usr/share/chromium/extensions/ublock-origin "$@"
