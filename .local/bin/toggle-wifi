@@ -2,7 +2,11 @@
 set -eu
 command=(ping -c 1 danil.mobi)
 if [[ $1 == block ]] || ! "${command[@]}" &> /dev/null; then
-  ! command -v rfkill > /dev/null || sudo rfkill "$1" wifi
+  command=rfkill
+  if [[ -b /dev/$command ]]; then
+    [[ -x /usr/sbin/$command ]] || install-packages "$command"
+    sudo "$command" "$1" wifi
+  fi
   if [[ $1 == unblock ]]; then
     echo -n 'Connecting...' >&2
     until "${command[@]}" &> /dev/null; do
