@@ -50,7 +50,7 @@ function change_volume(change)
 end
 
 function configure_chromium(client)
-  local copy = 'xdotool key alt+y sleep 0.1'
+  local copy = 'xdotool key --clearmodifiers alt+y sleep 0.1'
   client:keys(gears.table.join(table.unpack({
     awful.key({ 'Mod1' }, 'e', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title ebookify -e bash -c \'ebookify "$(xclip -o -selection clipboard)" || read -s\'', copy), { name = 'ebookify' }, true) end),
     awful.key({ 'Mod1' }, 'm', nil, function() run_or_raise(string.format('%s && exec x-terminal-emulator -title sharing -e bash -c $\'output=$(xclip -o -selection clipboard); mutt -e \\\'set noabort_unmodified\\\' -i <(echo "${output##* }") -s "Link: ${output%% *}"\'', copy:gsub(' alt%+y ', ' alt+shift+y ')), { name = 'sharing' }, true) end),
