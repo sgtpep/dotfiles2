@@ -1,24 +1,24 @@
 #!/bin/bash
 set -eu
-output=$(sed '/^\s*#\s*!/d' "$1")
-path=/tmp/cjs
-cat > "$path" << EOF
-__filename = '${1//'/\\'}';
-__dirname = require('path').dirname(__filename);
-require.main.filename = __filename;
-require.main.path = __dirname;
-require.main.paths = __dirname.split(require('path').sep).reduce(paths => {
-  const path = require('path');
-  return [
-    ...paths,
-    path.join(
-      path.dirname(path.dirname(paths[paths.length - 1] || __filename)),
-      'node_modules'
-    ),
-  ];
-}, []);
-module = { ...module };
-$output
-console.log($2);
-EOF
-exec node "$path" "${@:3}"
+exec rlwrap -C "${0##*/}" -P '' -S '> ' -b '' -g '^ ' -q '([' -s 10000 -w 10 node -e $'
+const fs = require(\'fs\');
+const path = require(\'path\');
+const readline = require(\'readline\');
+
+readline.createInterface({ input: process.stdin }).on(\'line\', line => {
+  try {
+    line && console.log(
+      eval(`
+__filename = \'${process.argv[1].replace(/\'/g, \'\\\\\\\'\')}\';
+__dirname = path.dirname(__filename);
+Object.keys(require.cache).forEach(key => (delete require.cache[key]))
+\'use strict\';
+${fs.readFileSync(process.argv[1])}
+${line}
+`)
+    );
+  } catch (error) {
+    console.error(error);
+  }
+});
+' "$1"
