@@ -1,24 +1,11 @@
 #!/bin/bash
 set -eu
-exec rlwrap -C "${0##*/}" -P '' -S '> ' -b '' -g '^ ' -q '([' -s 10000 -w 10 node -e $'
-const fs = require(\'fs\');
-const path = require(\'path\');
-const readline = require(\'readline\');
-
-readline.createInterface({ input: process.stdin }).on(\'line\', line => {
-  try {
-    line && console.log(
-      eval(`
-__filename = \'${process.argv[1].replace(/\'/g, \'\\\\\\\'\')}\';
-__dirname = path.dirname(__filename);
-Object.keys(require.cache).forEach(key => (delete require.cache[key]))
-\'use strict\';
-${fs.readFileSync(process.argv[1])}
-${line}
-`)
-    );
-  } catch (error) {
-    console.error(error);
-  }
-});
-' "$1"
+while :; do
+  rlwrap -o -C "${0##*/}" -P '' -b '' -g '^ ' -q '([' -s 10000 -w 0 bash -"$-" -c $'
+read -r -p \'> \'
+exec node -e "
+$(< \"$1\")
+console.log($REPLY);
+"
+' -- "$@"
+done

@@ -5,10 +5,12 @@ if [[ ! -f $path ]]; then
   cat > "$path" << \EOF
 const url = new URL(`file://${process.cwd()}/`);
 export const resolve = (specifier, parentModuleURL = url) => ({
-  format: 'esm',
-  url: new URL(specifier, parentModuleURL).href,
+  format: 'module',
+  url: new URL(
+    specifier,
+    parentModuleURL.startsWith('eval:') ? url : parentModuleURL
+  ).href
 });
 EOF
 fi
-output=$(< "$1")
-exec node --experimental-modules --loader="$path" --no-warnings <(echo "$output"$'\n'${2+"console.log($2);"})
+NODE_OPTIONS='--experimental-modules --input-type=module --loader='"$path"' --no-warnings' . cjs
