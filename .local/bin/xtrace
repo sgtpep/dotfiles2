@@ -1,6 +1,10 @@
 #!/bin/bash
 set -eu
+while :; do
+  rlwrap -o -C "${0##*/}" -P '' -b '' -g '^ ' -q '([' -s 10000 -w 0 bash -"$-" -c $'
+read -r -p \'> \'
 . "$1"
 set -x
-(($# > 1)) || set -- "$@" main
-"${@:2}"
+eval "$REPLY" || :
+' -- "$@"
+done
