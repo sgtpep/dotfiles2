@@ -1,28 +1,12 @@
 #!/bin/bash
 set -eu
 
-function configure-apt {
-  sudo tee /etc/apt/apt.conf.d/50disable-cache > /dev/null <<< 'Binary::apt::APT::Keep-Downloaded-Packages "false";'
+function configure-apt-sources {
   local release=$(lsb_release -cs)
   sudo tee /etc/apt/sources.list > /dev/null << EOF
 deb http://deb.debian.org/debian $release main
 deb http://security.debian.org/debian-security $release/updates main
 EOF
-}
-
-function configure-ssh-server {
-  local path=/etc/ssh/sshd_config
-  local checksum=$(md5sum "$path")
-  [[ ! $(tail -c 1 "$path") ]] || sudo tee -a "$path" > /dev/null <<< ''
-  lines=(
-    'GatewayPorts yes'
-    'UseDNS no'
-  )
-  local line
-  for line in "${lines[@]}"; do
-    grep -Fqx "$line" "$path" || sudo tee -a "$path" > /dev/null <<< $line
-  done
-  md5sum -c --status <<< $checksum || sudo systemctl reload sshd
 }
 
 function download-dotfile {
@@ -56,7 +40,7 @@ function install-standalone-packages {
 
 function main {
   if [[ -v SSH_CONNECTION ]]; then
-    configure-apt
+    configure-apt-sources
     setup-system
     upgrade-system
     prompt-reboot
@@ -93,20 +77,20 @@ function run-script {
 }
 
 function setup-gallery {
-  install-packages python3
   local command=generate-gallery
   download-dotfile .local/bin/"$command"
   sudo tee /etc/cron.d/"$command" > /dev/null << EOF
 PATH=/usr/bin:/bin:/home/$USER/.local/bin
 0 0 */5 * * $USER $command ~/.config/gallery/config ~/www/gallery
-0 0 */5 * * $USER $command ~/.config/ksenia-gallery/config ~/www/ksenia-gallery
+0 0 */5 * * $USER $command ~/.config/*-gallery/config ~/www/*-gallery
 EOF
 }
 
 function setup-msmtp {
   install-packages msmtp-mta
   sudo tee /etc/aliases > /dev/null <<< "default: $email"
-  download-dotfile .msmtprc
+  local path=~/.msmtprc
+  download-dotfile "${path#~/}"
   sudo ln -fs "$path" /etc/msmtprc
   sudo ln -fs ~/.netrc /etc/netrc
 }
@@ -118,7 +102,7 @@ function setup-nginx {
   sudo usermod -a -G adm "$USER"
   local path=/etc/nginx/sites-enabled/default
   local checksum=$(md5sum "$path")
-  local ssl_path=/etc/letsencrypt/live/$hostname
+  local certificate=/etc/letsencrypt/live/$hostname
   sudo tee "$path" > /dev/null << EOF
 server {
   listen 80 default_server;
@@ -132,15 +116,15 @@ server {
   listen 443 ssl default_server;
   listen [::]:443 ssl default_server;
   root /var/www/html;
-  ssl_certificate $ssl_path/fullchain.pem;
-  ssl_certificate_key $ssl_path/privkey.pem;
+  ssl_certificate $certificate/fullchain.pem;
+  ssl_certificate_key $certificate/privkey.pem;
 
   location ~ ^/(favicon\.ico|robots\.txt)$ {
     access_log off;
     log_not_found off;
   }
 
-  location ~ ^/(gallery|ksenia-gallery)/ {
+  location ~ ^/(|[^/]+-)gallery)/ {
     auth_basic 'Gallery';
     auth_basic_user_file $HOME/.config/\$1/htpasswd;
   }
@@ -157,7 +141,7 @@ EOF
 function setup-rss2email {
   install-packages rss2email
   local command=(r2e run)
-  sudo tee /etc/cron.d/"${command[0}" > /dev/null << EOF
+  sudo tee /etc/cron.d/"${command[0]}" > /dev/null << EOF
 0 */3 * * * $USER ${command[@]} > /dev/null 2>&1
 0 1 * * 0 $USER ${command[@]} 2>&1 | grep -v '^\(HTTP status 5\|sax parsing error:\)'
 EOF
@@ -167,21 +151,20 @@ function setup-certbot {
   install-packages certbot
   local path=/etc/letsencrypt/cli.ini
   [[ ! $(tail -c 1 "$path") ]] || sudo tee -a "$path" > /dev/null <<< ''
-  grep -q '^post-hook ' "$path" || echo 'post-hook = systemctl reload nginx' | sudo tee -a "$path" > /dev/null
+  local name=post-hook
+  grep -q "^$name " "$path" || sudo tee -a "$path" > /dev/null <<< "$name = systemctl reload nginx"
   local root=/var/www/html
   [[ -d ${path%/*}/live ]] || sudo certbot certonly -d "$hostname" -m "$email" -w "$root" --agree-tos --no-eff-email --webroot
-  sudo rm -fr "$root"/.well-known
 }
 
 function setup-system {
-  configure-ssh-server
   install-standalone-packages
   setup-gallery
   setup-msmtp
   setup-nginx
   setup-rss2email
   setup-tasks
-  setup-ufw
+#  setup-ufw
   setup-unattended-upgrades
 }
 
@@ -189,39 +172,37 @@ function setup-tasks {
   local command=tasks
   download-dotfile .local/bin/"$command"
   install-packages bsd-mailx
-  local mail='mail -E -a "Date: $(date -R)"'
+  local mail='mail -E -a "Date: $(date -R)" -s'
   sudo tee /etc/cron.d/"$command" > /dev/null << EOF
 PATH=/usr/bin:/bin:/home/$USER/.local/bin
-0 5 * * * $USER $command today | $mail -s Today $USER
-0 5 * * * $USER $command tomorrow | $mail -s Tomorrow $USER
-0 5 * * 0 $USER $command | $mail -s Week $USER
+0 5 * * * $USER $command today | $mail Today $USER
+0 5 * * * $USER $command tomorrow | $mail Tomorrow $USER
+0 5 * * 0 $USER $command | $mail Week $USER
 EOF
 }
 
-function setup-ufw {
-  install-packages ufw
-  local output=$(sudo ufw status)
-  local port
-  for port in 22 443 80; do
-    grep -q "^$port " <<< $output || sudo ufw allow "$port"
-  done
-  grep -q ' active$' <<< $output || yes | sudo ufw enable
-}
+#function setup-ufw {
+#  install-packages ufw
+#  local output=$(sudo ufw status)
+#  local port
+#  for port in 22 443 80; do
+#    grep -q "^$port " <<< $output || sudo ufw allow "$port"
+#  done
+#  grep -q ' active$' <<< $output || yes | sudo ufw enable
+#}
 
 function setup-unattended-upgrades {
   install-packages unattended-upgrades
-  sudo sed -i 's/^\/*\(Unattended-Upgrade::Automatic-Reboot \).*/\1"true";/' /etc/apt/apt.conf.d/50unattended-upgrades
+  sudo sed -i 's/^\/*\(Unattended-Upgrade::Automatic-Reboot "\).*\(";\)$/\1true\2/' /etc/apt/apt.conf.d/50unattended-upgrades
 }
 
 function setup-user {
   if ! ssh personal '[[ -d ~/.ssh ]]'; then
     ssh root@personal bash -"$-" << EOF
-    timedatectl set-timezone '$(readlink /etc/localtime | sed 's|/usr/share/zoneinfo/||')'
-    local user=debian
-    ! id "\$user" &> /dev/null || userdel -r "\$user"
+    timedatectl set-timezone '$(readlink /etc/localtime | sed 's|^/usr/share/zoneinfo/||')'
     id $USER &> /dev/null || useradd -m -G sudo -s /bin/bash $USER
     chpasswd -e <<< '$USER:$(sudo grep -Po "(?<=^$USER:)[^:]+" /etc/shadow)'
-    local dirname=.ssh
+    dirname=.ssh
     cp -r ~/"\$dirname" ~$USER
     chown -R $USER: ~$USER/"\$dirname"
 EOF
