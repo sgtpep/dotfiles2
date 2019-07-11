@@ -50,14 +50,15 @@ function change_volume(change)
 end
 
 function configure_chromium(client)
-  local copy = function()
-    input_shortcut({'Alt_L', 'y'})
+  local copy = function(callback, with_title)
+    input_shortcut(with_title and {'Alt_L', 'Shift_L', 'y'} or {'Alt_L', 'y'})
+    gears.timer.start_new(0.1, callback)
   end
   client:keys(gears.table.join(table.unpack({
-    awful.key({ 'Mod1' }, 'e', nil, function() copy() run_or_raise('x-terminal-emulator -title ebookify -e bash -c \'ebookify "$(xclip -o -selection clipboard)" || read -s\'', { name = 'ebookify' }) end),
-    awful.key({ 'Mod1' }, 'm', nil, function() input_shortcut({'Alt_L', 'Shift_L', 'y'}) run_or_raise('x-terminal-emulator -title sharing -e bash -c $\'output=$(xclip -o -selection clipboard); mutt -e \\\'set noabort_unmodified\\\' -i <(echo "${output##* }") -s "Link: ${output% *}"\'', { name = 'sharing' }) end),
-    awful.key({ 'Mod1' }, 'p', nil, function() copy() run_or_raise('x-terminal-emulator -title password -e bash -c \': "$(xclip -o -selection clipboard)"; : "${_#*://}"; hostname=${_%%/*}; if [[ -f ~/.password-store/$hostname.gpg ]]; then pass "$hostname"; else pwdhash "$hostname" 2> /dev/null; fi | xclip -selection clipboard; awesome-client <<< $1\' -- "input_shortcut({\'Alt_L\', \'Tab\'}) require(\'gears\').timer.start_new(0.1, function() input_shortcut({\'Control_L\', \'v\'}) require(\'gears\').timer.start_new(0.1, function() require(\'awful\').spawn.with_shell(\'xclip -selection clipboard <<< \\\'\\\'\') end) end)"', { name = 'password' }) end),
-    awful.key({ 'Mod1' }, 'v', nil, function() copy() run_or_raise('x-terminal-emulator -title mpv -e bash -c \'mpv "$(xclip -o -selection clipboard)" || read -s\'', { class = 'mpv' }) end),
+    awful.key({ 'Mod1' }, 'e', nil, function() copy(function() run_or_raise('x-terminal-emulator -title ebookify -e bash -c \'ebookify "$(xclip -o -selection clipboard)" || read -s\'', { name = 'ebookify' }) end) end),
+    awful.key({ 'Mod1' }, 'm', nil, function() copy(function() run_or_raise('x-terminal-emulator -title sharing -e bash -c $\'output=$(xclip -o -selection clipboard); mutt -e \\\'set noabort_unmodified\\\' -i <(echo "${output##* }") -s "Link: ${output% *}"\'', { name = 'sharing' }) end, true) end),
+    awful.key({ 'Mod1' }, 'p', nil, function() copy(function() run_or_raise('x-terminal-emulator -title password -e bash -c \': "$(xclip -o -selection clipboard)"; : "${_#*://}"; hostname=${_%%/*}; if [[ -f ~/.password-store/$hostname.gpg ]]; then pass "$hostname"; else pwdhash "$hostname" 2> /dev/null; fi | xclip -selection clipboard; awesome-client <<< $1\' -- "input_shortcut({\'Alt_L\', \'Tab\'}) require(\'gears\').timer.start_new(0.1, function() input_shortcut({\'Control_L\', \'v\'}) require(\'gears\').timer.start_new(0.1, function() require(\'awful\').spawn.with_shell(\'xclip -selection clipboard <<< \\\'\\\'\') end) end)"', { name = 'password' }) end) end),
+    awful.key({ 'Mod1' }, 'v', nil, function() copy(function() run_or_raise('x-terminal-emulator -title mpv -e bash -c \'mpv "$(xclip -o -selection clipboard)" || read -s\'', { class = 'mpv' }) end) end),
   })))
 end
 
