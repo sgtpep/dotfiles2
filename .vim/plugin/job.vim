@@ -1,3 +1,3 @@
 if filereadable(expand('~/.job'))
-  autocmd BufNewFile,BufRead *.jsx,*.ts,*.tsx set filetype=javascript
+  autocmd BufNewFile,BufRead *.ts,*.tsx set filetype=javascript
 endif
