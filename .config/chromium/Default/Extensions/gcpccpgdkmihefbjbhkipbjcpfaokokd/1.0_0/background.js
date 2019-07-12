@@ -28,7 +28,7 @@ const insertCSS = () =>
       const { host } = new URL(tab.url);
       styles[host] &&
         chrome.tabs.insertCSS(tabId, {
-          code: styles[host].replace(/;/g, ' !important$&'),
+          code: styles[host].replace(/;| }/g, ' !important$&'),
         });
     }
   });
@@ -59,9 +59,9 @@ const main = () => {
 
 const styles = {
   'stackoverflow.com':
-    'body, .top-bar { margin-top: 0; } #js-gdpr-consent-banner, #noscript-warning { display: none; }',
+    'body, .top-bar { margin-top: 0 } #js-gdpr-consent-banner, #noscript-warning { display: none }',
   'www.reddit.com':
-    '.kkVTOP { max-height: none; } .kkVTOP::before { display: none; }',
+    '.kkVTOP { max-height: none } .kkVTOP::before { display: none }',
 };
 
 const togglePinnedTab = tab => chrome.tabs.update({ pinned: !tab.pinned });
