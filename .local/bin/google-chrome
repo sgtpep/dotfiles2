@@ -2,7 +2,7 @@
 set -eu
 command=${0##*/}
 path=~/.local/apps/$command
-set -- firejail --whitelist="$path" "$path"/google-chrome --disable-infobars --no-sandbox "$@"
+set -- firejail --whitelist="$path" "$path"/chrome --disable-infobars --no-sandbox "$@"
 if [[ ! -x $3 ]]; then
   path=/tmp/$command
   wget -O "$path" https://dl.google.com/linux/direct/"$command"-stable_current_amd64.deb || rm -f "$path"
