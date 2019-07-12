@@ -124,7 +124,7 @@ server {
     log_not_found off;
   }
 
-  location ~ ^/(|[^/]+-)gallery)/ {
+  location ~ ^/((?:|[^/]+-)gallery)/ {
     auth_basic 'Gallery';
     auth_basic_user_file $HOME/.config/\$1/htpasswd;
   }
@@ -164,7 +164,7 @@ function setup-system {
   setup-nginx
   setup-rss2email
   setup-tasks
-#  setup-ufw
+  setup-ufw
   setup-unattended-upgrades
 }
 
@@ -181,15 +181,15 @@ PATH=/usr/bin:/bin:/home/$USER/.local/bin
 EOF
 }
 
-#function setup-ufw {
-#  install-packages ufw
-#  local output=$(sudo ufw status)
-#  local port
-#  for port in 22 443 80; do
-#    grep -q "^$port " <<< $output || sudo ufw allow "$port"
-#  done
-#  grep -q ' active$' <<< $output || yes | sudo ufw enable
-#}
+function setup-ufw {
+  install-packages ufw
+  local output=$(sudo ufw status)
+  local port
+  for port in 22 443 80; do
+    grep -q "^$port " <<< $output || sudo ufw allow "$port"
+  done
+  grep -q ' active$' <<< $output || yes | sudo ufw enable
+}
 
 function setup-unattended-upgrades {
   install-packages unattended-upgrades
