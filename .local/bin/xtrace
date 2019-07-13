@@ -1,10 +1,15 @@
 #!/bin/bash
 set -eu
 while :; do
-  rlwrap -o -C "${0##*/}" -P '' -b '' -g '^ ' -q '([' -s 10000 -w 0 bash -"$-" -c $'
-read -r -p "${1##*/}> "
-. "$1"
+  output=$(rlwrap -o -C "${0##*/}" -P '' -S "${1##*/}> " -b '' -g '^ ' -q '([' -s 10000 -w 0 cat)
+  if [[ $output ]]; then
+    bash -c "
+. "\$1"
 set -x
-eval "$REPLY" || :
-' -- "$@"
+$output
+" -- "$1" |& less
+  else
+    echo
+    break
+  fi
 done

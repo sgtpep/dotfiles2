@@ -1,11 +1,14 @@
 #!/bin/bash
 set -eu
 while :; do
-  rlwrap -o -C "${0##*/}" -P '' -b '' -g '^ ' -q '([' -s 10000 -w 0 bash -"$-" -c $'
-read -r -p "${1##*/}> "
-exec node -e "
-$(< \"$1\")
-console.log($REPLY);
-"
-' -- "$@"
+  output=$(rlwrap -o -C "${0##*/}" -P '' -S "${1##*/}> " -b '' -g '^ ' -q '([' -s 10000 -w 0 cat)
+  if [[ $output ]]; then
+    node -e "
+$(< "$1")
+console.log($output);
+" |& less
+  else
+    echo
+    break
+  fi
 done
