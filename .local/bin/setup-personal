@@ -29,7 +29,6 @@ function install-packages {
 
 function install-standalone-packages {
   local packages=(
-    calibre
     git
     man-db
     ncdu
