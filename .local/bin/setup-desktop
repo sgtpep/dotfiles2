@@ -90,6 +90,13 @@ function configure-xorg {
   fi
 }
 
+function confirm-reboot {
+  if [[ $TERM == linux && $XDG_VTNR == 1 ]]; then
+    read -p 'Reboot? [Y/n] '
+    [[ ! $REPLY =~ ^[Yy]*$ ]] || sudo reboot
+  fi
+}
+
 function disable-power-key {
   virtualbox-product || sudo sed -i 's/^#*\(HandlePowerKey=\).*/\1ignore/' /etc/systemd/logind.conf
 }
@@ -146,19 +153,12 @@ function main {
   clone-dotfiles
   setup-system
   upgrade-system
-  prompt-reboot
+  confirm-reboot
 }
 
 function product-name {
   local path=/sys/class/dmi/id/product_name
   [[ ! -f $path ]] || echo "$(< "$path")"
-}
-
-function prompt-reboot {
-  if [[ $TERM == linux && $XDG_VTNR == 1 ]]; then
-    read -p 'Reboot? [Y/n] '
-    [[ ! $REPLY =~ ^[Yy]*$ ]] || sudo reboot
-  fi
 }
 
 function release-name {

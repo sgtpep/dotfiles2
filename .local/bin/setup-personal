@@ -9,6 +9,13 @@ deb http://security.debian.org/debian-security $release/updates main
 EOF
 }
 
+function confirm-reboot {
+  if [[ -f /run/reboot-required ]]; then
+    read -p 'Reboot? [Y/n] '
+    [[ ! $REPLY =~ ^[Yy]*$ ]] || sudo reboot
+  fi
+}
+
 function download-dotfile {
   local path=~/$1
   if [[ ! -f $path ]]; then
@@ -42,18 +49,11 @@ function main {
     configure-apt-sources
     setup-system
     upgrade-system
-    prompt-reboot
+    confirm-reboot
   else
     run-actions "$@"
     setup-user
     run-script
-  fi
-}
-
-function prompt-reboot {
-  if [[ -f /run/reboot-required ]]; then
-    read -p 'Reboot? [Y/n] '
-    [[ ! $REPLY =~ ^[Yy]*$ ]] || sudo reboot
   fi
 }
 
