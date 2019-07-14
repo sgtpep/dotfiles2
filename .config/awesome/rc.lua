@@ -228,6 +228,7 @@ rules = {
   { { class = 'Chromium', type = 'normal' }, { callback = function(client) configure_chromium(client) end } },
   { { class = 'XClipboard' }, { hidden = true } },
   { { name = 'Event Tester' }, { floating = true } },
+  { { role = 'GtkFileChooserDialog' }, { maximized_vertical = hp_stream_product() } },
   { { type = 'dialog' }, { callback = function(client) awful.placement.centered(client) end } },
 }
 
