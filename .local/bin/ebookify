@@ -1,16 +1,37 @@
 #!/bin/bash
 set -eu
 
+function activate-window {
+  if [[ -v DISPLAY ]]; then
+    local command=(wmctrl -F -a "${0##*/}")
+    "${command[@]}" 2> /dev/null || "${command[@]}" || :
+  fi
+}
+
 function confirm-upload {
-  [[ ! -v DISPLAY ]] || wmctrl -F -a "${0##*/}" || :
+  activate-window
   read -p "Upload '$1'? [Y/n] "
   [[ $REPLY =~ ^[Yy]*$ ]]
 }
 
+function copy-article {
+  rsync -asvz "$@"
+}
+
+function deactivate-links {
+  local string='/S /URI'
+  sed -i "s|$string\b|$(printf "%${#string}s")|g" "$1"
+}
+
 function download-articles {
+  local dirname=articles
   local path=/media/$USER/Kindle
-  scp -r personal:articles "$path"/documents
-  ssh personal 'rm -fr ~/articles/*'
+  local filename
+  while IFS= read -r filename; do
+    local article=$dirname/$filename
+    copy-article personal:"$article" "$path"/documents/"$dirname"/"$(sanitize-filename "$filename")"
+    ssh personal $'xargs -d \'\\n\' rm' <<< $article
+  done < <(list-articles)
   devmon --unmount "$path"
 }
 
@@ -22,6 +43,10 @@ function extract-filename {
 function extract-title {
   install-packages poppler-utils
   pdfinfo "$1" | grep '^Title:' | sed 's/^.*:\s*//'
+}
+
+function list-articles {
+  ssh personal ls articles
 }
 
 function main {
@@ -36,15 +61,23 @@ function main {
 }
 
 function parse-title {
-  wget -q -O - -U 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0' --no-check-certificate "$1" | grep -Pio -m 1 '[^>]*(?=</title>)' | tr '\0' ' ' | w3m -T text/html -dump | tr -d '\n'
+  local tag='</title>'
+  wget -q -O - -U 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0' --no-check-certificate "$1" | sed "/${tag//\//\\\/}/Iq" | tr '\n' ' ' | grep -Pio "[^>]*(?=$tag)" | tr '\0' ' ' | w3m -T text/html -dump | tr '\n' ' '
 }
 
 function process-html-url {
   [[ $1 != *://habr.com/* ]] || set -- "${1/\/\////m.}" "${@:2}"
-  [[ $1 != *://medium.com/* ]] || local options=(-n)
+  [[ $1 != *://warhead.su/* ]] || local options=(--enable-javascript)
   install-packages wkhtmltopdf
-  wkhtmltopdf -B 0 -L 0 -R 0 -T 0 --page-height 297pt --page-width 225pt "${options[@]}" "$1" "$2" || :
-  echo "$(parse-title "$1")"
+  cd /tmp
+  wkhtmltopdf -n -B 0 -L 0 -R 0 -T 0 --page-height 297pt --page-width 225pt --stop-slow-scripts "${options[@]}" "$1" "$2" || :
+  cd - > /dev/null
+  local title=$(parse-title "$1")
+  [[ $title ]] || title=${2##*/}
+  sed -f - <<< $title << \EOF
+s/^\s*//
+s/\s*$//
+EOF
 }
 
 function process-pdf-url {
@@ -59,35 +92,47 @@ function process-pdf-url {
 }
 
 function process-url {
-  local path=/tmp/${0##*/}.pdf
+  local path=$(temp-path "$1")
+  rm -f "$path"
   if [[ ${1%\?*} == *.pdf ]]; then
     local title=$(process-pdf-url "$1" "$path")
   else
     local title=$(process-html-url "$1" "$path")
   fi
+  deactivate-links "$path"
   exiftool -overwrite_original -Author="$1" "$path"
   mupdf "$path"
-  local sanitized_title=$(sanitize-filename "$title")
-  ! confirm-upload "$sanitized_title" || upload-article "$path" "$sanitized_title"
+  ! confirm-upload "$title" || upload-article "$path" "$title"
+  rm "$path"
 }
 
 function sanitize-filename {
-  sed -f - <(echo "$1") << \EOF
-s/[\\\/:] / — /g
-s/[\x0*"<>|\n]/ /g
-s/[\\\/:]/-/g
-s/\s\+/ /g
-s/-\+/-/g
-EOF
+  local filename=${1//$'\0'/ }
+  filename=${filename//$'\n'/ }
+  filename=${filename//\\/＼}
+  filename=${filename//\//／}
+  filename=${filename//:/꞉}
+  filename=${filename//\*/∗}
+  filename=${filename//\"/‟}
+  filename=${filename//</＜}
+  filename=${filename//>/＞}
+  filename=${filename//|/❘}
+  filename=${filename//\?/？}
+  sed 's/\s\+/ /g' <<< $filename
+}
+
+function temp-path {
+  local checksum=$(md5sum <<< $1)
+  echo /tmp/"${checksum%% *}"
 }
 
 function upload-article {
-  local filename=$2.pdf
-  if ssh personal ls articles | grep -Fqx "$filename"; then
+  local filename=${2//\//／}.pdf
+  if list-articles | grep -Fqx "$filename"; then
     echo "'$filename' already exists." >&2
     return 1
   else
-    rsync -asvz "$1" personal:articles/"$filename"
+    copy-article "$1" personal:articles/"$filename"
   fi
 }
 
