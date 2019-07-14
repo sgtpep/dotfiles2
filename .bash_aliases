@@ -20,7 +20,7 @@ alias watch='watch '
 
 function git {
   set -- "${FUNCNAME[0]}" "$@"
-  if [[ ${2-} =~ ^(clone|pull)$ ]]; then
+  if [[ ${2-} =~ ^(clone|pull|push)$ ]]; then
     online "$@"
   else
     command "$@"
