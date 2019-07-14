@@ -29,7 +29,7 @@ function download-articles {
   local filename
   while IFS= read -r filename; do
     local article=$dirname/$filename
-    copy-article personal:"$article" "$path"/documents/"$dirname"/"$(sanitize-filename "$filename")"
+    copy-article personal:"$article" "$path"/documents/"$dirname"/"$(sanitize-filename "${filename%.*}")".pdf
     ssh personal $'xargs -d \'\\n\' rm' <<< $article
   done < <(list-articles)
   devmon --unmount "$path"
@@ -118,7 +118,11 @@ function sanitize-filename {
   filename=${filename//>/＞}
   filename=${filename//|/❘}
   filename=${filename//\?/？}
-  sed 's/\s\+/ /g' <<< $filename
+  sed -f - <(echo "$filename") << \EOF
+s/\s\+/ /g
+s/^\s*//
+s/\s*$//
+EOF
 }
 
 function temp-path {
