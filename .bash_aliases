@@ -29,6 +29,7 @@ function git {
 
 function paginate {
   "$@" |& less
+  return "${PIPESTATUS[0]}"
 }
 
 function pwdhash {
