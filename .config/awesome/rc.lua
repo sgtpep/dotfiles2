@@ -51,7 +51,7 @@ end
 
 function configure_chromium(client)
   local copy = function(callback, with_title)
-    input_shortcut(with_title and {'Alt_L', 'Shift_L', 'y'} or {'Alt_L', 'y'})
+    input_shortcut(table.unpack(with_title and {{'Alt_L', 'Shift_L', 'y'}} or {{'Shift_L'}, {'Alt_L', 'y'}}))
     gears.timer.start_new(0.1, callback)
   end
   client:keys(gears.table.join(table.unpack({

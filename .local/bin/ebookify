@@ -24,26 +24,43 @@ function deactivate-links {
 }
 
 function download-articles {
-  local dirname=articles
   local path=/media/$USER/Kindle
   local filename
   while IFS= read -r filename; do
-    local article=$dirname/$filename
-    copy-article personal:"$article" "$path"/documents/"$dirname"/"$(sanitize-filename "${filename%.*}")".pdf
-    ssh personal $'xargs -d \'\\n\' rm' <<< $article
+    local article=articles/$filename
+    copy-article personal:"$article" "$path"/documents/articles/"$(sanitize-filename "${filename%.*}")".pdf
+    ssh personal xargs -d '\\n' rm <<< $article
   done < <(list-articles)
   devmon --unmount "$path"
 }
 
+function extract-domain {
+  local url=${1#*://}
+  local domain=${url%%/*}
+  [[ $domain != *.medium.com ]] || domain=${domain#*.}
+  echo "$domain"
+}
+
 function extract-filename {
   local url=${1%\?*}
-  echo "${url##*/}"
+  local filename=${url##*/}
+  echo "${title//%20/ }"
 }
 
 function extract-title {
   install-packages poppler-utils
-  pdfinfo "$1" | grep '^Title:' | sed 's/^.*:\s*//'
+  pdfinfo "$1" | grep '^Title:' | sed 's/^[^:]*:\s*\(.*\)\s*$/\1/'
 }
+
+function install-puppeteer {
+  local package=puppeteer
+  local version=chrome-$(dpkg -s chromium | grep -Po '(?<=^Version: )[^.]+')
+  grep -qs "\"$version\"" "$NODE_PATH"/"$package"/package.json || npm install -g --ignore-scripts "$package"@"$version"
+}
+
+declare -A javascript_disabled=(
+  [www.nytimes.com]=1
+)
 
 function list-articles {
   ssh personal ls articles
@@ -60,24 +77,67 @@ function main {
   fi
 }
 
-function parse-title {
-  local tag='</title>'
-  wget -q -O - -U 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0' --no-check-certificate "$1" | sed "/${tag//\//\\\/}/Iq" | tr '\n' ' ' | grep -Pio "[^>]*(?=$tag)" | tr '\0' ' ' | w3m -T text/html -dump | tr '\n' ' '
-}
+declare -A print_media=()
 
 function process-html-url {
-  [[ $1 != *://habr.com/* ]] || set -- "${1/\/\////m.}" "${@:2}"
-  [[ $1 != *://warhead.su/* ]] || local options=(--enable-javascript)
-  install-packages wkhtmltopdf
-  cd /tmp
-  wkhtmltopdf -n -B 0 -L 0 -R 0 -T 0 --page-height 297pt --page-width 225pt --stop-slow-scripts "${options[@]}" "$1" "$2" || :
-  cd - > /dev/null
-  local title=$(parse-title "$1")
-  [[ $title ]] || title=${2##*/}
-  sed -f - <<< $title << \EOF
-s/^\s*//
-s/\s*$//
+  local url=$(rewrite-url "$1")
+  echo -n "Downloading $url..." >&2
+  install-puppeteer
+  local domain=$(extract-domain "$url")
+  node - "$url" "$2" "${print_media[$domain]-}" "${styles[$domain]-}" "${javascript_disabled[$domain]-}" << \EOF
+const puppeteer = require('puppeteer');
+
+(async () => {
+  try {
+    const scale = 1.25;
+    const width = 560;
+    const browser = await puppeteer.launch({
+      defaultViewport: {
+        deviceScaleFactor: scale,
+        height: 100000,
+        width: Math.round(width / scale),
+      },
+      executablePath: 'chromium',
+    });
+    const page = await browser.newPage();
+    await page.emulateMedia(process.argv[4] ? 'print' : 'screen');
+    await page.setJavaScriptEnabled(!process.argv[6]);
+    await page.goto(process.argv[2], {
+      timeout: 60000,
+      waitUntil: 'networkidle2',
+    });
+    process.argv[6] || await page.addStyleTag({ content: process.argv[5] });
+    await Promise.all(
+      [page, ...(await page.frames())].map(page =>
+        page.evaluate(() =>
+          [...document.querySelectorAll('*')].forEach(element => {
+            const style = getComputedStyle(element);
+            ['fixed', 'sticky'].includes(style.position) &&
+              (element.style.position = 'static');
+            style.overflow === 'auto' && (element.style.overflow = 'visible');
+            style.whiteSpace === 'pre' &&
+              (element.style.whiteSpace = 'pre-wrap');
+          })
+        )
+      )
+    );
+    await page.waitFor(1000);
+    await page.pdf({
+      height: 735 / scale,
+      path: process.argv[3],
+      printBackground: true,
+      width: width / scale,
+    });
+    console.log(await page.title());
+    await browser.close();
+  } catch (error) {
+    console.error();
+    console.error(error);
+    process.exit(1);
+  }
+})();
 EOF
+  echo >&2
 }
 
 function process-pdf-url {
@@ -86,31 +146,39 @@ function process-pdf-url {
   if [[ ! $title ]]; then
     local filename=$(extract-filename "$1")
     title=${filename%.pdf}
-    title=${title/%20/ }
   fi
   echo "$title"
 }
 
 function process-url {
-  local path=$(temp-path "$1")
+  local path=$(temp-path "$1").pdf
   rm -f "$path"
   if [[ ${1%\?*} == *.pdf ]]; then
     local title=$(process-pdf-url "$1" "$path")
   else
     local title=$(process-html-url "$1" "$path")
   fi
+  [[ -f $path ]]
   deactivate-links "$path"
-  exiftool -overwrite_original -Author="$1" "$path"
+  exiftool -q -overwrite_original -Author="$1" "$path"
   mupdf "$path"
   ! confirm-upload "$title" || upload-article "$path" "$title"
   rm "$path"
+}
+
+function rewrite-url {
+  if [[ $1 == https://habr.com/* ]]; then
+    echo "${1/\/\////m.}"
+  else
+    echo "$1"
+  fi
 }
 
 function sanitize-filename {
   local filename=${1//$'\0'/ }
   filename=${filename//$'\n'/ }
   filename=${filename//\\/＼}
-  filename=${filename//\//／}
+  filename=${filename//\//∕}
   filename=${filename//:/꞉}
   filename=${filename//\*/∗}
   filename=${filename//\"/‟}
@@ -125,13 +193,17 @@ s/\s*$//
 EOF
 }
 
+declare -A styles=(
+  [medium.com]='#root > div > :nth-child(2) { display: none }'
+)
+
 function temp-path {
   local checksum=$(md5sum <<< $1)
   echo /tmp/"${checksum%% *}"
 }
 
 function upload-article {
-  local filename=${2//\//／}.pdf
+  local filename=${2//\//∕}.pdf
   if list-articles | grep -Fqx "$filename"; then
     echo "'$filename' already exists." >&2
     return 1
