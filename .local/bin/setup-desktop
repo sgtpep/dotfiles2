@@ -172,8 +172,14 @@ function schedule-syncing {
   sudo tee /etc/cron.d/"$command" > /dev/null << EOF
 PATH=/usr/bin:/bin:/home/$USER/.local/bin
 10 * * * * $USER $command
-@reboot $USER $command
 EOF
+  local path=/etc/dhcp/dhclient-exit-hooks.d/$command
+  sudo tee "$path" > /dev/null << EOF
+#!/bin/bash
+set -eu
+exec sudo -u $USER env PATH=\$PATH:$HOME/.local/bin $command
+EOF
+  sudo chmod +x "$path"
 }
 
 function setup-acpid {
