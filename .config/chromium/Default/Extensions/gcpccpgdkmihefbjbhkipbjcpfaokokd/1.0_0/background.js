@@ -60,6 +60,7 @@ const main = () => {
 const styles = {
   'app.slack.com': `
     .c-message, .c-message_kit__message, .c-texty_input .ql-editor, .c-texty_input .ql-placeholder { font-size: 19px }
+    .p-message_input > .c-button-unstyled { bottom: 6px }
     .p-channel_sidebar__channel--muted > .c-mention_badge { display: none }
   `,
   'stackoverflow.com':
