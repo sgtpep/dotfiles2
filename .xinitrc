@@ -9,10 +9,10 @@ xrdb ~/.Xresources
 [[ $product_name != VirtualBox ]] || { pactl set-sink-mute 0 no; pactl set-sink-volume 0 100%; } &
 [[ $product_name != VirtualBox || ! -f ~/.job ]] || xmodmap ~/.Xmodmap-job &
 battery-monitor &
-devmon &
 eval "$(dbus-launch --exit-with-session --sh-syntax)"
 export SSH_AUTH_SOCK=/tmp/ssh-agent; ssh-agent -a "$SSH_AUTH_SOCK" &
 start-pulseaudio-x11 &
+udisks-monitor &
 { sleep 1; exec xclipboard; } &
 
 exec awesome

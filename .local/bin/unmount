@@ -1,0 +1,13 @@
+#!/bin/bash
+set -eu
+if [[ $@ ]]; then
+  for path; do
+    if [[ -b $path ]]; then
+      readlink -f "$path"
+    else
+      findmnt -n -o source "$path"
+    fi
+  done
+else
+  findmnt -ln -o source,target | grep ' /media/' | sed 's/\s\+.*$//'
+fi | exec xargs -r -d '\n' -n 1 bash -"$-" -c 'udisksctl unmount -b "$1" && { udisksctl power-off -b "$1" 2> /dev/null || :; }' --

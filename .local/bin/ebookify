@@ -46,7 +46,7 @@ function download-articles {
     copy-article personal:"$article" "$path"/documents/articles/"$(sanitize-filename "${filename%.*}")".pdf
     ssh personal xargs -d '\\n' rm <<< $article
   done < <(list-articles)
-  devmon --unmount "$path"
+  unmount "$path"
 }
 
 function extract-domain {

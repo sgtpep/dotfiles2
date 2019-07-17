@@ -1,0 +1,3 @@
+#!/bin/bash
+set -eu
+udevadm monitor -pu -s block | grep -Fx -A 3 --line-buffered 'ACTION=add' | grep -Po --line-buffered '(?<=^DEVNAME=).+' | exec xargs -d '\n' -I {} udisksctl mount -b {} --no-user-interaction

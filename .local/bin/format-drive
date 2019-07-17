@@ -1,6 +1,6 @@
 #!/bin/bash
 set -eu
-devmon -r
+unmount
 install-packages gdisk
 sudo sgdisk -og "$1"
 sudo sgdisk -n 1:"$(sudo sgdisk -F "$1")":"$(sudo sgdisk -E "$1")" -t 1:0700 "$1"
