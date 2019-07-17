@@ -23,6 +23,21 @@ function deactivate-links {
   sed -i "s|$string\b|$(printf "%${#string}s")|g" "$1"
 }
 
+declare -A domain_javascript_disabled=(
+  [www.nytimes.com]=1
+  [www.theatlantic.com]=1
+)
+
+declare -A domain_print_media=()
+
+declare -A domain_scales=()
+
+declare -A domain_scripts=()
+
+declare -A domain_styles=(
+  [medium.com]='#root > div > :nth-child(2) { display: none }'
+)
+
 function download-articles {
   local path=/media/$USER/Kindle
   local filename
@@ -58,16 +73,13 @@ function install-puppeteer {
   grep -qs "\"$version\"" "$NODE_PATH"/"$package"/package.json || npm install -g --ignore-scripts "$package"@"$version"
 }
 
-declare -A javascript_disabled=(
-  [www.nytimes.com]=1
-  [www.theatlantic.com]=1
-)
-
 function list-articles {
   ssh personal ls articles
 }
 
 function main {
+  parse-options "$@"
+  shift "$((OPTIND - 1))"
   if [[ $@ ]]; then
     local url
     for url; do
@@ -78,19 +90,34 @@ function main {
   fi
 }
 
-declare -A print_media=()
+function parse-options {
+  while getopts c:djps: option; do
+    if [[ $option == c ]]; then
+      style=$OPTARG
+    elif [[ $option == d ]]; then
+      javascript_disabled=1
+    elif [[ $option == j ]]; then
+      script=$OPTARG
+    elif [[ $option == p ]]; then
+      print_media=1
+    elif [[ $option == s ]]; then
+      scale=$OPTARG
+    else
+      return 1
+    fi
+  done
+}
 
 function process-html-url {
-  local url=$(rewrite-url "$1")
-  echo -n "Downloading $url..." >&2
+  echo -n "Downloading $1..." >&2
   install-puppeteer
-  local domain=$(extract-domain "$url")
-  node - "$url" "$2" "${print_media[$domain]-}" "${styles[$domain]-}" "${javascript_disabled[$domain]-}" << \EOF
+  local domain=$(extract-domain "$1")
+  javascript_disabled=${javascript_disabled-${domain_javascript_disabled[$domain]-}} print_media=${print_media-${domain_print_media[$domain]-}} scale=${scale-${domain_scales[$domain]-1.375}} script=${script-${domain_scripts[$domain]-}} style=${style-${domain_styles[$domain]-}} node - "$1" "$2" << \EOF
 const puppeteer = require('puppeteer');
 
 (async () => {
   try {
-    const scale = 1.375;
+    const scale = Number(process.env.scale);
     const width = 560;
     const browser = await puppeteer.launch({
       defaultViewport: {
@@ -101,17 +128,18 @@ const puppeteer = require('puppeteer');
       executablePath: 'chromium',
     });
     const page = await browser.newPage();
-    await page.emulateMedia(process.argv[4] ? 'print' : 'screen');
-    await page.setJavaScriptEnabled(!process.argv[6]);
+    await page.emulateMedia(process.env.print_media ? 'print' : 'screen');
+    await page.setJavaScriptEnabled(!process.env.javascript_disabled);
     await page.goto(process.argv[2], {
       timeout: 60000,
       waitUntil: 'networkidle2',
     });
-    process.argv[6] || (await page.addStyleTag({ content: process.argv[5] }));
+    process.env.javascript_disabled ||
+      (await page.addStyleTag({ content: process.env.style }));
     const frames = await page.frames();
     await Promise.all(
       [page, ...frames].map(page =>
-        page.evaluate(() =>
+        page.evaluate(script => {
           [...document.querySelectorAll('*')].forEach(element => {
             const style = getComputedStyle(element);
             ['fixed', 'sticky'].includes(style.position) &&
@@ -120,7 +148,8 @@ const puppeteer = require('puppeteer');
             style.whiteSpace === 'pre' &&
               (element.style.whiteSpace = 'pre-wrap');
           })
-        )
+          eval(script);
+        }, process.env.script)
       )
     );
     frames.length && (await page.waitFor(1000));
@@ -153,6 +182,7 @@ function process-pdf-url {
 }
 
 function process-url {
+  set -- "$(rewrite-url "$1")" "$@"
   local path=$(temp-path "$1").pdf
   rm -f "$path"
   if [[ ${1%\?*} == *.pdf ]]; then
@@ -194,10 +224,6 @@ s/^\s*//
 s/\s*$//
 EOF
 }
-
-declare -A styles=(
-  [medium.com]='#root > div > :nth-child(2) { display: none }'
-)
 
 function temp-path {
   local checksum=$(md5sum <<< $1)
