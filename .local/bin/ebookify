@@ -90,7 +90,7 @@ const puppeteer = require('puppeteer');
 
 (async () => {
   try {
-    const scale = 1.25;
+    const scale = 1.375;
     const width = 560;
     const browser = await puppeteer.launch({
       defaultViewport: {
