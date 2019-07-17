@@ -15,7 +15,7 @@ function confirm-upload {
 }
 
 function copy-article {
-  rsync -asvz "$@"
+  rsync -ahsz --progress "$@"
 }
 
 function deactivate-links {
@@ -60,6 +60,7 @@ function install-puppeteer {
 
 declare -A javascript_disabled=(
   [www.nytimes.com]=1
+  [www.theatlantic.com]=1
 )
 
 function list-articles {
@@ -106,14 +107,15 @@ const puppeteer = require('puppeteer');
       timeout: 60000,
       waitUntil: 'networkidle2',
     });
-    process.argv[6] || await page.addStyleTag({ content: process.argv[5] });
+    process.argv[6] || (await page.addStyleTag({ content: process.argv[5] }));
+    const frames = await page.frames();
     await Promise.all(
-      [page, ...(await page.frames())].map(page =>
+      [page, ...frames].map(page =>
         page.evaluate(() =>
           [...document.querySelectorAll('*')].forEach(element => {
             const style = getComputedStyle(element);
             ['fixed', 'sticky'].includes(style.position) &&
-              (element.style.position = 'static');
+              element.setAttribute('style', 'display: none !important');
             style.overflow === 'auto' && (element.style.overflow = 'visible');
             style.whiteSpace === 'pre' &&
               (element.style.whiteSpace = 'pre-wrap');
@@ -121,7 +123,7 @@ const puppeteer = require('puppeteer');
         )
       )
     );
-    await page.waitFor(1000);
+    frames.length && (await page.waitFor(1000));
     await page.pdf({
       height: 735 / scale,
       path: process.argv[3],
