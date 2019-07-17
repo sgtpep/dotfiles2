@@ -1,3 +1,14 @@
+const appendStyle = () => {
+  const domain = styleDomain();
+  if (styles[domain]) {
+    const style = document.createElement('style');
+    style.appendChild(
+      document.createTextNode(styles[domain].replace(/;| }/g, ' !important$&'))
+    );
+    document.documentElement.appendChild(style);
+  }
+};
+
 const characters = 'fdsagrewcx';
 
 const clickElement = (element, ctrlKey = false) => {
@@ -87,6 +98,7 @@ const listenLoaded = () =>
   });
 
 const main = () => {
+  appendStyle();
   listenKeyDown();
   listenLoaded();
 };
@@ -129,6 +141,30 @@ const showHints = () => {
     onHintsKey(event, elements, character => (input += character))
   );
   addEventListener('scroll', onScroll);
+};
+
+const styleDomain = () =>
+  location.host.startsWith('www.google.')
+    ? location.host.replace(/[^.]+$/, 'com')
+    : /^\/questions\/\d+\//.test(location.pathname)
+    ? 'stackoverflow.com'
+    : location.host;
+
+const styles = {
+  'app.slack.com': `
+    .c-message, .c-message_kit__message, .c-texty_input .ql-editor, .c-texty_input .ql-placeholder { font-size: 19px }
+    .p-message_input > .c-button-unstyled { bottom: 6px }
+    .p-channel_sidebar__channel--muted > .c-mention_badge { display: none }
+  `,
+  'stackoverflow.com': `
+    body, .top-bar { margin-top: 0 }
+    #js-gdpr-consent-banner, #noscript-warning { display: none }
+  `,
+  'www.google.com': 'body { margin: 0 1.5em }',
+  'www.reddit.com': `
+    .Post ~ :nth-of-type(4) > div > button, .Post ~ :nth-of-type(4) > div > div::before { display: none }
+    .Post ~ :nth-of-type(4) > div > div { max-height: none }
+  `,
 };
 
 const visibleElements = () =>

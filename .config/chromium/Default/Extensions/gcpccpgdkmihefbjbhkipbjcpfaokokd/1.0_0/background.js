@@ -22,17 +22,6 @@ const enableJavaScript = (url, incognito = false) =>
     () => chrome.tabs.reload()
   );
 
-const insertCSS = () =>
-  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (tab.url && changeInfo.status === 'loading') {
-      const { host } = new URL(tab.url);
-      styles[host] &&
-        chrome.tabs.insertCSS(tabId, {
-          code: styles[host].replace(/;| }/g, ' !important$&'),
-        });
-    }
-  });
-
 const listenCommands = () =>
   chrome.commands.onCommand.addListener(command =>
     chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) =>
@@ -52,22 +41,7 @@ const listenCommands = () =>
     )
   );
 
-const main = () => {
-  insertCSS();
-  listenCommands();
-};
-
-const styles = {
-  'app.slack.com': `
-    .c-message, .c-message_kit__message, .c-texty_input .ql-editor, .c-texty_input .ql-placeholder { font-size: 19px }
-    .p-message_input > .c-button-unstyled { bottom: 6px }
-    .p-channel_sidebar__channel--muted > .c-mention_badge { display: none }
-  `,
-  'stackoverflow.com':
-    'body, .top-bar { margin-top: 0 } #js-gdpr-consent-banner, #noscript-warning { display: none }',
-  'www.reddit.com':
-    '.kkVTOP { max-height: none } .kkVTOP::before { display: none }',
-};
+const main = () => listenCommands();
 
 const togglePinnedTab = tab => chrome.tabs.update({ pinned: !tab.pinned });
 
