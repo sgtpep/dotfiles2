@@ -58,7 +58,10 @@ const main = () => {
 };
 
 const styles = {
-  'app.slack.com': '.c-message, .c-message_kit__message, .c-texty_input .ql-editor, .c-texty_input .ql-placeholder { font-size: 19px }',
+  'app.slack.com': `
+    .c-message, .c-message_kit__message, .c-texty_input .ql-editor, .c-texty_input .ql-placeholder { font-size: 19px }
+    .p-channel_sidebar__channel--muted > .c-mention_badge { display: none }
+  `,
   'stackoverflow.com':
     'body, .top-bar { margin-top: 0 } #js-gdpr-consent-banner, #noscript-warning { display: none }',
   'www.reddit.com':
