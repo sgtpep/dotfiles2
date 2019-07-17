@@ -170,7 +170,7 @@ repository=sgtpep/dotfiles
 function schedule-syncing {
   local command=sync-cron
   sudo tee /etc/cron.d/"$command" > /dev/null << EOF
-PATH=/usr/bin:/bin:/home/$USER/.local/bin
+PATH=/usr/bin:/bin:$HOME/.local/bin
 10 * * * * $USER $command
 EOF
   local path=/etc/dhcp/dhclient-exit-hooks.d/$command
@@ -187,11 +187,13 @@ function setup-acpid {
   sudo ln -fs /lib/systemd/system/acpid.service /etc/systemd/system/multi-user.target.wants
   sudo ln -fs /usr/share/doc/acpid/examples/default /etc/acpi/events
   local path=/etc/acpi/default.sh
-  sudo tee "$path" > /dev/null << \EOF
+  sudo tee "$path" > /dev/null << EOF
 #!/bin/bash
 set -eu
-if [[ $1 == button/lid ]]; then
-  rm -f /home/*/.ssh/ssh-*
+if [[ \$1 == button/lid ]]; then
+  rm -f $HOME/.ssh/ssh-*
+EOF
+  sudo tee -a "$path" > /dev/null << \EOF
 elif [[ $1 == video/brightness* ]]; then
   paths=(/sys/class/backlight/*)
   cd "${paths[0]}"

@@ -79,7 +79,7 @@ function setup-gallery {
   local command=generate-gallery
   download-dotfile .local/bin/"$command"
   sudo tee /etc/cron.d/"$command" > /dev/null << EOF
-PATH=/usr/bin:/bin:/home/$USER/.local/bin
+PATH=/usr/bin:/bin:$HOME/.local/bin
 0 0 */5 * * $USER $command ~/.config/gallery/config ~/www/gallery
 0 0 */5 * * $USER $command ~/.config/*-gallery/config ~/www/*-gallery
 EOF
@@ -173,7 +173,7 @@ function setup-tasks {
   install-packages bsd-mailx
   local mail='mail -E -a "Date: $(date -R)" -s'
   sudo tee /etc/cron.d/"$command" > /dev/null << EOF
-PATH=/usr/bin:/bin:/home/$USER/.local/bin
+PATH=/usr/bin:/bin:$HOME/.local/bin
 0 5 * * * $USER $command today | $mail Today $USER
 0 5 * * * $USER $command tomorrow | $mail Tomorrow $USER
 0 5 * * 0 $USER $command | $mail Week $USER
