@@ -5,10 +5,24 @@ for path in src/@types/*; do
   paths=(../../node_modules/@*/"${filename%.d.ts}")
   [[ ! -d ${paths[0]} ]] || cp -u "$path" "${paths[0]}"/index.d.ts
 done
-job-list "$@" | grep '\.\(jsx\?\|tsx\?\)$' | grep -v '/__tests__/\|\.test\.' | exec xargs -r -d '\n' bash -"$-" -c $'
-path=.tsconfig.json
-sed \'s|\("include":\s*\)\[[^]]*\]|"files":\'"$(node -p \'JSON.stringify(process.argv.slice(1))\' -- "$@")"\'|\' "${path#.}" > "$path"
-npx tsc -p "$path" || status=$?
-rm "$path"
+declare -A declarations=(
+  [src/components/SvgIcon/icons/index.ts]='declare module "*.svg"'
+)
+for path in "${!declarations[@]}"; do
+  if [[ -f $path ]]; then
+    declaration=${path%.*}.d.ts
+    echo "${declarations[$path]}" > "$declaration"
+    sed -i "1i /// <reference path='${declaration##*/}'/>" "$path"
+  fi
+done
+config=.tsconfig.json
+job-list "$@" | grep '\.\(jsx\?\|tsx\?\)$' | grep -v '/__tests__/\|\.test\.' | exec xargs -r -d '\n' bash -"$-" -c $'sed \'s|\("include":\s*\)\[[^]]*\]|"files":\'"$(node -p \'JSON.stringify(process.argv.slice(1))\' -- "$@")"\'|\' '"${config#.}" -- > "$config"
+npx tsc -p "$config" || status=$?
+rm "$config"
+for path in "${!declarations[@]}"; do
+  if [[ -f $path ]]; then
+    rm "${path%.*}".d.ts
+    sed -i '/^\/\/\/ /d' "$path"
+  fi
+done
 exit "${status-0}"
-' --
