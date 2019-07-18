@@ -11,7 +11,8 @@
   "devtools": {
     "preferences": {
       "currentDockState": "\"left\"",
-      "networkLogShowOverview": "false"
+      "networkLogShowOverview": "false",
+      "shortcutPanelSwitch": "true"
     }
   },
   "enable_do_not_track": true,
