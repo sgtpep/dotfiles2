@@ -23,15 +23,13 @@ function main {
   [[ $@ ]] || set -- .
   local path
   for path; do
-    if [[ -d $path ]]; then
-      lowercase-extensions "${path%/}"/*.{3GP,MOV,MP4}
-      set -- "${path%/}"/*.{3gp,mov,mp4}
-    else
-      set -- "$path"
-    fi
-    rename-dated "$@"
-    rename-whatsapp "$@"
-    convert-videos "$@"
+    [[ -d $path ]]
+    local directory=${path%/}
+    local pattern=*.{3gp,mov,mp4}
+    lowercase-extensions "$directory"/${pattern^^}
+    rename-dated "$directory"/$pattern
+    rename-whatsapp "$directory"/$pattern
+    convert-videos "$directory"/$pattern
   done
 }
 
