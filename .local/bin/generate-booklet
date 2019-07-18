@@ -45,7 +45,7 @@ function generate-ranges {
 }
 
 function main {
-  if [[ $@ ]]; then
+  if [[ ${2-} ]]; then
     local paths
     mapfile -t paths < <(generate-ranges "$@")
     [[ ${paths[@]} ]]
