@@ -20,6 +20,7 @@ function convert-videos {
 }
 
 function main {
+  [[ $@ ]] || set -- .
   local path
   for path; do
     if [[ -d $path ]]; then

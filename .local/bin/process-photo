@@ -23,6 +23,7 @@ function normalize-extensions {
 }
 
 function main {
+  [[ $@ ]] || set -- .
   local path
   for path; do
     if [[ -d $path ]]; then
