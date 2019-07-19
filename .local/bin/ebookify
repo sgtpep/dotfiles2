@@ -109,7 +109,7 @@ function parse-options {
 }
 
 function process-html-url {
-  echo -n "Downloading $1..." >&2
+  echo -n "Processing $1..." >&2
   install-puppeteer
   local domain=$(extract-domain "$1")
   javascript_disabled=${javascript_disabled-${domain_javascript_disabled[$domain]-}} print_media=${print_media-${domain_print_media[$domain]-}} scale=${scale-${domain_scales[$domain]-1.375}} script=${script-${domain_scripts[$domain]-}} style=${style-${domain_styles[$domain]-}} node - "$1" "$2" << \EOF
@@ -123,7 +123,7 @@ const puppeteer = require('puppeteer');
       defaultViewport: {
         deviceScaleFactor: scale,
         height: 100000,
-        width: Math.round(width / scale),
+        width,
       },
       executablePath: 'chromium',
     });
@@ -154,10 +154,11 @@ const puppeteer = require('puppeteer');
     );
     frames.length && (await page.waitFor(1000));
     await page.pdf({
-      height: 735 / scale,
+      height: 735,
       path: process.argv[3],
       printBackground: true,
-      width: width / scale,
+      scale,
+      width,
     });
     console.log(await page.title());
     await browser.close();
