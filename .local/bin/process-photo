@@ -30,10 +30,9 @@ function main {
     local directory=${path%/}
     lowercase-extensions "$directory"/*.{JPEG,JPG}
     normalize-extensions "$directory"/*.jpeg
-    local pattern='*.jpg'
-    rename-dated "$directory"/$pattern
-    rename-whatsapp "$directory"/$pattern
-    rotate-photos "$directory"/$pattern
+    rename-dated "$directory"/*.jpg
+    rename-whatsapp "$directory"/*.jpg
+    rotate-photos "$directory"/*.jpg
   done
 }
 

@@ -25,11 +25,10 @@ function main {
   for path; do
     [[ -d $path ]]
     local directory=${path%/}
-    local pattern=*.{3gp,mov,mp4}
-    lowercase-extensions "$directory"/${pattern^^}
-    rename-dated "$directory"/$pattern
-    rename-whatsapp "$directory"/$pattern
-    convert-videos "$directory"/$pattern
+    lowercase-extensions "$directory"/*.{3GP,MOV,MP4}
+    rename-dated "$directory"/*.{3gp,mov,mp4}
+    rename-whatsapp "$directory"/*.mp4
+    convert-videos "$directory"/*.{3gp,mov,mp4}
   done
 }
 
