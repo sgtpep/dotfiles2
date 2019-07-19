@@ -35,6 +35,7 @@ declare -A domain_scales=()
 declare -A domain_scripts=()
 
 declare -A domain_styles=(
+  [m.habr.com]='.spoiler_text { display: block; opacity: 1 }'
   [medium.com]='#root > div > :nth-child(2) { display: none }'
 )
 
@@ -135,24 +136,28 @@ const puppeteer = require('puppeteer');
       waitUntil: 'networkidle2',
     });
     process.env.javascript_disabled ||
-      (await page.addStyleTag({ content: process.env.style }));
+      (await page.addStyleTag({
+        content: `
+          table { border: 1px solid black }
+          td, th, tr { border: none }
+          td, th { display: block }
+          td:not(:last-child), th:not(:last-child) { border-bottom: 1px solid lightgrey }
+          tr:not(:last-child) { border-bottom: 1px solid black }
+          ${process.env.style}
+        `.replace(/;| }/g, ' !important$&'),
+      }));
     const frames = await page.frames();
-    await Promise.all(
-      [page, ...frames].map(page =>
-        page.evaluate(script => {
-          [...document.querySelectorAll('*')].forEach(element => {
-            const style = getComputedStyle(element);
-            ['fixed', 'sticky'].includes(style.position) &&
-              element.setAttribute('style', 'display: none !important');
-            style.overflow === 'auto' && (element.style.overflow = 'visible');
-            style.whiteSpace === 'pre' &&
-              (element.style.whiteSpace = 'pre-wrap');
-          })
-          eval(script);
-        }, process.env.script)
-      )
-    );
-    frames.length && (await page.waitFor(1000));
+    await page.evaluate(script => {
+      [...document.querySelectorAll('*')].forEach(element => {
+        const style = getComputedStyle(element);
+        ['fixed', 'sticky'].includes(style.position) &&
+          element.setAttribute('style', 'display: none !important');
+        style.overflow === 'auto' && (element.style.overflow = 'visible');
+        style.whiteSpace === 'pre' && (element.style.whiteSpace = 'pre-wrap');
+      });
+      eval(script);
+    }, process.env.script);
+    await page.waitFor(1000);
     await page.pdf({
       height: 735,
       path: process.argv[3],
