@@ -1,3 +1,0 @@
-#!/bin/bash
-set -eu
-exec x-terminal-emulator -title syncing -e bash -"$-" -c 'online sync-all || read -s'

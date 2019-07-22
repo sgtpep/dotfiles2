@@ -175,7 +175,7 @@ keys = {
   { { 'Control', 'Mod1' }, 'grave', function() toggle_keyboard() end },
   { { 'Control', 'Mod1' }, 'q', function() run_or_raise('x-terminal-emulator -title sshuttle -e bash -c \'online sshuttle -r personal -x danil.mobi --dns 0/0 |& grep -v DeprecationWarning\'', { name = 'sshuttle' }) end },
   { { 'Control', 'Mod1' }, 'r', function() run_or_raise('x-terminal-emulator -e launch', { name = 'launch' }) end },
-  { { 'Control', 'Mod1' }, 's', function() run_or_raise('sync-gui', { name = 'syncing' }) end },
+  { { 'Control', 'Mod1' }, 's', function() run_or_raise('x-terminal-emulator -title syncing -e bash -c \'online sync-all || read -s\'', { name = 'syncing' }) end },
   { { 'Control', 'Mod1' }, 't', function() run_or_raise('x-terminal-emulator -e tmux new-session -A -s tmux', { name = 'tmux' }) end },
   { { 'Control', 'Mod1' }, 'w', function() run_or_raise(tmux_command('notes'), { name = 'notes' }) end },
   { { 'Control', 'Mod1' }, 'x', function() run_or_raise('x-terminal-emulator -title calendar -e bash -c $\'date \\\'+%F %a %R\\\'; echo; ncal -Mb -A 1; read -s -n 1\'', { name = 'calendar' }, true) end },

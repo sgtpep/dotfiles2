@@ -173,8 +173,6 @@ function schedule-syncing {
 PATH=/usr/bin:/bin:$HOME/.local/bin
 10 * * * * $USER $command
 EOF
-  local command=sync-gui
-  sudo tee /etc/dhcp/dhclient-exit-hooks.d/"$command" > /dev/null <<< "[ \"\$reason\" != BOUND ] || sudo -u $USER env DISPLAY=:0 PATH=$HOME/.local/bin:\$PATH $command"
 }
 
 function setup-acpid {
