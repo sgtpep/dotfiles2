@@ -25,7 +25,7 @@ const clickElement = (element, ctrlKey = false) => {
     })
   );
   target && (element.target = target);
-  elementVisible(element) && element.focus();
+  elementVisible(element) && element.focus({ preventScroll: true });
 };
 
 const elementVisible = element => {
