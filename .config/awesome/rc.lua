@@ -59,6 +59,7 @@ function configure_chromium(client)
     awful.key({ 'Mod1' }, 'm', nil, function() copy(function() run_or_raise('x-terminal-emulator -title sharing -e bash -c $\'output=$(xclip -o -selection clipboard); mutt -e \\\'set noabort_unmodified\\\' -i <(echo "${output##* }") -s "Link: ${output% *}"\'', { name = 'sharing' }, true) end, true) end),
     awful.key({ 'Mod1' }, 'p', nil, function() copy(function() run_or_raise('x-terminal-emulator -title password -e bash -c \': "$(xclip -o -selection clipboard)"; : "${_#*://}"; hostname=${_%%/*}; if [[ -f ~/.password-store/$hostname.gpg ]]; then pass "$hostname"; else pwdhash "$hostname" 2> /dev/null; fi | xclip -selection clipboard; [[ ${PIPESTATUS[0]} != 0 ]] || awesome-client <<< $1\' -- "input_shortcut({\'Alt_L\', \'Tab\'}) require(\'gears\').timer.start_new(0.1, function() input_shortcut({\'Control_L\', \'v\'}) require(\'gears\').timer.start_new(0.1, function() require(\'awful\').spawn.with_shell(\'xclip -selection clipboard <<< \\\'\\\'\') end) end)"', { name = 'password' }) end) end),
     awful.key({ 'Mod1' }, 'v', nil, function() copy(function() run_or_raise('x-terminal-emulator -title mpv -e bash -c \'mpv "$(xclip -o -selection clipboard)" || read -s\'', { class = 'mpv' }) end) end),
+    awful.key({ 'Mod1', 'Shift' }, 'e', nil, function() copy(function() run_or_raise('x-terminal-emulator -title ebookify -e bash -c \'ebookify -d "$(xclip -o -selection clipboard)" || read -s\'', { name = 'ebookify' }) end) end),
   })))
 end
 
