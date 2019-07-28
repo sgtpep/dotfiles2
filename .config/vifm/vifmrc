@@ -10,7 +10,8 @@ fileviewer <application/vnd.openxmlformats-officedocument.wordprocessingml.docum
 fileviewer <audio/*,image/*,video/*> file -b -- %f
 fileviewer <text/html> w3m -o display_link_number=1 %f
 fileviewer <text/rtf> catdoc -w -- %f
-filextype <application/*,audio/*,image/svg,image/webp,text/html,text/rtf,video/*> xdg-open %f %i &
+filextype <application/*,image/svg,image/webp,text/html,text/rtf,video/*> xdg-open %f %i &
+filextype <audio/*> xdg-open %f
 filextype <image/*> bash -c $'paths=$(find "$1" -maxdepth 1 -type f -iregex \'.*\.\(gif\|jpe?g\|png\)\' | LANG=C sort); exec sxiv -i -n "$(output=$(grep -Fnx -m 1 "$2" <<< $paths); echo "${output%%:*}")" <<< $paths' -- %d %c:p %i &
 highlight Border cterm=none ctermfg=default ctermbg=default
 highlight BrokenLink cterm=none ctermfg=default ctermbg=default
