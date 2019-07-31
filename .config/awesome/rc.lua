@@ -55,11 +55,11 @@ function configure_chromium(client)
     gears.timer.start_new(0.1, callback)
   end
   client:keys(gears.table.join(table.unpack({
-    awful.key({ 'Mod1' }, 'e', nil, function() copy(function() run_or_raise('x-terminal-emulator -title ebookify -e bash -c \'ebookify "$(xclip -o -selection clipboard)" || read -s\'', { name = 'ebookify' }) end) end),
-    awful.key({ 'Mod1' }, 'm', nil, function() copy(function() run_or_raise('x-terminal-emulator -title sharing -e bash -c $\'output=$(xclip -o -selection clipboard); mutt -e \\\'set noabort_unmodified\\\' -i <(echo "${output##* }") -s "Link: ${output% *}"\'', { name = 'sharing' }, true) end, true) end),
-    awful.key({ 'Mod1' }, 'p', nil, function() copy(function() run_or_raise('x-terminal-emulator -title password -e bash -c \': "$(xclip -o -selection clipboard)"; : "${_#*://}"; hostname=${_%%/*}; if [[ -f ~/.password-store/$hostname.gpg ]]; then pass "$hostname"; else pwdhash "$hostname" 2> /dev/null; fi | xclip -selection clipboard; [[ ${PIPESTATUS[0]} != 0 ]] || awesome-client <<< $1\' -- "input_shortcut({\'Alt_L\', \'Tab\'}) require(\'gears\').timer.start_new(0.1, function() input_shortcut({\'Control_L\', \'v\'}) require(\'gears\').timer.start_new(0.1, function() require(\'awful\').spawn.with_shell(\'xclip -selection clipboard <<< \\\'\\\'\') end) end)"', { name = 'password' }) end) end),
-    awful.key({ 'Mod1' }, 'v', nil, function() copy(function() run_or_raise('x-terminal-emulator -title mpv -e bash -c \'mpv "$(xclip -o -selection clipboard)" || read -s\'', { class = 'mpv' }) end) end),
-    awful.key({ 'Mod1', 'Shift' }, 'e', nil, function() copy(function() run_or_raise('x-terminal-emulator -title ebookify -e bash -c \'ebookify -d "$(xclip -o -selection clipboard)" || read -s\'', { name = 'ebookify' }) end) end),
+    awful.key({ 'Mod1' }, 'e', nil, function() copy(function() run_or_raise('urxvtcd -title ebookify -e bash -c \'ebookify "$(xclip -o -selection clipboard)" || read -s\'', { name = 'ebookify' }) end) end),
+    awful.key({ 'Mod1' }, 'm', nil, function() copy(function() run_or_raise('urxvtcd -title sharing -e bash -c $\'output=$(xclip -o -selection clipboard); mutt -e \\\'set noabort_unmodified\\\' -i <(echo "${output##* }") -s "Link: ${output% *}"\'', { name = 'sharing' }, true) end, true) end),
+    awful.key({ 'Mod1' }, 'p', nil, function() copy(function() run_or_raise('urxvtcd -title password -e bash -c \': "$(xclip -o -selection clipboard)"; : "${_#*://}"; hostname=${_%%/*}; if [[ -f ~/.password-store/$hostname.gpg ]]; then pass "$hostname"; else pwdhash "$hostname" 2> /dev/null; fi | xclip -selection clipboard; [[ ${PIPESTATUS[0]} != 0 ]] || awesome-client <<< $1\' -- "input_shortcut({\'Alt_L\', \'Tab\'}) require(\'gears\').timer.start_new(0.1, function() input_shortcut({\'Control_L\', \'v\'}) require(\'gears\').timer.start_new(0.1, function() require(\'awful\').spawn.with_shell(\'xclip -selection clipboard <<< \\\'\\\'\') end) end)"', { name = 'password' }) end) end),
+    awful.key({ 'Mod1' }, 'v', nil, function() copy(function() run_or_raise('urxvtcd -title mpv -e bash -c \'mpv "$(xclip -o -selection clipboard)" || read -s\'', { class = 'mpv' }) end) end),
+    awful.key({ 'Mod1', 'Shift' }, 'e', nil, function() copy(function() run_or_raise('urxvtcd -title ebookify -e bash -c \'ebookify -d "$(xclip -o -selection clipboard)" || read -s\'', { name = 'ebookify' }) end) end),
   })))
 end
 
@@ -166,20 +166,20 @@ end
 
 keys = {
   { { 'Control', 'Mod1' }, 'Tab', function() naughty.destroy_all_notifications() end },
-  { { 'Control', 'Mod1' }, 'a', function() run_or_raise('x-terminal-emulator -e calc', { name = 'calc' }) end },
-  { { 'Control', 'Mod1' }, 'b', function() run_or_raise('x-terminal-emulator -title acpi -e bash -c \'acpi; read -s -n 1\'', { name = 'acpi' }) end },
+  { { 'Control', 'Mod1' }, 'a', function() run_or_raise('urxvtcd -e calc', { name = 'calc' }) end },
+  { { 'Control', 'Mod1' }, 'b', function() run_or_raise('urxvtcd -title acpi -e bash -c \'acpi; read -s -n 1\'', { name = 'acpi' }) end },
   { { 'Control', 'Mod1' }, 'c', function() run_or_raise('pgrep -x chromium > /dev/null || chromium', { class = 'Chromium' }, true) end },
-  { { 'Control', 'Mod1' }, 'd', function() run_or_raise('x-terminal-emulator -e dictionary', { name = 'dictionary' }) end },
+  { { 'Control', 'Mod1' }, 'd', function() run_or_raise('urxvtcd -e dictionary', { name = 'dictionary' }) end },
   { { 'Control', 'Mod1' }, 'e', function() run_or_raise(tmux_command('mutt'), { name = 'mutt' }) end },
   { { 'Control', 'Mod1' }, 'f', function() run_or_raise(tmux_command('mutt -f =Feeds', 'feeds'), { name = 'feeds' }) end },
   { { 'Control', 'Mod1' }, 'g', function() awful.spawn.with_shell('[[ -f ~/.urls ]] && mv ~/.urls{,~} && exec xargs -r -a ~/.urls~ -d \'\\n\' x-www-browser') end },
   { { 'Control', 'Mod1' }, 'grave', function() toggle_keyboard() end },
-  { { 'Control', 'Mod1' }, 'q', function() run_or_raise('x-terminal-emulator -title sshuttle -e bash -c \'online sshuttle -r personal -x danil.mobi --dns 0/0 |& grep -v DeprecationWarning\'', { name = 'sshuttle' }) end },
-  { { 'Control', 'Mod1' }, 'r', function() run_or_raise('x-terminal-emulator -e launch', { name = 'launch' }) end },
-  { { 'Control', 'Mod1' }, 's', function() run_or_raise('x-terminal-emulator -title syncing -e bash -c \'online sync-all || read -s\'', { name = 'syncing' }) end },
-  { { 'Control', 'Mod1' }, 't', function() run_or_raise('x-terminal-emulator -e tmux new-session -A -s tmux', { name = 'tmux' }) end },
+  { { 'Control', 'Mod1' }, 'q', function() run_or_raise('urxvtcd -title sshuttle -e bash -c \'online sshuttle -r personal -x danil.mobi --dns 0/0 |& grep -v DeprecationWarning\'', { name = 'sshuttle' }) end },
+  { { 'Control', 'Mod1' }, 'r', function() run_or_raise('urxvtcd -e launch', { name = 'launch' }) end },
+  { { 'Control', 'Mod1' }, 's', function() run_or_raise('urxvtcd -title syncing -e bash -c \'online sync-all || read -s\'', { name = 'syncing' }) end },
+  { { 'Control', 'Mod1' }, 't', function() run_or_raise('urxvtcd -e tmux new-session -A -s tmux', { name = 'tmux' }) end },
   { { 'Control', 'Mod1' }, 'w', function() run_or_raise(tmux_command('notes'), { name = 'notes' }) end },
-  { { 'Control', 'Mod1' }, 'x', function() run_or_raise('x-terminal-emulator -title calendar -e bash -c $\'printf \\\'%(%F %a %R)T\\n\\n\\\'; ncal -Mb -A 1; read -s -n 1\'', { name = 'calendar' }, true) end },
+  { { 'Control', 'Mod1' }, 'x', function() run_or_raise('urxvtcd -title calendar -e bash -c $\'printf \\\'%(%F %a %R)T\\n\\n\\\'; ncal -Mb -A 1; read -s -n 1\'', { name = 'calendar' }, true) end },
   { { 'Control', 'Mod1' }, 'z', function() awful.spawn('slock') end },
   { { 'Mod1' }, 'Escape', function() tag = root.tags()[1] tag.selected = not tag.selected end },
   { { 'Mod1' }, 'F4', function() if client.focus then client.focus:kill() end end },
@@ -281,7 +281,7 @@ function tmux_command(command, title)
   if not title then
     title = command
   end
-  return string.format('x-terminal-emulator -g %dx%d -title %s -e tmux new-session -Ad -s %s %s \\; set-option status off \\; attach-session -t %s', geometry.width // 11, geometry.height // 24, title, title, command, title)
+  return string.format('urxvtcd -g %dx%d -title %s -e tmux new-session -Ad -s %s %s \\; set-option status off \\; attach-session -t %s', geometry.width // 11, geometry.height // 24, title, title, command, title)
 end
 
 function toggle_keyboard()
@@ -292,7 +292,7 @@ function toggle_keyboard()
 end
 
 function toggle_wifi(command)
-  run_or_raise(string.format('x-terminal-emulator -e toggle-wifi %s', command), { name = 'toggle-wifi' })
+  run_or_raise(string.format('urxvtcd -e toggle-wifi %s', command), { name = 'toggle-wifi' })
 end
 
 main()

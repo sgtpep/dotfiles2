@@ -1,11 +1,5 @@
 #!/bin/bash
 set -eu
-set -- urxvtc "$@"
-command -v "$1" > /dev/null || install-packages rxvt-unicode
-"$@" || status=$?
-if [[ ${status-} == 2 ]]; then
-  urxvtd -f -o
-  exec "$@"
-else
-  exit "${status-0}"
-fi
+set -- /usr/bin/urxvt "$@"
+[[ -x $1 ]] || install-packages rxvt-unicode
+exec "$@"
