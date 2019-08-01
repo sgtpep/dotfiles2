@@ -282,6 +282,7 @@ style_html = lambda: \
   .lightbox:target {
     display: block;
   }
+
   .lightbox .media {
     -webkit-transform: translate(-50%, -50%);
     left: 50%;
@@ -291,6 +292,7 @@ style_html = lambda: \
     top: 50%;
     transform: translate(-50%, -50%);
   }
+
   .lightbox .caption {
     background-color: rgba(0, 0, 0, 0.5);
     bottom: 0;
@@ -334,17 +336,21 @@ style_html = lambda: \
     text-decoration: none;
     vertical-align: top;
   }
+
   .thumbnail > * {
     display: table;
   }
+
   .thumbnail video {
     border-radius: 0.75em;
   }
+
   .thumbnail .caption {
     caption-side: bottom;
     display: table-caption;
     font-size: smaller;
   }
+
   .thumbnail .media {
     display: block;
     max-height: 6em;
