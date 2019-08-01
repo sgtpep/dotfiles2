@@ -92,7 +92,7 @@ function main {
 }
 
 function parse-options {
-  while getopts c:djps: option; do
+  while getopts c:dj:ps: option; do
     if [[ $option == c ]]; then
       style=$OPTARG
     elif [[ $option == d ]]; then
