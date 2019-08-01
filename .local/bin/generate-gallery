@@ -343,6 +343,11 @@ style_html = lambda: \
 
   .thumbnail video {
     border-radius: 0.75em;
+    pointer-events: none;
+  }
+
+  .thumbnail video::-webkit-media-controls-panel {
+    display: none;
   }
 
   .thumbnail .caption {
