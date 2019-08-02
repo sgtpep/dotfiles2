@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eu
 product_name=$(path=/sys/class/dmi/id/product_name; [[ ! -f $path ]] || echo "$(< "$path")")
-setxkbmap -option ctrl:nocaps,grp:shifts_toggle,grp:switch,lv3:switch,misc:typo us,ru
+setxkbmap -option ctrl:nocaps,grp:rshift_toggle,grp:switch,lv3:switch,misc:typo us,ru
 xrdb ~/.Xresources
 
 [[ $product_name != 'HP Stream '* ]] || xinput set-prop 'ETPS/2 Elantech Touchpad' 'libinput Tapping Enabled' 1
