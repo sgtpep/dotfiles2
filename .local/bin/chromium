@@ -11,6 +11,6 @@ if [[ ! -h $directory/SingletonLock ]]; then
 fi
 [[ -f ~/.job ]] || set -- --disable-notifications "$@"
 command=chromium
-set -- /usr/bin/"$command" --disable-infobars --disable-smooth-scrolling --enable-native-notifications --load-extension=/usr/share/chromium/extensions/ublock-origin "$@"
+set -- /usr/bin/"$command" --disable-features=TranslateUI --disable-infobars --disable-smooth-scrolling --enable-native-notifications --load-extension=/usr/share/chromium/extensions/ublock-origin "$@"
 [[ -x $1 ]] || install-packages "$command" webext-ublock-origin
 exec "$@"
