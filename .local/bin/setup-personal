@@ -37,6 +37,7 @@ function install-packages {
 function install-standalone-packages {
   local packages=(
     git
+    goaccess
     man-db
     ncdu
     rsync
