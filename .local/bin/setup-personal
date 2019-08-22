@@ -36,8 +36,10 @@ function install-packages {
 
 function install-standalone-packages {
   local packages=(
+    aria2
     git
     man-db
+    mosh
     ncdu
     rsync
   )
