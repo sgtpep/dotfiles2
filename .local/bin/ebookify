@@ -23,7 +23,10 @@ function deactivate-links {
   sed -i "s|$string\b|$(printf "%${#string}s")|g" "$1"
 }
 
-declare -A domain_javascript_enabled=()
+declare -A domain_javascript_enabled=(
+  [m.habr.com]=1
+  [warhead.su]=1
+)
 
 declare -A domain_print_media=()
 
