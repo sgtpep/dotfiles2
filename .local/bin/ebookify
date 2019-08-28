@@ -23,10 +23,7 @@ function deactivate-links {
   sed -i "s|$string\b|$(printf "%${#string}s")|g" "$1"
 }
 
-declare -A domain_javascript_disabled=(
-  [www.nytimes.com]=1
-  [www.theatlantic.com]=1
-)
+declare -A domain_javascript_enabled=()
 
 declare -A domain_print_media=()
 
@@ -92,11 +89,11 @@ function main {
 }
 
 function parse-options {
-  while getopts c:dj:ps: option; do
+  while getopts c:ej:ps: option; do
     if [[ $option == c ]]; then
       style=$OPTARG
-    elif [[ $option == d ]]; then
-      javascript_disabled=1
+    elif [[ $option == e ]]; then
+      javascript_enabled=1
     elif [[ $option == j ]]; then
       script=$OPTARG
     elif [[ $option == p ]]; then
@@ -113,7 +110,7 @@ function process-html-url {
   echo -n "Processing $1..." >&2
   install-puppeteer
   local domain=$(extract-domain "$1")
-  javascript_disabled=${javascript_disabled-${domain_javascript_disabled[$domain]-}} print_media=${print_media-${domain_print_media[$domain]-}} scale=${scale-${domain_scales[$domain]-1.375}} script=${script-${domain_scripts[$domain]-}} style=${style-${domain_styles[$domain]-}} node - "$1" "$2" << \EOF
+  javascript_enabled=${javascript_enabled-${domain_javascript_enabled[$domain]-}} print_media=${print_media-${domain_print_media[$domain]-}} scale=${scale-${domain_scales[$domain]-1.375}} script=${script-${domain_scripts[$domain]-}} style=${style-${domain_styles[$domain]-}} node - "$1" "$2" << \EOF
 const puppeteer = require('puppeteer');
 
 (async () => {
@@ -130,7 +127,7 @@ const puppeteer = require('puppeteer');
     });
     const page = await browser.newPage();
     await page.emulateMedia(process.env.print_media ? 'print' : 'screen');
-    await page.setJavaScriptEnabled(!process.env.javascript_disabled);
+    await page.setJavaScriptEnabled(Boolean(process.env.javascript_enabled));
     await page.setUserAgent(
       'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.75 Mobile Safari/537.36'
     );
@@ -138,7 +135,7 @@ const puppeteer = require('puppeteer');
       timeout: 60000,
       waitUntil: 'networkidle2',
     });
-    process.env.javascript_disabled ||
+    process.env.javascript_enabled &&
       (await page.addStyleTag({
         content: `
           table { border: 1px solid black }
@@ -160,7 +157,6 @@ const puppeteer = require('puppeteer');
       });
       eval(script);
     }, process.env.script);
-    await page.waitFor(1000);
     await page.pdf({
       height: 735,
       path: process.argv[3],
