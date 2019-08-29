@@ -238,8 +238,17 @@ function temp-path {
   echo /tmp/"${checksum%% *}"
 }
 
+function truncate-filename {
+  local filename=$1
+  while (($(wc -c <<< $filename) > 255)); do
+    local suffix=.${filename##*.}
+    filename=${filename::-$((${#suffix} + 1))}$suffix
+  done
+  echo "$filename"
+}
+
 function upload-article {
-  local filename=${2//\//∕}.pdf
+  local filename=$(truncate-filename "${2//\//∕}".pdf)
   if list-articles | grep -Fqx "$filename"; then
     echo "'$filename' already exists." >&2
     return 1
