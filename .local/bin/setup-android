@@ -1,0 +1,67 @@
+#!/bin/bash
+set -eu
+
+function change-settings {
+  declare -A global=(
+    [animator_duration_scale]=0
+    [transition_animation_scale]=0
+    [window_animation_scale]=0
+  )
+  declare -A secure=(
+  )
+  declare -A system=(
+  )
+  local namespaces=(global secure system)
+  local checksum=$(declare -p "${namespaces[@]}" | md5sum | cut -d ' ' -f 1)
+  local checksum_key=settings_checksum
+  if [[ $(adb shell settings list global | grep -Po "(?<=^$checksum_key=).*") != $checksum ]]; then
+    local commands=()
+    local namespace
+    for namespace in "${namespaces[@]}"; do
+      declare -n settings=$namespace
+      local output=$(adb shell settings list "$namespace")
+      local key
+      for key in "${!settings[@]}"; do
+        [[ $'\n'$output$'\n' == *$'\n'$key=${settings[$key]}$'\n'* ]] || commands+=("settings put $namespace $key ${settings[$key]}")
+      done
+    done
+    [[ ! ${commands[@]} ]] || adb shell "$(printf '%s\n' "${commands[@]}")"
+    adb shell settings put global "$checksum_key" "$checksum"
+  fi
+}
+
+function disable-apps {
+  local apps=(
+    com.android.{chrome,vending}
+    com.google.android.apps.{docs,googleassistant,maps,messaging,nbu.files,photos,wallpaper}
+    com.google.android.{as,calendar,contacts,deskclock,dialer,gm,googlequicksearchbox,inputmethod.latin,youtube}
+    com.hmdglobal.{app.{camera,fmradio},support}
+  )
+  local enabled_apps=$(comm -12 <(adb shell cmd package list packages -e | cut -d : -f 2 | sort) <(printf '%s\n' "${apps[@]}" | sort))
+  [[ ! $enabled_apps ]] || adb shell "$(sed 's/^/pm disable-user /' <<< $enabled_apps)"
+}
+
+function install-apps {
+  declare -A apps=(
+    [com.github.postapczuk.lalauncher]=
+    [de.j4velin.wifiAutoOff]=
+    [org.fdroid.fdroid]=https://f-droid.org/FDroid.apk
+  )
+  local packages=$(adb shell cmd package list packages)
+  local app
+  for app in "${!apps[@]}"; do
+    if ! grep -Fqx "package:$app" <<< $packages; then
+      local url=${apps[$app]:-$(wget -O - https://f-droid.org/en/packages/"$app"/ 2> /dev/null | grep -o -m 1 "[^\"]*/${app//./\\.}_.*\.apk\b")}
+      [[ -f /tmp/$app.apk ]] || wget -O /tmp/"$app".apk "$url"
+      adb install /tmp/"$app".apk
+    fi
+  done
+}
+
+function main {
+  disable-apps
+  install-apps
+  change-settings
+}
+
+[[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"
