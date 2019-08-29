@@ -1,15 +1,35 @@
 #!/bin/bash
 set -eu
 
+function adb-input {
+  adb shell "$(
+    local options=eu
+    [[ $- != *x* ]] || options=${options}x
+    echo "set -$options"
+    cat << \EOF
+dumpsys window 2> /dev/null | grep -q -m 1 ' mAwake=true' || input keyevent 26
+dumpsys window 2> /dev/null | grep -q -m 1 ' mShowingLockscreen=false' || input keyevent 82
+TMPDIR=/sdcard
+EOF
+    cat
+  )"
+}
+
 function change-settings {
   declare -A global=(
     [animator_duration_scale]=0
     [transition_animation_scale]=0
+    [wifi_networks_available_notification_on]=0
     [window_animation_scale]=0
   )
   declare -A secure=(
+    [enabled_input_methods]=rkr.simplekeyboard.inputmethod/.latin.LatinIME
+    [icon_blacklist]=volume
+    [sysui_qs_tiles]=wifi,location,rotation,flashlight
   )
   declare -A system=(
+    [screen_brightness]=25
+    [screen_brightness_mode]=0
   )
   local namespaces=(global secure system)
   local checksum=$(declare -p "${namespaces[@]}" | md5sum | cut -d ' ' -f 1)
@@ -30,9 +50,112 @@ function change-settings {
   fi
 }
 
+function configure-apps {
+  local names=(
+  )
+  configure-once "${names[@]}"
+}
+
+function configure-languages {
+  adb-input << \EOF
+am start -a android.settings.LOCALE_SETTINGS &> /dev/null
+# Add a language
+input tap 0 400
+sleep 1
+# search icon, input, Русский (Россия)
+for arguments in tap\ 650\ 100 text\ rus tap\ 1\ 200; do
+  input $arguments
+done
+am force-stop com.android.settings
+EOF
+}
+
+function configure-mute {
+  adb-input << \EOF
+# volume down, top icon, top icon
+for arguments in keyevent\ 25 tap\ 650\ 500{,}; do
+  input $arguments
+done
+EOF
+}
+
+function configure-once {
+  local settings=$(adb shell settings list global)
+  local name
+  for name; do
+    local key=${name//-/_}_configured
+    if ! grep -Fqx "$key=1" <<< $settings; then
+      configure-"$name"
+      adb shell settings put global "$key" 1
+    fi
+  done
+}
+
+function configure-screen-lock {
+  adb-input << \EOF
+am start -a android.settings.SECURITY_SETTINGS &> /dev/null
+# Screen lock, None
+for arguments in tap\ 0\ {800,200}; do
+  input $arguments
+done
+am force-stop com.android.settings
+EOF
+}
+
+function configure-sounds {
+  adb-input << \EOF
+am start -a android.settings.SOUND_SETTINGS &> /dev/null
+# Advanced, Screen locking sounds, Touch vibration
+for arguments in swipe\ 0\ 1000\ 0\ 0 tap\ 0\ 1400 swipe\ 0\ 1000\ 0\ 0 tap\ 0\ {1000,1400}; do
+  input $arguments
+done
+am force-stop com.android.settings
+EOF
+}
+
+function configure-system {
+  local names=(
+    languages
+    mute
+    screen-lock
+    sounds
+    wallpaper
+  )
+  configure-once "${names[@]}"
+}
+
+function configure-wallpaper {
+  adb-input << \EOF
+local path=/data/local/tmp/wallpaper.gif
+base64 -d <<< 'R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==' > "$path"
+am start -d file://"$path" -a android.service.wallpaper.CROP_AND_SET_WALLPAPER -f 0x1 com.android.wallpaperpicker/.WallpaperCropActivity
+# Set wallpaper, Home screen
+for arguments in tap\ 0\ 100 keyevent\ {20,23}; do
+  input $arguments
+done
+EOF
+}
+
+function connect-wifi {
+  enable-wifi
+  if ! adb shell dumpsys wifi 2> /dev/null | grep -x -A 1 -m 1 'Configured networks' | grep -q '\bID:'; then
+    adb-input << EOF
+am start com.android.settings/.wifi.WifiPickerActivity &> /dev/null
+# first item, input, Connect
+for arguments in tap\ 0\ 300 text\ '$(wifi-passphrase)' tap\ 600\ 750; do
+  input \$arguments
+done
+am force-stop com.android.settings
+until ping -c 1 1.1.1.1 &> /dev/null; do
+  sleep 1
+done
+EOF
+  fi
+}
+
 function disable-apps {
   local apps=(
-    com.android.{chrome,vending}
+    com.android.{bluetooth,chrome,vending}
     com.google.android.apps.{docs,googleassistant,maps,messaging,nbu.files,photos,wallpaper}
     com.google.android.{as,calendar,contacts,deskclock,dialer,gm,googlequicksearchbox,inputmethod.latin,youtube}
     com.hmdglobal.{app.{camera,fmradio},support}
@@ -41,11 +164,23 @@ function disable-apps {
   [[ ! $enabled_apps ]] || adb shell "$(sed 's/^/pm disable-user /' <<< $enabled_apps)"
 }
 
+function enable-wifi {
+  if adb shell dumpsys wifi 2> /dev/null | grep -qx -m 1 'Wi-Fi is disabled'; then
+    adb-input << \EOF
+am start com.android.settings/.wifi.WifiPickerActivity &> /dev/null
+# Use Wi-Fi
+input tap 0 200
+am force-stop com.android.settings
+EOF
+  fi
+}
+
 function install-apps {
   declare -A apps=(
-    [com.github.postapczuk.lalauncher]=
+    [com.anpmech.launcher]=
     [de.j4velin.wifiAutoOff]=
     [org.fdroid.fdroid]=https://f-droid.org/FDroid.apk
+    [rkr.simplekeyboard.inputmethod]=
   )
   local packages=$(adb shell cmd package list packages)
   local app
@@ -62,6 +197,17 @@ function main {
   disable-apps
   install-apps
   change-settings
+  configure-system
+  configure-apps
+  connect-wifi
+}
+
+function wifi-passphrase {
+  local path=/etc/wpa_supplicant/wpa_supplicant.conf
+  if [[ -f $path ]]; then
+    local paths=(/sys/class/net/wl*)
+    sudo grep -A 1 "\bssid=\"$(sudo wpa_cli -i "${paths[0]##*/}" status | grep -Po '(?<=^ssid=).+')\"" "$path" | grep -Po '(?<=\bpsk=")[^"]+'
+  fi
 }
 
 [[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"
