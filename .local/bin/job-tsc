@@ -1,6 +1,6 @@
 #!/bin/bash
 set -eu
-for path in src/@types/*; do
+for path in ../backoffice-library-typings/@types/*; do
   filename=${path##*/}
   paths=(../../node_modules/@*/"${filename%.d.ts}")
   [[ ! -d ${paths[0]} ]] || cp -u "$path" "${paths[0]}"/index.d.ts
