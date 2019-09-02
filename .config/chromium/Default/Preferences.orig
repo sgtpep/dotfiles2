@@ -41,6 +41,10 @@
       "linux:Alt+Y": {
         "command_name": "copy-url",
         "extension": "gcpccpgdkmihefbjbhkipbjcpfaokokd"
+      },
+      "linux:Ctrl+D": {
+        "command_name": "noop",
+        "extension": "gcpccpgdkmihefbjbhkipbjcpfaokokd"
       }
     },
     "settings": {
@@ -73,6 +77,9 @@
             },
             "history-forward": {
               "description": "Forward in history"
+            },
+            "noop": {
+              "description": "No operation"
             },
             "toggle-pinned": {
               "description": "Pin/unpin a tab"
