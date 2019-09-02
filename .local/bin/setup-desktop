@@ -184,6 +184,7 @@ function setup-acpid {
 #!/bin/bash
 set -eu
 if [[ \$1 == button/lid ]]; then
+  pkill -x sshuttle || :
   rm -f $HOME/.ssh/ssh-*
 EOF
   sudo tee -a "$path" > /dev/null << \EOF
