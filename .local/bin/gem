@@ -1,5 +1,6 @@
 #!/bin/bash
 set -eu
 set -- /usr/bin/"${0##*/}" "$@"
-[[ -x $1 ]] || install-packages ruby{,-dev}
+[[ -x $1 ]] || install-packages ruby
+ls /usr/include/ruby-*/ruby.h &> /dev/null || install-packages ruby-dev
 exec "$@"
