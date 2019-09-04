@@ -1,7 +1,9 @@
 #!/bin/bash
 set -eu
 sudo apt update
-if [[ $(apt list --upgradable 2> /dev/null) != 'Listing...' ]]; then
+output=$(apt list --upgradable 2> /dev/null)
+if [[ $output != 'Listing...' ]]; then
+  echo "$output"
   sudo APT_LISTCHANGES_FRONTEND=none DEBIAN_FRONTEND=noninteractive apt -y -o Dpkg::Options::=--force-confnew full-upgrade
   sudo apt -y autoremove --purge
   if [[ -f /run/reboot-required ]]; then
