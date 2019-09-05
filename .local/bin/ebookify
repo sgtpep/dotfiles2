@@ -92,9 +92,11 @@ function main {
 }
 
 function parse-options {
-  while getopts c:ej:ps: option; do
+  while getopts c:dej:ps: option; do
     if [[ $option == c ]]; then
       style=$OPTARG
+    elif [[ $option == d ]]; then
+      styles_disabled=1
     elif [[ $option == e ]]; then
       javascript_enabled=1
     elif [[ $option == j ]]; then

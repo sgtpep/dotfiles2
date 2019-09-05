@@ -8,7 +8,7 @@ require('awful.autofocus')
 function activate_history_client(offset, focus)
   local client = awful.client.focus.history.list[((gears.table.hasitem(awful.client.focus.history.list, focus or client.focus) or 1) + offset - 1) % #awful.client.focus.history.list + 1]
   if client then
-    if client.hidden and not focus then
+    if client.hidden then
       activate_history_client(offset, client)
     else
       client:jump_to()
