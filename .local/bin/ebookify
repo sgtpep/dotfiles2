@@ -113,7 +113,9 @@ function process-html-url {
   echo -n "Processing $1..." >&2
   install-puppeteer
   local domain=$(extract-domain "$1")
-  javascript_enabled=${javascript_enabled-${domain_javascript_enabled[$domain]-}} print_media=${print_media-${domain_print_media[$domain]-}} scale=${scale-${domain_scales[$domain]-1.375}} script=${script-${domain_scripts[$domain]-}} style=${style-${domain_styles[$domain]-}} node - "$1" "$2" << \EOF
+  local style=${style-${domain_styles[$domain]-}}
+  [[ ! -v style ]] || local javascript_enabled=1
+  javascript_enabled=${javascript_enabled-${domain_javascript_enabled[$domain]-}} print_media=${print_media-${domain_print_media[$domain]-}} scale=${scale-${domain_scales[$domain]-1.375}} script=${script-${domain_scripts[$domain]-}} style=$style node - "$1" "$2" << \EOF
 const puppeteer = require('puppeteer');
 
 (async () => {
