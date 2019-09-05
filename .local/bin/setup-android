@@ -52,6 +52,7 @@ function change-settings {
 
 function configure-apps {
   local names=(
+    wifi-automatic
   )
   configure-once "${names[@]}"
 }
@@ -62,7 +63,7 @@ am start -a android.settings.LOCALE_SETTINGS &> /dev/null
 # Add a language
 input tap 0 400
 sleep 1
-# search icon, input, Русский (Россия)
+# search icon, Русский (Россия)
 for arguments in tap\ 650\ 100 text\ rus tap\ 1\ 200; do
   input $arguments
 done
@@ -105,8 +106,8 @@ EOF
 function configure-sounds {
   adb-input << \EOF
 am start -a android.settings.SOUND_SETTINGS &> /dev/null
-# Advanced, Screen locking sounds, Touch vibration
-for arguments in swipe\ 0\ 1000\ 0\ 0 tap\ 0\ 1400 swipe\ 0\ 1000\ 0\ 0 tap\ 0\ {1000,1400}; do
+# Advanced, Default notification sounds, None, OK, Dial pad tones, Screen locking sounds, Charging sounds, Touch vibration
+for arguments in swipe\ 0\ 1000\ 0\ 0 tap\ 0\ 1400 swipe\ 0\ 1000\ 0\ 0 tap\ 0\ 600 swipe\ 0\ 1000\ 0\ 2000 tap\ {1\ 200,650\ 1350} tap\ 0\ {900,1000,1100,1400}; do
   input $arguments
 done
 am force-stop com.android.settings
@@ -137,12 +138,14 @@ EOF
 }
 
 function connect-wifi {
-  enable-wifi
-  if ! adb shell dumpsys wifi 2> /dev/null | grep -x -A 1 -m 1 'Configured networks' | grep -q '\bID:'; then
-    adb-input << EOF
+  local passphrase=$(wifi-passphrase)
+  if [[ $passphrase ]]; then
+    enable-wifi
+    if ! adb shell dumpsys wifi 2> /dev/null | grep -x -A 1 -m 1 'Configured networks' | grep -q '\bID:'; then
+      adb-input << EOF
 am start com.android.settings/.wifi.WifiPickerActivity &> /dev/null
-# first item, input, Connect
-for arguments in tap\ 0\ 300 text\ '$(wifi-passphrase)' tap\ 600\ 750; do
+# first item, Connect
+for arguments in tap\ 0\ 300 text\ '$passphrase' tap\ 600\ 750; do
   input \$arguments
 done
 am force-stop com.android.settings
@@ -150,7 +153,20 @@ until ping -c 1 1.1.1.1 &> /dev/null; do
   sleep 1
 done
 EOF
+    fi
   fi
+}
+
+function configure-wifi-automatic {
+  adb-input << \EOF
+  am start de.j4velin.wifiAutoOff/.Preferences &> /dev/null
+# Turn WiFi on... when device gets unlocked, Turn WiFi off when... screen is off, Turn WiFi off when... screen is off, 10, 5, OK
+for arguments in tap\ {1\ {600,1300{,}},350\ 700} text\ 5 tap\ 600\ 750; do
+  input $arguments
+done
+sleep 1
+am force-stop de.j4velin.wifiAutoOff
+EOF
 }
 
 function disable-apps {
