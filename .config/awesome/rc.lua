@@ -5,15 +5,14 @@ local naughty = require('naughty')
 local wibox = require('wibox')
 require('awful.autofocus')
 
-function activate_history_client(offset, focus)
-  local client = awful.client.focus.history.list[((gears.table.hasitem(awful.client.focus.history.list, focus or client.focus) or 1) + offset - 1) % #awful.client.focus.history.list + 1]
-  if client then
-    if client.hidden then
-      activate_history_client(offset, client)
-    else
-      client:jump_to()
+function activate_previous_client()
+  local clients = {}
+  for _, client in ipairs(awful.client.focus.history.list) do
+    if not client.hidden then
+      table.insert(clients, client)
     end
   end
+  clients[gears.table.hasitem(clients, client.focus) % #clients + 1]:jump_to()
 end
 
 function bind_alt_tab()
@@ -22,11 +21,7 @@ function bind_alt_tab()
   awful.keygrabber({ export_keybindings = true, keybindings = {
     { { modifier }, 'Tab', function()
       count = count + 1
-      activate_history_client(1)
-    end },
-    { { modifier, 'Shift' }, 'Tab', function()
-      count = count + 1
-      activate_history_client(-1)
+      activate_previous_client()
     end },
   }, start_callback = function()
     count = 0
