@@ -52,6 +52,7 @@ function change-settings {
 
 function configure-apps {
   local names=(
+    simple-keyboard
     wifi-automatic
   )
   configure-once "${names[@]}"
@@ -64,10 +65,9 @@ am start -a android.settings.LOCALE_SETTINGS &> /dev/null
 input tap 0 400
 sleep 1
 # search icon, Русский (Россия)
-for arguments in tap\ 650\ 100 text\ rus tap\ 1\ 200; do
+for arguments in tap\ 650\ 100 text\ rus tap\ 1\ 200 keyevent\ 4; do
   input $arguments
 done
-am force-stop com.android.settings
 EOF
 }
 
@@ -96,10 +96,19 @@ function configure-screen-lock {
   adb-input << \EOF
 am start -a android.settings.SECURITY_SETTINGS &> /dev/null
 # Screen lock, None
-for arguments in tap\ 0\ {800,200}; do
+for arguments in tap\ 0\ {800,200} keyevent\ 4; do
   input $arguments
 done
-am force-stop com.android.settings
+EOF
+}
+
+function configure-simple-keyboard {
+  adb-input << \EOF
+am start com.android.settings/.Settings\$LanguageAndInputSettingsActivity &> /dev/null
+# Virtual keyboard, Simple Keyboard, Preferences, Vibrate on keypress, Popup on keypress
+for arguments in tap\ {0\ 500,1\ {200,350{,},550}} keyevent\ 4{,,,}; do
+  input $arguments
+done
 EOF
 }
 
@@ -107,10 +116,9 @@ function configure-sounds {
   adb-input << \EOF
 am start -a android.settings.SOUND_SETTINGS &> /dev/null
 # Advanced, Default notification sounds, None, OK, Dial pad tones, Screen locking sounds, Charging sounds, Touch vibration
-for arguments in swipe\ 0\ 1000\ 0\ 0 tap\ 0\ 1400 swipe\ 0\ 1000\ 0\ 0 tap\ 0\ 600 swipe\ 0\ 1000\ 0\ 2000 tap\ {1\ 200,650\ 1350} tap\ 0\ {900,1000,1100,1400}; do
+for arguments in swipe\ 0\ 1000\ 0\ 0 tap\ 0\ 1400 swipe\ 0\ 1000\ 0\ 0 tap\ 0\ 600 swipe\ 0\ 1000\ 0\ 2000 tap\ {1\ 200,650\ 1350} tap\ 0\ {900,1000,1100,1400} keyevent\ 4; do
   input $arguments
 done
-am force-stop com.android.settings
 EOF
 }
 
@@ -145,10 +153,9 @@ function connect-wifi {
       adb-input << EOF
 am start com.android.settings/.wifi.WifiPickerActivity &> /dev/null
 # first item, Connect
-for arguments in tap\ 0\ 300 text\ '$passphrase' tap\ 600\ 750; do
+for arguments in tap\ 0\ 300 text\ '$passphrase' tap\ 600\ 750 keyevent\ 4; do
   input \$arguments
 done
-am force-stop com.android.settings
 until ping -c 1 1.1.1.1 &> /dev/null; do
   sleep 1
 done
@@ -159,13 +166,17 @@ EOF
 
 function configure-wifi-automatic {
   adb-input << \EOF
-  am start de.j4velin.wifiAutoOff/.Preferences &> /dev/null
+package=de.j4velin.wifiAutoOff
+am start "$package"/.Preferences &> /dev/null
 # Turn WiFi on... when device gets unlocked, Turn WiFi off when... screen is off, Turn WiFi off when... screen is off, 10, 5, OK
-for arguments in tap\ {1\ {600,1300{,}},350\ 700} text\ 5 tap\ 600\ 750; do
+for arguments in tap\ {1\ {600,1300{,}},350\ 700} text\ 5 tap\ 600\ 750 keyevent\ 4; do
   input $arguments
 done
-sleep 1
-am force-stop de.j4velin.wifiAutoOff
+am start -a android.settings.APPLICATION_DETAILS_SETTINGS -d package:"$package"
+# Notifications, Show notifications
+for arguments in tap\ 0\ {550,400} keyevent\ 4{,}; do
+  input $arguments
+done
 EOF
 }
 
@@ -185,8 +196,9 @@ function enable-wifi {
     adb-input << \EOF
 am start com.android.settings/.wifi.WifiPickerActivity &> /dev/null
 # Use Wi-Fi
-input tap 0 200
-am force-stop com.android.settings
+for arguments in tap\ 0\ 200 keyevent\ 4; do
+  input $arguments
+done
 EOF
   fi
 }
