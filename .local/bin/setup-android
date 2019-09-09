@@ -7,9 +7,18 @@ function adb-input {
     [[ $- != *x* ]] || options=${options}x
     echo "set -$options"
     cat << \EOF
+TMPDIR=/sdcard
+function wait-ui {
+  local path=/sdcard/window_dump.xml
+  while :; do
+    uiautomator dump &> /dev/null
+    ! grep -qs "$1" "$path" || break
+    sleep 1
+  done
+  rm "$path"
+}
 dumpsys window 2> /dev/null | grep -q -m 1 ' mAwake=true' || input keyevent KEYCODE_POWER
 dumpsys window 2> /dev/null | grep -q -m 1 ' mDreamingLockscreen=false' || input keyevent KEYCODE_MENU
-TMPDIR=/sdcard
 EOF
     cat
   )"
@@ -18,6 +27,7 @@ EOF
 function change-settings {
   declare -A global=(
     [animator_duration_scale]=0
+    [heads_up_notifications_enabled]=0
     [transition_animation_scale]=0
     [wifi_networks_available_notification_on]=0
     [window_animation_scale]=0
@@ -26,7 +36,8 @@ function change-settings {
     [enabled_input_methods]=rkr.simplekeyboard.inputmethod/.latin.LatinIME
     [icon_blacklist]=volume
     [install_non_market_apps]=1
-    [sysui_qs_tiles]=wifi,location,rotation,flashlight
+    [location_providers_allowed]=+gps
+    [sysui_qs_tiles]=wifi,rotation,flashlight
   )
   declare -A system=(
     [screen_brightness]=25
@@ -43,7 +54,7 @@ function change-settings {
       local output=$(adb shell settings list "$namespace")
       local key
       for key in "${!settings[@]}"; do
-        [[ $'\n'$output$'\n' == *$'\n'$key=${settings[$key]}$'\n'* ]] || commands+=("settings put $namespace $key ${settings[$key]}")
+        [[ $'\n'$output$'\n' == *$'\n'$key=${settings[$key]#+}$'\n'* ]] || commands+=("settings put $namespace $key ${settings[$key]}")
       done
     done
     [[ ! ${commands[@]} ]] || adb shell "$(printf '%s\n' "${commands[@]}")"
@@ -79,7 +90,7 @@ EOF
 
 function configure-camera-roll {
   adb-input << \EOF
-am start us.koller.cameraroll/.ui.MainActivity
+am start us.koller.cameraroll/.ui.MainActivity &> /dev/null
 # settings icon, Settings, Theme, Black, Style, Nested RecyclerView, OK, Show Animations
 for arguments in tap\ {650\ 100,500\ 450,0\ 500,200\ 850,0\ 700} swipe\ 500\ 500\ 0\ 500{,,} tap\ {600\ 1350,0\ 1000} keyevent\ KEYCODE_BACK{,}; do
   input $arguments
@@ -89,7 +100,7 @@ EOF
 
 function configure-f-droid {
   adb-input << \EOF
-am start -d package:org.fdroid.fdroid -n com.android.settings/.Settings\$ManageAppExternalSourcesActivity
+am start -d package:org.fdroid.fdroid -n com.android.settings/.Settings\$ManageAppExternalSourcesActivity &> /dev/null
 # Allow from this source
 for arguments in tap\ 0\ 400 keyevent\ KEYCODE_BACK; do
   input $arguments
@@ -100,10 +111,10 @@ EOF
 function configure-keikai-launcher {
   adb-input << \EOF
 activity=com.anpmech.launcher/.activities.SearchActivity
-am start "$activity"
+am start "$activity" &> /dev/null
 pm set-home-activity "$activity"
 # menu icon, Settings, Open keyboard automatically, Allow orientation change
-for arguments in tap\ {650\ 150{,},1\ {300,600}} keyevent\ {KEYCODE_BACK,KEYCODE_HOME}; do
+for arguments in tap\ {650\ 150{,},1\ {300,600}} keyevent\ KEYCODE_{BACK,HOME}; do
   input $arguments
 done
 EOF
@@ -123,13 +134,23 @@ EOF
 }
 
 function configure-maps {
+  download-maps
   adb-input << \EOF
-am start com.github.axet.maps/com.mapswithme.maps.SplashActivity &> /dev/null
-false
-## search icon, Русский (Россия)
-#for arguments in tap\ 650\ 100 text\ rus tap\ 1\ 200 keyevent\ KEYCODE_BACK; do
-#  input $arguments
-#done
+package=com.github.axet.maps
+am start "$package"/com.mapswithme.maps.SplashActivity &> /dev/null
+sleep 1
+# Next
+input tap 650 1400
+wait-ui '"My Position"'
+# menu icon, Download Maps, first item, first item
+for arguments in tap\ {650\ 1400,0\ {1200,300{,}}} keyevent\ KEYCODE_BACK{,,}; do
+  input $arguments
+done
+am start -a android.settings.APPLICATION_DETAILS_SETTINGS -d package:"$package" &> /dev/null
+# Notifications, Map downloader
+for arguments in tap\ {0\ 550,650\ 600} keyevent\ KEYCODE_BACK{,}; do
+  input $arguments
+done
 EOF
 }
 
@@ -210,23 +231,23 @@ function configure-wallpaper {
   adb-input << \EOF
 local path=/data/local/tmp/wallpaper.gif
 base64 -d <<< 'R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==' > "$path"
-am start -d file://"$path" -a android.service.wallpaper.CROP_AND_SET_WALLPAPER -f 0x1 com.android.wallpaperpicker/.WallpaperCropActivity
+am start -d file://"$path" -a android.service.wallpaper.CROP_AND_SET_WALLPAPER -f 0x1 com.android.wallpaperpicker/.WallpaperCropActivity &> /dev/null
 # Set wallpaper, Home screen
-for arguments in tap\ 0\ 100 keyevent\ {KEYCODE_DPAD_DOWN,KEYCODE_DPAD_CENTER}; do
+for arguments in tap\ 0\ 100 keyevent\ KEYCODE_{DPAD_DOWN,DPAD_CENTER}; do
   input $arguments
 done
 EOF
 }
 
 function connect-wifi {
-  local passphrase=$(wifi-passphrase)
-  if [[ $passphrase ]]; then
-    enable-wifi
-    if ! adb shell dumpsys wifi 2> /dev/null | grep -x -A 1 -m 1 'Configured networks' | grep -q '\bID:'; then
+  if ! wifi-connected; then
+    local passphrase=$(wifi-passphrase)
+    if [[ $passphrase ]]; then
+      enable-wifi
       adb-input << EOF
 am start com.android.settings/.wifi.WifiPickerActivity &> /dev/null
-# first item, Connect
-for arguments in tap\ 0\ 300 text\ '$passphrase' tap\ 600\ 750 keyevent\ KEYCODE_BACK; do
+# first item, confirm icon
+for arguments in tap\ 0\ 300 text\ '$passphrase' tap\ 700\ 1400 keyevent\ KEYCODE_BACK; do
   input \$arguments
 done
 until ping -c 1 1.1.1.1 &> /dev/null; do
@@ -245,7 +266,7 @@ am start "$package"/.Preferences &> /dev/null
 for arguments in tap\ {1\ {600,1300{,}},350\ 700} text\ 5 tap\ 600\ 750 keyevent\ KEYCODE_BACK; do
   input $arguments
 done
-am start -a android.settings.APPLICATION_DETAILS_SETTINGS -d package:"$package"
+am start -a android.settings.APPLICATION_DETAILS_SETTINGS -d package:"$package" &> /dev/null
 # Notifications, Show notifications
 for arguments in tap\ 0\ {550,400} keyevent\ KEYCODE_BACK{,}; do
   input $arguments
@@ -262,6 +283,28 @@ function disable-apps {
   )
   local enabled_apps=$(comm -12 <(adb shell cmd package list packages -e | cut -d : -f 2 | sort) <(printf '%s\n' "${apps[@]}" | sort))
   [[ ! $enabled_apps ]] || adb shell "$(sed 's/^/pm disable-user /' <<< $enabled_apps)"
+}
+
+function download-maps {
+  local directory=sdcard/MapsWithMe
+  local filenames=(
+    Russia_Moscow.mwm
+    World{,Coasts{,_obsolete}}.mwm
+    {01_dejavusans,02_droidsans-fallback,03_jomolhari-id-a3d,04_padauk,05_khmeros,06_code2000,07_roboto_medium}.ttf
+  )
+  local filename
+  for filename in "${filenames[@]}"; do
+    local path=$directory/$filename
+    if ! adb shell [[ -f "$path" ]]; then
+      local temp=/tmp/$filename
+      [[ -f $temp ]] || wget -O "$temp" http://opensource-data.mapswithme.com/regular/weekly/"$filename"
+      adb shell mkdir -p "${path%/*}"
+      adb push "$temp" "$path"
+    fi
+  done
+  local temp=/tmp/settings.ini
+  echo 'ScreenClipRect=37.6064088837 67.4336744786 0 -0.240503617395 -0.477666906771 0.240503617395 0.477666906771' > "$temp"
+  adb push "$temp" "$directory"/"${temp##*/}"
 }
 
 function enable-wifi {
@@ -316,13 +359,17 @@ function install-apps {
 }
 
 function main {
+  connect-wifi
   disable-apps
   install-apps
   change-settings
   grant-permissions
   configure-system
   configure-apps
-  connect-wifi
+}
+
+function wifi-connected {
+  adb shell dumpsys wifi 2> /dev/null | grep -A 1 -m 1 ' Configured networks ' | grep -q '^ID:'
 }
 
 function wifi-passphrase {
