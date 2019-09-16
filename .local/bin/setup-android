@@ -8,7 +8,7 @@ am start -a android.settings.LOCALE_SETTINGS &> /dev/null
 inputs keyevent\ KEYCODE_DPAD_{UP,DOWN,CENTER}
 wait-ui 'All languages'
 # Русский (Россия)
-inputs keyevent\ KEYCODE_{DPAD_{UP,DOWN{,,},CENTER},BACK}
+inputs keyevent\ KEYCODE_{DPAD_{DOWN{,,},CENTER},BACK}
 EOF
 }
 
@@ -21,10 +21,12 @@ function change-settings {
     [window_animation_scale]=0
   )
   declare -A secure_settings=(
-    [icon_blacklist]=volume
+    [assist_gesture_enabled]=0
+    [icon_blacklist]=headset,rotate,volume
     [sysui_qs_tiles]=wifi,rotation,flashlight
   )
   declare -A system_settings=(
+    [accelerometer_rotation]=0
     [screen_brightness]=25
     [screen_brightness_mode]=0
   )
@@ -46,10 +48,11 @@ function configure-camera {
 # Skip
 input tap 200 1300
 wait-ui 'DENY'
-# Deny, menu icon, Shutter sound, Photos from rear camera, (4:3) 4MP, Photos from front camera, (4:3) 4MP, Video Resolution, Video from rear camera, HD 720P, Video from front camera, HD 720P
-inputs keyevent\ KEYCODE_DPAD_{UP,CENTER} tap\ 600\ 900
+# Deny, OK
+inputs keyevent\ KEYCODE_{TAB,DPAD_CENTER} tap\ 600\ 900
 wait-ui 'Settings'
-inputs tap\ 50\ 100 keyevent\ KEYCODE_{DPAD_{UP,CENTER},PAGE_DOWN,DPAD_{CENTER{,},DOWN,CENTER,DOWN,CENTER,DOWN,CENTER},BACK,DPAD_{DOWN,CENTER{,},DOWN,CENTER,DOWN,CENTER,DOWN,CENTER},BACK{,,}}
+# menu icon, Shutter sound, Photos from rear camera, (4:3) 4MP, Photos from front camera, (4:3) 4MP, Video Resolution, Video from rear camera, HD 720P, Video from front camera, HD 720P
+inputs tap\ 50\ 100 keyevent\ KEYCODE_{DPAD_{DOWN,CENTER},PAGE_DOWN,DPAD_{CENTER{,},DOWN,CENTER,DOWN,CENTER,DOWN,CENTER},BACK,DPAD_{DOWN,CENTER{,},DOWN,CENTER,DOWN,CENTER,DOWN,CENTER},BACK{,,}}
 EOF
 }
 
@@ -225,7 +228,7 @@ local path=/data/local/tmp/wallpaper.gif
 base64 -d <<< 'R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==' > "$path"
 am start -d file://"$path" -a android.service.wallpaper.CROP_AND_SET_WALLPAPER -f 0x1 com.android.wallpaperpicker/.WallpaperCropActivity &> /dev/null
 # Set wallpaper, Home screen
-inputs tap\ 0\ 100 keyevent\ KEYCODE_DPAD_{UP,CENTER}
+inputs tap\ 0\ 100 keyevent\ KEYCODE_{DPAD_DOWN,MOVE_END,DPAD_CENTER}
 rm "$path"
 EOF
 }
@@ -234,6 +237,7 @@ function setup-packages {
   local commands=(
     setup-camera-roll
     setup-f-droid
+    setup-fennec
     setup-keikai-launcher
     setup-kiwix
     setup-maps
@@ -259,6 +263,16 @@ disable-notifications "$1"
 EOF
 }
 
+function setup-fennec {
+  run-script org.mozilla.fennec_fdroid << \EOF
+input keyevent KEYCODE_MENU
+wait-ui 'Report site issue'
+# Settings, General, Home, Set a Homepage, Custom, Also use for new tabs, Search, Google, Privacy, Do not track, Tracking Protection, Enabled, Fennec Health Report, No, tabs icon, close icon
+inputs keyevent\ KEYCODE_{TAB,MOVE_END,DPAD_{UP{,},CENTER,DOWN,CENTER{,,},DOWN,CENTER}} text\ 'about:blank' keyevent\ KEYCODE_{TAB{,},DPAD_{CENTER,DOWN,CENTER},BACK{,},DPAD_{DOWN,CENTER},MOVE_HOME,DPAD_{DOWN,CENTER{,}},BACK,DPAD_{DOWN,CENTER,CENTER,DOWN{,},CENTER,UP,CENTER},MOVE_END,DPAD_CENTER,BACK{,}} tap\ 100\ 100 text\ - tap\ 500\ 200 keyevent\ KEYCODE_BACK{,} tap\ {600\ 100,325\ 200} keyevent\ KEYCODE_BACK
+disable-notifications "$1"
+EOF
+}
+
 function setup-keikai-launcher {
   run-script com.anpmech.launcher << \EOF
 pm set-home-activity "$1"/.activities.SearchActivity
@@ -271,7 +285,7 @@ function setup-kiwix {
   run-script org.kiwix.kiwixmobile android.permission.{READ,WRITE}_EXTERNAL_STORAGE << \EOF
 wait-ui 'More options'
 # Get Content, Device, Wiktionary
-inputs tap\ 100\ 800 swipe\ 0\ 300\ 500\ 300 keyevent\ KEYCODE_{DPAD_{UP,DOWN,CENTER},BACK}
+inputs tap\ 100\ 800 swipe\ 0\ 300\ 500\ 300 keyevent\ KEYCODE_{DPAD_{DOWN{,},CENTER},BACK}
 EOF
 }
 
@@ -288,7 +302,7 @@ StoragePath=${paths[0]}/${path##*/}/
 EOF2
 wait-ui 'NEXT'
 # Next
-inputs keyevent\ KEYCODE_DPAD_{UP,CENTER}
+inputs keyevent\ KEYCODE_{FOCUS,DPAD_CENTER}
 wait-ui 'My Position'
 input keyevent KEYCODE_BACK
 EOF
@@ -308,7 +322,7 @@ EOF
 function setup-sd-card {
   run-script << \EOF
 # SD card, Portable storage, Done, SD Card
-inputs keyevent\ KEYCODE_HOME swipe\ 0\ 0\ 0\ 1000 tap\ 10\ 600 keyevent\ KEYCODE_DPAD_{UP,DOWN,CENTER,DOWN,CENTER} swipe\ {0\ 0\ 0\ 1000,10\ 500\ 1000\ 500} keyevent\ KEYCODE_BACK
+inputs keyevent\ KEYCODE_HOME swipe\ 0\ 0\ 0\ 1000 tap\ 10\ 600 keyevent\ KEYCODE_DPAD_{DOWN{,},CENTER,DOWN,CENTER} swipe\ {0\ 0\ 0\ 1000,10\ 500\ 1000\ 500} keyevent\ KEYCODE_BACK
 EOF
 }
 
