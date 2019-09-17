@@ -40,6 +40,8 @@ declare -A domain_styles=(
   [medium.com]='#root > div > :nth-child(2) { display: none }'
 )
 
+declare -A domain_styles_disabled=()
+
 function download-articles {
   local path=/media/$USER/Kindle
   local filename
@@ -116,7 +118,7 @@ function process-html-url {
   echo -n "Processing $1..." >&2
   install-puppeteer
   local domain=$(extract-domain "$1")
-  javascript_enabled=${javascript_enabled-${domain_javascript_enabled[$domain]-}} print_media=${print_media-${domain_print_media[$domain]-}} scale=${scale-${domain_scales[$domain]-1.375}} script=${script-${domain_scripts[$domain]-}} style=${style-${domain_styles[$domain]-}} node - "$1" "$2" << \EOF
+  javascript_enabled=${javascript_enabled-${domain_javascript_enabled[$domain]-}} print_media=${print_media-${domain_print_media[$domain]-}} scale=${scale-${domain_scales[$domain]-1.375}} script=${script-${domain_scripts[$domain]-}} style=${style-${domain_styles[$domain]-}} styles_disabled=${styles_disabled-${domain_styles_disabled[$domain]-}} node - "$1" "$2" << \EOF
 const puppeteer = require('puppeteer');
 
 (async () => {
@@ -134,7 +136,7 @@ const puppeteer = require('puppeteer');
     const page = await browser.newPage();
     await page.emulateMedia(process.env.print_media ? 'print' : 'screen');
     const javaScriptEnabled = Boolean(
-      process.env.javascript_enabled || process.env.style
+      process.env.javascript_enabled || process.env.style || process.env.styles_disabled
     );
     await page.setJavaScriptEnabled(javaScriptEnabled);
     await page.setUserAgent(
@@ -144,6 +146,17 @@ const puppeteer = require('puppeteer');
       timeout: 60000,
       waitUntil: 'networkidle2',
     });
+    await page.evaluate((script, stylesDisabled) => {
+      [...document.querySelectorAll('*')].forEach(element => {
+        const style = getComputedStyle(element);
+        ['fixed', 'sticky'].includes(style.position) &&
+          element.setAttribute('style', 'display: none !important');
+        style.overflow === 'auto' && (element.style.overflow = 'visible');
+        style.whiteSpace === 'pre' && (element.style.whiteSpace = 'pre-wrap');
+      });
+      eval(script);
+      stylesDisabled && [...document.querySelectorAll('link[rel="stylesheet"], style')].forEach(element => element.remove())
+    }, process.env.script, process.env.styles_disabled);
     javaScriptEnabled &&
       (await page.addStyleTag({
         content: `
@@ -153,19 +166,9 @@ const puppeteer = require('puppeteer');
         td:not(:last-child), th:not(:last-child) { border-bottom: 1px solid lightgrey }
         tr:not(:last-child) { border-bottom: 1px solid black }
         ${process.env.style}
+        ${process.env.styles_disabled && 'body { font: 1.5em sans-serif }'}
       `.replace(/;| }/g, ' !important$&'),
       }));
-    const frames = await page.frames();
-    await page.evaluate(script => {
-      [...document.querySelectorAll('*')].forEach(element => {
-        const style = getComputedStyle(element);
-        ['fixed', 'sticky'].includes(style.position) &&
-          element.setAttribute('style', 'display: none !important');
-        style.overflow === 'auto' && (element.style.overflow = 'visible');
-        style.whiteSpace === 'pre' && (element.style.whiteSpace = 'pre-wrap');
-      });
-      eval(script);
-    }, process.env.script);
     await page.pdf({
       height: 735,
       path: process.argv[3],
