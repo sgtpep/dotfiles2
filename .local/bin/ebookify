@@ -166,7 +166,7 @@ const puppeteer = require('puppeteer');
         td:not(:last-child), th:not(:last-child) { border-bottom: 1px solid lightgrey }
         tr:not(:last-child) { border-bottom: 1px solid black }
         ${process.env.style}
-        ${process.env.styles_disabled && 'body { font: 1.5em sans-serif }'}
+        ${process.env.styles_disabled && 'body { font: 1.5em / 1.5 sans-serif }'}
       `.replace(/;| }/g, ' !important$&'),
       }));
     await page.pdf({

@@ -49,12 +49,15 @@ function configure_chromium(client)
     input_shortcut(table.unpack(with_title and {{'Alt_L', 'Shift_L', 'y'}} or {{'Shift_L'}, {'Alt_L', 'y'}}))
     gears.timer.start_new(0.1, callback)
   end
+  local ebookify = function(arguments)
+    copy(function() run_or_raise(string.format('urxvtcd -title ebookify -e bash -c \'ebookify %s "$(xclip -o -selection clipboard)" || read -s\'', arguments or ''), { name = 'ebookify' }) end)
+  end
   client:keys(gears.table.join(table.unpack({
-    awful.key({ 'Mod1' }, 'e', nil, function() copy(function() run_or_raise('urxvtcd -title ebookify -e bash -c \'ebookify "$(xclip -o -selection clipboard)" || read -s\'', { name = 'ebookify' }) end) end),
+    awful.key({ 'Mod1' }, 'e', nil, function() ebookify() end),
     awful.key({ 'Mod1' }, 'm', nil, function() copy(function() run_or_raise('urxvtcd -title sharing -e bash -c $\'output=$(xclip -o -selection clipboard); exec mutt -e \\\'set noabort_unmodified\\\' -i <(echo "${output##* }") -s "Link: ${output% *}"\'', { name = 'sharing' }, true) end, true) end),
     awful.key({ 'Mod1' }, 'p', nil, function() copy(function() run_or_raise('urxvtcd -title password -e bash -c \': "$(xclip -o -selection clipboard)"; : "${_#*://}"; hostname=${_%%/*}; if [[ -f ~/.password-store/$hostname.gpg ]]; then pass "$hostname"; else pwdhash "$hostname" 2> /dev/null; fi | xclip -selection clipboard; [[ ${PIPESTATUS[0]} != 0 ]] || awesome-client <<< $1\' -- "input_shortcut({\'Alt_L\', \'Tab\'}) require(\'gears\').timer.start_new(0.1, function() input_shortcut({\'Control_L\', \'v\'}) require(\'gears\').timer.start_new(0.1, function() require(\'awful\').spawn.with_shell(\'xclip -selection clipboard <<< \\\'\\\'\') end) end)"', { name = 'password' }) end) end),
     awful.key({ 'Mod1' }, 'v', nil, function() copy(function() run_or_raise('urxvtcd -title mpv -e bash -c \'mpv "$(xclip -o -selection clipboard)" || read -s\'', { class = 'mpv' }) end) end),
-    awful.key({ 'Mod1', 'Shift' }, 'e', nil, function() copy(function() run_or_raise('urxvtcd -title ebookify -e bash -c \'ebookify -e "$(xclip -o -selection clipboard)" || read -s\'', { name = 'ebookify' }) end) end),
+    awful.key({ 'Mod1', 'Shift' }, 'e', nil, function() ebookify('-d') end),
   })))
 end
 
