@@ -39,11 +39,6 @@ function bind_alt_tab()
   end, stop_event = 'release', stop_key = modifier })
 end
 
-function change_volume(change)
-  local source = hp_stream_product() and 1 or 0
-  awful.spawn.with_shell(change < 0 and string.format('pactl set-sink-mute 0 no; pactl set-sink-volume 0 -10%%; pactl set-source-mute %d no', source) or change > 0 and string.format('pactl set-sink-mute 0 no; pactl set-sink-volume 0 +10%%; pactl set-source-mute %d no', source) or string.format('pactl set-sink-mute 0 %s; pactl set-sink-volume 0 %d%%; pactl set-source-mute %d yes', table.unpack(gears.table.merge(hp_stream_product() and { 'no', 0 } or { 'yes', 25 }, { source }))))
-end
-
 function configure_chromium(client)
   local copy = function(callback, with_title)
     input_shortcut(table.unpack(with_title and {{'Alt_L', 'Shift_L', 'y'}} or {{'Shift_L'}, {'Alt_L', 'y'}}))
@@ -181,19 +176,9 @@ keys = {
   { { 'Control', 'Mod1' }, 'z', function() awful.spawn('slock') end },
   { { 'Mod1' }, 'Escape', function() tag = root.tags()[1] tag.selected = not tag.selected end },
   { { 'Mod1' }, 'F4', function() if client.focus then client.focus:kill() end end },
-  { { 'Mod4' }, 'F1', function() awful.spawn('sudo /etc/acpi/default.sh video/brightnessdown') end },
-  { { 'Mod4' }, 'F12', function() awful.spawn('sudo poweroff') end },
-  { { 'Mod4' }, 'F2', function() awful.spawn('sudo /etc/acpi/default.sh video/brightnessup') end },
-  { { 'Mod4' }, 'F3', function() change_volume(0) end },
-  { { 'Mod4' }, 'F4', function() change_volume(-1) end },
-  { { 'Mod4' }, 'F5', function() change_volume(1) end },
-  { { 'Mod4' }, 'F6', function() toggle_wifi('unblock') end },
-  { { 'Mod4', 'Shift' }, 'F6', function() toggle_wifi('block') end },
-  { { 'Shift' }, 'XF86WLAN', function() toggle_wifi('block') end },
-  { {}, 'XF86AudioLowerVolume', function() change_volume(-1) end },
-  { {}, 'XF86AudioMute', function() change_volume(0) end },
-  { {}, 'XF86AudioRaiseVolume', function() change_volume(1) end },
-  { {}, 'XF86WLAN', function() toggle_wifi('unblock') end },
+  { {}, 'XF86AudioLowerVolume', function() awful.spawn.with_shell(string.format('pactl set-sink-mute 0 no; pactl set-sink-volume 0 -10%%; pactl set-source-mute %d no', hp_stream_product() and 1 or 0)) end },
+  { {}, 'XF86AudioMute', function() awful.spawn.with_shell(string.format('pactl set-sink-mute 0 %s; pactl set-sink-volume 0 %d%%; pactl set-source-mute %d yes', table.unpack(hp_stream_product() and { 'no', 0, 1 } or { 'yes', 25, 0 }))) end },
+  { {}, 'XF86AudioRaiseVolume', function() awful.spawn.with_shell(string.format('pactl set-sink-mute 0 no; pactl set-sink-volume 0 +10%%; pactl set-source-mute %d no', hp_stream_product() and 1 or 0)) end },
 }
 
 layout = {
@@ -287,10 +272,6 @@ function toggle_keyboard()
   if keyboard_toggle then
     keyboard_toggle.visible = not keyboard_toggle.visible
   end
-end
-
-function toggle_wifi(command)
-  run_or_raise(string.format('urxvtcd -e toggle-wifi %s', command), { name = 'toggle-wifi' })
 end
 
 main()
