@@ -2,13 +2,13 @@ const copyText = text => {
   addEventListener(
     'copy',
     event => {
-      event.preventDefault();
-      event.clipboardData.setData('text/plain', text);
+      event.preventDefault()
+      event.clipboardData.setData('text/plain', text)
     },
-    { once: true }
-  );
-  document.execCommand('copy');
-};
+    { once: true },
+  )
+  document.execCommand('copy')
+}
 
 const enableJavaScript = (url, incognito = false) =>
   chrome.contentSettings.javascript.set(
@@ -19,8 +19,8 @@ const enableJavaScript = (url, incognito = false) =>
       scope: incognito ? 'incognito_session_only' : 'regular',
       setting: 'allow',
     },
-    () => chrome.tabs.reload()
-  );
+    () => chrome.tabs.reload(),
+  )
 
 const listenCommands = () =>
   chrome.commands.onCommand.addListener(command =>
@@ -37,12 +37,12 @@ const listenCommands = () =>
         ? chrome.tabs.executeScript({ code: 'history.forward()' })
         : command === 'toggle-pinned'
         ? togglePinnedTab(tab)
-        : undefined
-    )
-  );
+        : undefined,
+    ),
+  )
 
-const main = () => listenCommands();
+const main = () => listenCommands()
 
-const togglePinnedTab = tab => chrome.tabs.update({ pinned: !tab.pinned });
+const togglePinnedTab = tab => chrome.tabs.update({ pinned: !tab.pinned })
 
-main();
+main()

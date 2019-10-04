@@ -1,20 +1,20 @@
 const appendStyle = () => {
-  const domain = styleDomain();
+  const domain = styleDomain()
   if (styles[domain]) {
-    const style = document.createElement('style');
+    const style = document.createElement('style')
     style.appendChild(
-      document.createTextNode(styles[domain].replace(/;| }/g, ' !important$&'))
-    );
-    document.documentElement.appendChild(style);
+      document.createTextNode(styles[domain].replace(/;| }/g, ' !important$&')),
+    )
+    document.documentElement.appendChild(style)
   }
-};
+}
 
-const characters = 'fdsagrewcx';
+const characters = 'fdsagrewcx'
 
 const clickElement = (element, ctrlKey = false) => {
   if (element.target === '_blank') {
-    var { target } = element;
-    element.removeAttribute('target');
+    var { target } = element
+    element.removeAttribute('target')
   }
   element.dispatchEvent(
     new MouseEvent('click', {
@@ -22,39 +22,39 @@ const clickElement = (element, ctrlKey = false) => {
       cancelable: true,
       ctrlKey,
       view: window,
-    })
-  );
-  target && (element.target = target);
-  elementVisible(element) && element.focus({ preventScroll: true });
-};
+    }),
+  )
+  target && (element.target = target)
+  elementVisible(element) && element.focus({ preventScroll: true })
+}
 
 const elementVisible = element => {
-  const rects = element.getClientRects();
-  return rects.length && rects[0].bottom >= 0 && rects[0].top <= innerHeight;
-};
+  const rects = element.getClientRects()
+  return rects.length && rects[0].bottom >= 0 && rects[0].top <= innerHeight
+}
 
 const generateLabel = (index, length) =>
   [...index.toString().padStart(length.toString().length, '0')]
     .map(digit => characters[digit])
-    .join('');
+    .join('')
 
 const hideHints = () => {
-  document.getElementById(`${id}-hints`).remove();
-  removeEventListener('scroll', onScroll);
-};
+  document.getElementById(`${id}-hints`).remove()
+  removeEventListener('scroll', onScroll)
+}
 
 const hintsItem = (label, element) => {
-  const item = document.createElement('span');
-  item.dataset.label = label;
-  const [{ left, top }] = element.getClientRects();
-  item.style.left = `${left}px`;
-  item.style.top = `${top}px`;
-  item.textContent = label.toUpperCase();
-  return item;
-};
+  const item = document.createElement('span')
+  item.dataset.label = label
+  const [{ left, top }] = element.getClientRects()
+  item.style.left = `${left}px`
+  item.style.top = `${top}px`
+  item.textContent = label.toUpperCase()
+  return item
+}
 
 const hintsStyle = () => {
-  const style = document.createElement('style');
+  const style = document.createElement('style')
   style.textContent = `
   #${id}-hints {
     bottom: 0;
@@ -76,79 +76,79 @@ const hintsStyle = () => {
     padding: 0;
     position: absolute;
   }
-  `.replace(/;/g, ' !important$&');
-  return style;
-};
+  `.replace(/;/g, ' !important$&')
+  return style
+}
 
-const id = 'gcpccpgdkmihefbjbhkipbjcpfaokokd';
+const id = 'gcpccpgdkmihefbjbhkipbjcpfaokokd'
 
 const listenKeyDown = () =>
   addEventListener('keydown', event => {
     if (event.altKey && !event.ctrlKey && event.key === 'f') {
-      event.preventDefault();
-      event.stopPropagation();
-      showHints();
+      event.preventDefault()
+      event.stopPropagation()
+      showHints()
     }
-  });
+  })
 
 const listenLoaded = () =>
   addEventListener('DOMContentLoaded', () => {
-    const element = document.querySelector('[accesskey="f"]');
-    element && element.removeAttribute('accesskey');
-  });
+    const element = document.querySelector('[accesskey="f"]')
+    element && element.removeAttribute('accesskey')
+  })
 
 const main = () => {
-  appendStyle();
-  listenKeyDown();
-  listenLoaded();
-};
+  appendStyle()
+  listenKeyDown()
+  listenLoaded()
+}
 
 const onHintsKey = (event, elements, updateInput) => {
-  event.preventDefault();
-  event.stopPropagation();
-  const character = event.key.toLowerCase();
+  event.preventDefault()
+  event.stopPropagation()
+  const character = event.key.toLowerCase()
   if (characters.includes(character)) {
-    const input = updateInput(character);
+    const input = updateInput(character)
     if (input.length > (Object.keys(elements)[0] || '').length) {
-      hideHints();
+      hideHints()
     } else if (elements[input]) {
-      clickElement(elements[input], event.shiftKey);
-      hideHints();
+      clickElement(elements[input], event.shiftKey)
+      hideHints()
     }
   } else if (event.key !== 'Shift') {
-    hideHints();
+    hideHints()
   }
-};
+}
 
-const onScroll = () => hideHints();
+const onScroll = () => hideHints()
 
 const showHints = () => {
-  const hints = document.createElement('div');
-  hints.id = `${id}-hints`;
-  hints.tabIndex = 0;
-  hints.appendChild(hintsStyle());
-  const elements = {};
+  const hints = document.createElement('div')
+  hints.id = `${id}-hints`
+  hints.tabIndex = 0
+  hints.appendChild(hintsStyle())
+  const elements = {}
   visibleElements().forEach((element, index, { length }) => {
-    const label = generateLabel(index, length);
-    elements[label] = element;
-    hints.appendChild(hintsItem(label, element));
-  });
-  document.body.append(hints);
-  hints.focus();
-  let input = '';
-  hints.addEventListener('click', () => hideHints());
+    const label = generateLabel(index, length)
+    elements[label] = element
+    hints.appendChild(hintsItem(label, element))
+  })
+  document.body.append(hints)
+  hints.focus()
+  let input = ''
+  hints.addEventListener('click', () => hideHints())
   hints.addEventListener('keydown', event =>
-    onHintsKey(event, elements, character => (input += character))
-  );
-  addEventListener('scroll', onScroll);
-};
+    onHintsKey(event, elements, character => (input += character)),
+  )
+  addEventListener('scroll', onScroll)
+}
 
 const styleDomain = () =>
   location.host.startsWith('www.google.')
     ? location.host.replace(/[^.]+$/, 'com')
     : /^\/questions\/\d+\//.test(location.pathname)
     ? 'stackoverflow.com'
-    : location.host;
+    : location.host
 
 const styles = {
   'app.slack.com': `
@@ -165,13 +165,13 @@ const styles = {
     .Post ~ :nth-of-type(4) > div > button, .Post ~ :nth-of-type(4) > div > div::before { display: none }
     .Post ~ :nth-of-type(4) > div > div { max-height: none }
   `,
-};
+}
 
 const visibleElements = () =>
   [
     ...document.querySelectorAll(
-      'a, button, input:not([type=hidden]), select, textarea'
+      'a, button, input:not([type=hidden]), select, textarea',
     ),
-  ].filter(element => elementVisible(element));
+  ].filter(element => elementVisible(element))
 
-main();
+main()
