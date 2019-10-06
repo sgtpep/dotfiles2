@@ -4,6 +4,7 @@ export HUSKY_SKIP_HOOKS=1
 export LESS='-FRXi -j 3'
 export MANWIDTH=80
 export NODE_PATH=~/.npm/lib/node_modules
+export NO_COLOR=1
 export PYTHONUSERBASE=~/.pip
 export RIPGREP_CONFIG_PATH=~/.ripgreprc
 
