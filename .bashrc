@@ -13,7 +13,7 @@ GIT_PS1_SHOWUPSTREAM=auto
 HISTCONTROL=ignoreboth
 HISTFILESIZE=-1
 HISTSIZE=10000
-PROMPT_COMMAND=': "$?"; [[ $_ == 0 ]] || echo -e "\e[4mExit status: $_\e[m" >&2; history -a'
+PROMPT_COMMAND=': "$?" && [[ $_ == 0 ]] || echo -e "\e[4mExit status: $_\e[m" >&2; history -a; : "$PWD/${HISTFILE##*/}" && [[ -f $_ && $_ != $HISTFILE ]] && HISTFILE=$_ && history -c && history -r'
 PS1=$'$([[ -h $PWD ]] && : "$(readlink "$PWD")" || : "$PWD"; while [[ $_ == ${HOME%/*}/* && ! -d $_/.git && $_ != ~ ]]; do : "${_%/*}"; done; [[ $_ == ~ ]] || __git_ps1 \'(%s) \')'$PS1
 set -P
 shopt -s autocd
