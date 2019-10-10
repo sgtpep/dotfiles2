@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eu
 output=$(job-list "$@" | grep '\.\(jsx\?\|tsx\?\)$')
-CI=1 NODE_PATH=src exec xargs -r -a <(
+exec xargs -r -a <(
   {
     grep '/__tests__/\|\.test\.' <<< $output || :
     {
@@ -12,4 +12,4 @@ CI=1 NODE_PATH=src exec xargs -r -a <(
       } | sed 's/\.[^.]*$/.test\0/'
     } | xargs -d '\n' ls -d 2> /dev/null || :
   } | sort -u
-) -d '\n' npx react-scripts test
+) -d '\n' npm test
