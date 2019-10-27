@@ -2,7 +2,6 @@ local awful = require('awful')
 local beautiful = require('beautiful')
 local gears = require('gears')
 local naughty = require('naughty')
-local wibox = require('wibox')
 require('awful.autofocus')
 
 function activate_previous_client()
@@ -57,9 +56,9 @@ function configure_chromium(client)
 end
 
 function configure_notifications()
-  local max_size = 600
-  beautiful.notification_max_height = max_size
-  beautiful.notification_max_width = max_size
+  local size = 600
+  beautiful.notification_max_height = size
+  beautiful.notification_max_width = size
   naughty.config.defaults.bg = 'Black'
   naughty.config.defaults.border_color = '#ffffff'
   naughty.config.defaults.border_width = 1
@@ -70,79 +69,11 @@ function configure_notifications()
   naughty.config.spacing = 0
 end
 
-function create_keyboard()
-  keyboard = awful.wibar({ height = 200, ontop = true, position = 'bottom', visible = false })
-  local groups = { Return = {}, space = {} }
-  local modifiers = {}
-  keyboard:setup(gears.table.join({ layout = wibox.layout.flex.vertical }, gears.table.map(function(keys)
-    return gears.table.join({ layout = wibox.layout.flex.horizontal, spacing = -1 }, gears.table.map(function(key)
-      local button = wibox.widget({
-        widget = wibox.container.background,
-        {
-          align = 'center',
-          markup = type(key[2]) == 'string' and gears.string.xml_escape(key[1]) or string.format('<sup>%s</sup> %s <sub>%s</sub>', gears.string.xml_escape(key[1]:sub(2, 2)), gears.string.xml_escape(key[1]:sub(1, 1)), gears.string.xml_escape(key[1]:sub(3))),
-          valign = 'center',
-          widget = wibox.widget.textbox,
-        },
-      })
-      button:buttons(awful.button({}, 1, function()
-        if key[3] then
-          modifiers[key[2]] = not modifiers[key[2]] or nil
-        else
-          for modifier in pairs(modifiers) do
-            root.fake_input('key_press', modifier)
-          end
-          if key[2] == 'ISO_Next_Group' then
-            for _, arguments in ipairs({ { 'key_press', 'Shift_L' }, { 'key_press', 'Shift_R' }, { 'key_release', 'Shift_R' }, { 'key_release', 'Shift_L' } }) do
-              root.fake_input(table.unpack(arguments))
-            end
-          else
-            root.fake_input('key_press', key[2])
-          end
-          for modifier in pairs(modifiers) do
-            root.fake_input('key_release', modifier)
-            modifiers[modifier] = nil
-          end
-        end
-        for _, button in ipairs(groups[key[2]] or { button }) do
-          button.bg, button.fg = 'White', 'Black'
-        end
-      end, function()
-        button:emit_signal('mouse::leave')
-      end))
-      button:connect_signal('mouse::leave', function()
-        if button.bg and button.fg then
-          for _, button in ipairs(groups[key[2]] or { button }) do
-            button.bg, button.fg = nil, nil
-          end
-          if key[2] == 'hide' then
-            toggle_keyboard()
-          elseif not key[3] then
-            root.fake_input('key_release', key[2])
-          end
-        end
-      end)
-      if groups[key[2]] then
-        table.insert(groups[key[2]], button)
-      end
-      return button
-    end, keys))
-  end, layout)))
-  if keyboard.visible then
-    keyboard_toggle = awful.wibar({ height = 5, ontop = true, position = 'bottom', visible = false })
-    keyboard_toggle:buttons(awful.button({}, 1, function()
-      toggle_keyboard()
-    end))
-  else
-    keyboard_toggle = nil
-  end
-end
-
 function create_tag()
   awful.tag({ 0 }, awful.screen.focused(), awful.layout.suit.max)
 end
 
-function hp_stream_product()
+function hp_stream()
   return product_name():find('^HP Stream ') ~= nil
 end
 
@@ -166,7 +97,6 @@ keys = {
   { { 'Control', 'Mod1' }, 'e', function() run_or_raise(tmux_command('mutt'), { name = 'mutt' }) end },
   { { 'Control', 'Mod1' }, 'f', function() run_or_raise(tmux_command('mutt -f =Feeds', 'feeds'), { name = 'feeds' }) end },
   { { 'Control', 'Mod1' }, 'g', function() awful.spawn.with_shell('[[ -f ~/.urls ]] && uniq ~/.urls{,~} && rm ~/.urls && exec xargs -r -a ~/.urls~ -d \'\\n\' x-www-browser') end },
-  { { 'Control', 'Mod1' }, 'grave', function() toggle_keyboard() end },
   { { 'Control', 'Mod1' }, 'q', function() run_or_raise('urxvtcd -title sshuttle -e bash -c \'online sshuttle -r personal -x danil.mobi --dns 0/0 |& grep -v DeprecationWarning\'', { name = 'sshuttle' }) end },
   { { 'Control', 'Mod1' }, 'r', function() run_or_raise('urxvtcd -e launch', { name = 'launch' }) end },
   { { 'Control', 'Mod1' }, 's', function() run_or_raise('urxvtcd -title syncing -e bash -c \'online sync-all || read -s\'', { name = 'syncing' }) end },
@@ -176,24 +106,14 @@ keys = {
   { { 'Control', 'Mod1' }, 'z', function() awful.spawn('slock') end },
   { { 'Mod1' }, 'Escape', function() tag = root.tags()[1] tag.selected = not tag.selected end },
   { { 'Mod1' }, 'F4', function() if client.focus then client.focus:kill() end end },
-  { {}, 'XF86AudioLowerVolume', function() awful.spawn.with_shell(string.format('pactl set-sink-mute 0 no; pactl set-sink-volume 0 -10%%; pactl set-source-mute %d no', hp_stream_product() and 1 or 0)) end },
-  { {}, 'XF86AudioMute', function() awful.spawn.with_shell(string.format('pactl set-sink-mute 0 %s; pactl set-sink-volume 0 %d%%; pactl set-source-mute %d yes', table.unpack(hp_stream_product() and { 'no', 0, 1 } or { 'yes', 25, 0 }))) end },
-  { {}, 'XF86AudioRaiseVolume', function() awful.spawn.with_shell(string.format('pactl set-sink-mute 0 no; pactl set-sink-volume 0 +10%%; pactl set-source-mute %d no', hp_stream_product() and 1 or 0)) end },
-}
-
-layout = {
-  { { 'Esc', 'Escape' }, { 'F1 ☼', 'F1' }, { 'F2 ☀', 'F2' }, { 'F3 🔇', 'F3' }, { 'F4 🔈', 'F4' }, { 'F5 🔉', 'F5' }, { 'F6 📶', 'F6' }, { 'F7', 'F7' }, { 'F8', 'F8' }, { 'F9', 'F9' }, { 'F10', 'F10' }, { 'F11', 'F11' }, { 'F12 ☾', 'F12' }, { 'Home', 'Home' }, { 'End', 'End' }, { 'Ins', 'Insert' }, { 'Del', 'Delete' }, { '×', 'hide' } },
-  { { '`~', 49 }, { '1!', 10 }, { '2@', 11 }, { '3#', 12 }, { '4$', 13 }, { '5%', 14 }, { '6^', 15 }, { '7&', 16 }, { '8*', 17 }, { '9(', 18 }, { '0)', 19 }, { '-_', 20 }, { '=+', 21 }, { 'Bksp', 'BackSpace' } },
-  { { 'Tab', 'Tab' }, { 'Q Й', 24 }, { 'W Ц', 25 }, { 'E У', 26 }, { 'R К', 27 }, { 'T Е', 28 }, { 'Y Н', 29 }, { 'U Г', 30 }, { 'I Ш', 31 }, { 'O Щ', 32 }, { 'P З', 33 }, { '[{Х', 34 }, { ']}Ъ', 35 }, { '\\|', 51 } },
-  { { 'Lang', 'ISO_Next_Group' }, { 'A Ф', 38 }, { 'S Ы', 39 }, { 'D В', 40 }, { 'F А', 41 }, { 'G П', 42 }, { 'H Р', 43 }, { 'J О', 44 }, { 'K Л', 45 }, { 'L Д', 46 }, { '; Ж', 47 }, { '\' Э', 48 }, { '', 'Return' }, { 'Enter', 'Return' } },
-  { { 'Shift', 'Shift_L', true }, { 'Z Я', 52 }, { 'X Ч', 53 }, { 'C С', 54 }, { 'V М', 55 }, { 'B И', 56 }, { 'N Т', 57 }, { 'M Ь', 58 }, { ', Б', 59 }, { '. Ю', 60 }, { '/ .', 61 }, { 'PgUp', 'Prior' }, { '↑', 'Up' }, { 'PgDn', 'Next' } },
-  { { 'Ctrl', 'Control_L', true }, { 'Win', 'Super_L', true }, { 'Alt', 'Alt_L', true }, { '', 'space' }, { '', 'space' }, { '', 'space' }, { '', 'space' }, { '', 'space' }, { 'AltGr', 'Mode_switch', true }, { 'Menu', 'Menu' }, { 'Ctrl', 'ISO_Level3_Shift', true }, { '←', 'Left' }, { '↓', 'Down' }, { '→', 'Right' } },
+  { {}, 'XF86AudioLowerVolume', function() awful.spawn.with_shell(string.format('pactl set-sink-mute 0 no; pactl set-sink-volume 0 -10%%; pactl set-source-mute %d no', hp_stream() and 1 or 0)) end },
+  { {}, 'XF86AudioMute', function() awful.spawn.with_shell(string.format('pactl set-sink-mute 0 %s; pactl set-sink-volume 0 %d%%; pactl set-source-mute %d yes', table.unpack(hp_stream() and { 'no', 0, 1 } or { 'yes', 25, 0 }))) end },
+  { {}, 'XF86AudioRaiseVolume', function() awful.spawn.with_shell(string.format('pactl set-sink-mute 0 no; pactl set-sink-volume 0 +10%%; pactl set-source-mute %d no', hp_stream() and 1 or 0)) end },
 }
 
 function main()
   bind_alt_tab()
   configure_notifications()
-  create_keyboard()
   create_tag()
   set_background()
   set_keys()
@@ -212,7 +132,7 @@ rules = {
   { { class = 'Chromium', type = 'normal' }, { callback = function(client) configure_chromium(client) end } },
   { { class = 'XClipboard' }, { hidden = true } },
   { { name = 'Event Tester' }, { floating = true } },
-  { { role = 'GtkFileChooserDialog' }, { maximized_vertical = hp_stream_product() } },
+  { { role = 'GtkFileChooserDialog' }, { maximized_vertical = hp_stream() } },
   { { type = 'dialog' }, { callback = function(client) awful.placement.centered(client) end } },
 }
 
@@ -265,13 +185,6 @@ function tmux_command(command, title)
     title = command
   end
   return string.format('urxvtcd -g %dx%d -title %s -e tmux new-session -Ad -s %s %s \\; set-option status off \\; attach-session -t %s', geometry.width // 11, geometry.height // 24, title, title, command, title)
-end
-
-function toggle_keyboard()
-  keyboard.visible = not keyboard.visible
-  if keyboard_toggle then
-    keyboard_toggle.visible = not keyboard_toggle.visible
-  end
 end
 
 main()

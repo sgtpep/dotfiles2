@@ -57,7 +57,7 @@ EOF
       sudo chmod 600 "$path"
     fi
     local interface=${paths[0]##*/}
-    ! hp-stream-product || interface=wlo1
+    ! hp-stream || interface=wlo1
     sudo tee /etc/network/interfaces.d/"$interface" > /dev/null << EOF
 allow-hotplug $interface
 iface $interface inet manual
@@ -83,7 +83,7 @@ function configure-nopasswd {
 }
 
 function configure-xorg {
-  if hp-stream-product; then
+  if hp-stream; then
     local path=/etc/X11/xorg.conf.d
     mkdir -p "$path"
     sudo ln -fs /usr/share/doc/xserver-xorg-video-intel/xorg.conf "$path"/50-intel.conf
@@ -129,12 +129,12 @@ function fix-efi {
   sudo cp "$path"/{debian/grub,boot/boot}x64.efi
 }
 
-function hp-stream-product {
+function hp-stream {
   [[ $(product-name) == 'HP Stream '* ]]
 }
 
 function install-firmware {
-  if hp-stream-product; then
+  if hp-stream; then
     enable-archive-area non-free
     install-packages firmware-iwlwifi
   fi
@@ -220,7 +220,7 @@ function setup-nginx {
 }
 
 function setup-printer {
-  if hp-stream-product; then
+  if hp-stream; then
     local name=HP_Ink_Tank_Wireless_410_series
     if ! lpstat -p "$name" &>/dev/null; then
       local url=$(sudo lpinfo -v | grep -o -m 1 "\bdnssd://${name//_/%20}.*" || :)
