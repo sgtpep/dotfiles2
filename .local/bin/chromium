@@ -4,10 +4,12 @@ directory=~/.config/chromium
 if [[ ! -h $directory/SingletonLock ]]; then
   path=$directory/Default/Preferences
   content=$(< "$path")
-  string='"content_settings":'
-  [[ $content != *"$string"[{* ]] || sed -i 's/\('"$string"'\[\){[^]]*\(]\)/\1\2/' "$path"
-  string='"gcpccpgdkmihefbjbhkipbjcpfaokokd":{"last_modified":'
-  [[ $content != *"$string"* ]] || sed -i 's/\('"$string"'"[0-9]*","zoom_level":\)[0-9.]*/\10/' "$path"
+  key=content_settings
+  [[ $content != *"\"$key\":"[{* ]] || sed -i 's/\("'"$key"'":\[\){[^]]*\(]\)/\1\2/' "$path"
+  pattern='"x":.*"zoom_level": *[0-9.]*[ \n]*}[ \n]*}'
+  [[ $(< "$path".orig) =~ ${pattern//\n/$'\n'} ]]
+  match=${BASH_REMATCH[0]//[[:space:]]}
+  [[ $content == *"$match"* ]] || sed -i "s/$pattern/$match/" "$path"
 fi
 [[ -f ~/.job ]] || set -- --disable-notifications "$@"
 command=chromium

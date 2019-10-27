@@ -41,28 +41,8 @@ const listenCommand = () =>
     ),
   )
 
-const listenUpdated = () => {
-  chrome.tabs.onCreated.addListener(({ id, url }) => onUpdated(id, url))
-  chrome.tabs.onUpdated.addListener(
-    (id, { status, url }) => status === 'completed' && onUpdated(id, url),
-  )
-}
-
-const main = () => {
-  listenCommand()
-  listenUpdated()
-}
-
-const onUpdated = (id, url) =>
-  chrome.tabs.getZoom(id, factor => {
-    const zoom = zooms[url && new URL(url).hostname] || 1
-    zoom === factor || chrome.tabs.setZoom(id, zoom)
-  })
+const main = () => listenCommand()
 
 const togglePinnedTab = tab => chrome.tabs.update({ pinned: !tab.pinned })
-
-const zooms = {
-  'app.slack.com': 1.25,
-}
 
 main()

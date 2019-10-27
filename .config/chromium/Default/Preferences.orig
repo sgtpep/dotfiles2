@@ -110,6 +110,13 @@
   "intl": {
     "accept_languages": "en-US,ru"
   },
+  "partition": {
+    "per_host_zoom_levels": {
+      "x": {
+        "app.slack.com": { "zoom_level": 1.2239010857415449 }
+      }
+    }
+  },
   "payments": {
     "can_make_payment_enabled": false
   },
