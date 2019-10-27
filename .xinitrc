@@ -13,7 +13,7 @@ eval "$(dbus-launch --exit-with-session --sh-syntax)"
 export SSH_AUTH_SOCK=/tmp/ssh-agent; ssh-agent -a "$SSH_AUTH_SOCK" &
 start-pulseaudio-x11 &
 udisks-monitor &
-unclutter -idle 1 &
+unclutter -idle 1 -root &
 { sleep 1; exec xclipboard; } &
 
 exec awesome
