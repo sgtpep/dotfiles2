@@ -110,6 +110,9 @@
   "intl": {
     "accept_languages": "en-US,ru"
   },
+  "payments": {
+    "can_make_payment_enabled": false
+  },
   "profile": {
     "block_third_party_cookies": true,
     "content_settings": {
