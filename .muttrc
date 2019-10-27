@@ -12,10 +12,10 @@ color status black white
 color tilde default default
 color tree default default
 folder-hook . 'bind index D noop'
-folder-hook . 'bind pager F flag-message'
+folder-hook . 'bind index,pager F flag-message'
 folder-hook . 'push <first-entry>'
 folder-hook Feeds 'macro index D "<first-entry><delete-pattern>~m-`echo "$(($(tput lines) - 2))"`<Return><sync-mailbox><Return>"'
-folder-hook Feeds 'macro pager F "<pipe-message>grep -Po '\''(?<=\^X-RSS-URL: ).+'\'' >> ~/.urls<Return>"'
+folder-hook Feeds 'macro index,pager F "<pipe-message>grep -Po '\''(?<=\^X-RSS-URL: ).+'\'' >> ~/.urls<Return>"'
 macro attach s '<save-entry><kill-line>~/Downloads/<Return>y'
 macro index <Space>e '<change-folder>=Inbox<Return>'
 macro index <Space>f '<change-folder>=Feeds<Return>'
