@@ -151,6 +151,9 @@ const styleDomain = () =>
     : location.host
 
 const styles = {
+  'app.slack.com': `
+    .p-channel_sidebar__channel--muted > .c-mention_badge { display: none }
+  `,
   'stackoverflow.com': `
     body, .top-bar { margin-top: 0 }
     #js-gdpr-consent-banner, #noscript-warning { display: none }
