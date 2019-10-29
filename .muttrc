@@ -1,3 +1,8 @@
+folder-hook . 'bind index D noop'
+folder-hook . 'bind index,pager F flag-message'
+folder-hook . 'push <first-entry>'
+reply-hook . 'set include'
+
 alternative_order text/plain text/html
 auto_view text/html
 bind editor <Tab> complete-query
@@ -11,15 +16,13 @@ color signature default default
 color status black white
 color tilde default default
 color tree default default
-folder-hook . 'bind index D noop'
-folder-hook . 'bind index,pager F flag-message'
-folder-hook . 'push <first-entry>'
-folder-hook Feeds 'macro index D "<first-entry><delete-pattern>~m-`echo "$(($(tput lines) - 2))"`<Return><sync-mailbox><Return>"'
-folder-hook Feeds 'macro index,pager F "<pipe-message>grep -Po '\''(?<=\^X-RSS-URL: ).+'\'' >> ~/.urls<Return>"'
+folder-hook Feeds 'macro index D <first-entry><delete-pattern>~m-`echo "$(($(tput lines) - 2))"`<Return><sync-mailbox><Return>'
+folder-hook Feeds 'macro index,pager F <pipe-message>"grep -Po '\''(?<=\^X-RSS-URL: ).+'\'' >> ~/.urls"<Return>'
 macro attach s '<save-entry><kill-line>~/Downloads/<Return>y'
 macro index <Space>e '<change-folder>=Inbox<Return>'
 macro index <Space>f '<change-folder>=Feeds<Return>'
 macro index <Space>s '<shell-escape>printf \\ec; online sync-mail; printf \\ec<Return>'
+reply-hook '~h '\''^X-Mailer: Delta Chat '\''' 'set noinclude'
 set beep_new
 set fast_reply
 set folder=~/mail
