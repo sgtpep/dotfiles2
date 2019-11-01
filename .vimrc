@@ -91,6 +91,7 @@ function s:patch_matchparen()
 endfunction
 
 function s:set_options()
+  autocmd FileType mail if getline(0, '$') == [''] | startinsert | endif
   autocmd FileType mail setlocal formatoptions+=w textwidth=72
   let &grepprg = printf('%srg --vimgrep --', isdirectory('.git') ? 'git ls-files \| xargs -r -d ''\n'' ' : '')
   set autoindent
