@@ -22,7 +22,7 @@ macro attach s '<save-entry><kill-line>~/Downloads/<Return>y'
 macro index <Space>e '<change-folder>=Inbox<Return>'
 macro index <Space>f '<change-folder>=Feeds<Return>'
 macro index <Space>s '<shell-escape>printf \\ec; online sync-mail; printf \\ec<Return>'
-reply-hook '~h '\''^X-Mailer: Delta Chat '\''' 'set noinclude'
+reply-hook '~h '\''^Chat-Disposition-Notification-To:'\''' 'set noinclude'
 set beep_new
 set fast_reply
 set folder=~/mail
