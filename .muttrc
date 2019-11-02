@@ -2,6 +2,7 @@ folder-hook . 'bind index D noop'
 folder-hook . 'bind index,pager F flag-message'
 folder-hook . 'push <first-entry>'
 reply-hook . 'set include'
+send-hook . 'unmy_hdr Chat-Version:'
 
 alternative_order text/plain text/html
 auto_view text/html
@@ -23,6 +24,7 @@ macro index <Space>e '<change-folder>=Inbox<Return>'
 macro index <Space>f '<change-folder>=Feeds<Return>'
 macro index <Space>s '<shell-escape>printf \\ec; online sync-mail; printf \\ec<Return>'
 reply-hook '~h '\''^Chat-Disposition-Notification-To:'\''' 'set noinclude'
+send-hook '!(~s '\''.'\'')' 'my_hdr Chat-Version: 1.0'
 set beep_new
 set fast_reply
 set folder=~/mail
@@ -30,13 +32,14 @@ set forward_format=Fw:\ %s
 set from='Danil Semelenov <mail'@'danil.mobi>'
 set include
 set mime_forward
+set noabort_nosubject
 set noabort_unmodified
 set nocrypt_use_gpgme
 set nohelp
 set nomarkers
+set nopostpone
 set norecord
 set pager_stop
-set postponed==Drafts
 set query_command='echo; sed -n '\''s/\(.*'\''%s'\''.*\) <\(.*\)>/\2\t\1/ip; s/\(.*\) <\(.*'\''%s'\''.*\)>/\2\t\1/ip'\'' ~/notes/emails'
 set rfc2047_parameters
 set sendmail=msmtp-enqueue
