@@ -72,6 +72,16 @@ function s:format_code()
   endif
 endfunction
 
+function s:is_git()
+  let path = expand('%:p:h')
+  while path != '/'
+    if isdirectory(printf('%s/.git', path))
+      return 1
+    endif
+    let path = fnamemodify(path, ':h')
+  endwhile
+endfunction
+
 function s:main()
   call s:configure_netrw()
   call s:define_mappings()
@@ -93,7 +103,7 @@ endfunction
 function s:set_options()
   autocmd FileType mail if getline(0, '$') == [''] | startinsert | endif
   autocmd FileType mail setlocal formatoptions+=w textwidth=72
-  let &grepprg = printf('%srg --vimgrep --', isdirectory('.git') ? 'git ls-files \| xargs -r -d ''\n'' ' : '')
+  let &grepprg = printf('%srg --vimgrep --', s:is_git() ? 'git ls-files \| xargs -r -d ''\n'' ' : '')
   set autoindent
   set directory=/var/tmp//
   set expandtab
@@ -113,7 +123,7 @@ function s:set_options()
 endfunction
 
 function s:update_path()
-  let &path = join([''] + (isdirectory('.git') ? uniq(sort(map(systemlist('git ls-files'), {_, path -> path =~ '/' ? substitute(path, '/[^/]*$', '', '') : ''}))) : map(filter(globpath(',', '{.,}*/', 1, 1), {_, path -> path !~# '^\(\.\.\|\.git\|dist\|node_modules\)/$'}), {_, path -> printf('%s**', path)})), ',')
+  let &path = join([''] + (s:is_git() ? uniq(sort(map(systemlist('git ls-files'), {_, path -> path =~ '/' ? substitute(path, '/[^/]*$', '', '') : ''}))) : map(filter(globpath(',', '{.,}*/', 1, 1), {_, path -> path !~# '^\(\.\.\|\.git\|dist\|node_modules\)/$'}), {_, path -> printf('%s**', path)})), ',')
 endfunction
 
 call s:main()
