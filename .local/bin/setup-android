@@ -155,8 +155,8 @@ function main {
 
 function mute-volume {
   run-script << \EOF
-# volume down, bell icon, vibration icon
-inputs keyevent\ KEYCODE_VOLUME_DOWN tap\ 650\ 500{,}
+# mute down
+inputs keyevent\ KEYCODE_VOLUME_DOWN tap\ 650\ 850
 EOF
 }
 
