@@ -267,8 +267,8 @@ function setup-fennec {
   run-script org.mozilla.fennec_fdroid << \EOF
 input keyevent KEYCODE_MENU
 wait-ui 'Report site issue'
-# Settings, General, Home, Set a Homepage, Custom, Also use for new tabs, Search, Google, Privacy, Do not track, Tracking Protection, Enabled, Fennec Health Report, No, tabs icon, close icon
-inputs keyevent\ KEYCODE_{TAB,MOVE_END,DPAD_{UP{,},CENTER,DOWN,CENTER{,,},DOWN,CENTER}} text\ 'about:blank' keyevent\ KEYCODE_{TAB{,},DPAD_{CENTER,DOWN,CENTER},BACK{,},DPAD_{DOWN,CENTER},MOVE_HOME,DPAD_{DOWN,CENTER{,}},BACK,DPAD_{DOWN,CENTER,CENTER,DOWN{,},CENTER,UP,CENTER},MOVE_END,DPAD_CENTER,BACK{,}} tap\ 100\ 100 text\ - tap\ 500\ 200 keyevent\ KEYCODE_BACK{,} tap\ {600\ 100,325\ 200} keyevent\ KEYCODE_BACK
+# Settings, General, Home, Top Sites, Hide, Bookmarks, Hide, History, Hide, Search, Google, Privacy, Do not track, Tracking Protection, Enabled, Fennec Health Report, No, tabs icon, close icon
+inputs keyevent\ KEYCODE_{TAB,MOVE_END,DPAD_{UP{,},CENTER,DOWN,CENTER{,},DOWN{,},CENTER,DOWN,CENTER,DOWN,CENTER,DOWN,CENTER,DOWN,CENTER,DOWN,CENTER},BACK{,},DPAD_{DOWN,CENTER},MOVE_HOME,DPAD_{DOWN,CENTER{,}},BACK,DPAD_{DOWN,CENTER,CENTER,DOWN{,},CENTER,UP,CENTER},MOVE_END,DPAD_CENTER,BACK{,}} tap\ 100\ 100 text\ - tap\ 500\ 200 keyevent\ KEYCODE_BACK{,} tap\ {600\ 100,325\ 200} keyevent\ KEYCODE_BACK
 disable-notifications "$1"
 EOF
 }
