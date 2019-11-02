@@ -14,7 +14,7 @@ color markers default default
 color normal default default
 color quoted default default
 color signature default default
-color status black white
+color status default default
 color tilde default default
 color tree default default
 folder-hook Feeds 'macro index D <first-entry><delete-pattern>~m-`echo "$(($(tput lines) - 2))"`<Return><sync-mailbox><Return>'
