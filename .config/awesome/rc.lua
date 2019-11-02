@@ -25,6 +25,7 @@ function bind_alt_tab()
   }, start_callback = function()
     count = 0
     awful.client.focus.history.disable_tracking()
+    awesome.xkb_set_layout_group(0)
   end, stop_callback = function()
     if client.focus then
       awful.client.focus.history.add(client.focus)
