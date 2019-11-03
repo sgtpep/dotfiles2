@@ -97,7 +97,7 @@ EOF
 
 function disable-packages {
   local packages=(
-    com.android.{bluetooth,chrome,vending}
+    com.android.{bluetooth,chrome,dreams.{basic,phototable},vending}
     com.google.android.apps.{docs,googleassistant,maps,messaging,nbu.files,photos,turbo,wallpaper,wellbeing}
     com.google.android.{as,calendar,contacts,deskclock,dialer,gm,gms,googlequicksearchbox,ims,inputmethod.latin,tts,youtube}
     com.hmdglobal.{app.{activation,fmradio},support}
