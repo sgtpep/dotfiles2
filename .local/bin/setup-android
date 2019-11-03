@@ -261,13 +261,13 @@ function setup-delta-chat {
   local email=mail'@'danil.mobi
   local imap_hostname=imap.fastmail.com
   local smtp_hostname=smtp.fastmail.com
-  run-script com.b44t.messenger android.permission.READ_CONTACTS << EOF
+  run-script com.b44t.messenger android.permission.{CAMERA,READ_CONTACTS,READ_EXTERNAL_STORAGE,RECORD_AUDIO} << EOF
 wait-ui 'START MESSAGING'
 # Start messaging, Email address, Password, Advanced, IMAP server, SMTP server, confirm icon
 inputs tap\ 300\ 1250 text\ $email keyevent\ KEYCODE_TAB text\ $(netrc-password "$imap_hostname" "$email") keyevent\ KEYCODE_{TAB{,,},DPAD_CENTER,TAB{,}} text\ $imap_hostname keyevent\ KEYCODE_TAB{,,,,,} text\ $smtp_hostname tap\ 650\ 100
 wait-ui 'Delta Chat'
 # menu icon, Settings, Your profile info, Signature text, Select all, confirm icon, Chats and media, Enter key sends, Show classic emails, All, plus icon, Me, OK, close icon
-inputs tap\ 650\ 100 keyevent\ KEYCODE_{TAB,MOVE_END,DPAD_{CENTER,CENTER}} swipe\ 100\ 400\ 100\ 400\ 500 tap\ 500\ 300 keyevent\ KEYCODE_DEL tap\ 650\ 100 keyevent\ KEYCODE_{DPAD_{DOWN{,,,,},CENTER,DOWN{,},CENTER,DOWN{,},CENTER,DOWN{,},CENTER},BACK{,}} tap\ {650\ 1350,1\ 400} keyevent\ KEYCODE_{TAB{,},DPAD_CENTER,BACK} tap\ 700\ 200
+inputs tap\ 650\ 100 keyevent\ KEYCODE_{TAB,MOVE_END,DPAD_{CENTER,CENTER}} swipe\ 100\ 400\ 100\ 400\ 500 tap\ 500\ 300 keyevent\ KEYCODE_DEL tap\ 650\ 100 keyevent\ KEYCODE_{DPAD_{DOWN{,,,,},CENTER,DOWN{,},CENTER,DOWN{,},CENTER,DOWN{,},CENTER},BACK{,}} tap\ {650\ 1350,1\ 400} keyevent\ KEYCODE_{TAB{,},DPAD_CENTER,BACK} tap\ 700\ 200 keyevent\ KEYCODE_BACK
 EOF
 }
 
