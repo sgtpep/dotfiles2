@@ -14,7 +14,13 @@ if [[ -d $path ]]; then
     "${command[@]}" add -A
     "${command[@]}" commit -m 'Update notes'
   fi
-  "${command[@]}" pull
+  "${command[@]}" pull 2>&1 || status=$?
+  if [[ -f $path/.git/REBASE_HEAD ]]; then
+    "${command[@]}" add -A
+    "${command[@]}" rebase --continue
+  else
+    [[ ! -v status ]] || exit "$status"
+  fi
   [[ ! ${notes[@]} ]] || "${command[@]}" push
 elif ! git clone personal:repositories/notes.git "$path"; then
   rm -fr "$path"
