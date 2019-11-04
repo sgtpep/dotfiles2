@@ -14,6 +14,7 @@ alias rclone='aws rclone'
 alias rg='paginate rg -p'
 alias rm='rm -I'
 alias sdcv='sdcv --color'
+alias ssh='online ssh'
 alias sxiv='sxiv -r'
 alias vi=vim
 alias watch='watch '
