@@ -12,4 +12,4 @@ exec xargs -r -a <(
       } | sed 's/\.[^.]*$/.test\0/'
     } | xargs -d '\n' ls -d 2> /dev/null || :
   } | sort -u
-) -d '\n' npm test
+) -d '\n' npm test -- --passWithNoTests
