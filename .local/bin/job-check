@@ -1,5 +1,0 @@
-#!/bin/bash
-set -eu
-for command in job-{format,lint,typecheck,test}; do
-  CI=1 "$command" "$@"
-done

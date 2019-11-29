@@ -1,3 +1,0 @@
-#!/bin/bash
-set -eu
-job-list "$@" | grep -v '\.snap$' | exec xargs -r -d '\n' npx prettier -l --write
