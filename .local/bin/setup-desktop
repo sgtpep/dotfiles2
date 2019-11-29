@@ -268,6 +268,7 @@ function setup-virtualbox-guest {
     sudo umount /mnt
   fi
   sudo usermod -a -G vboxsf "$USER"
+  sudo rm -f /usr/lib/systemd/system/systemd-timesyncd.service.d/disable-with-time-daemon.conf
 }
 
 function update-apt {
