@@ -10,4 +10,4 @@ if [[ $@ ]]; then
   done
 else
   findmnt -ln -o source,target | grep " /media/$USER/" | sed 's/\s\+.*$//'
-fi | exec xargs -r -d '\n' -n 1 bash -"$-" -c 'udisksctl unmount -b "$1" && { udisksctl power-off -b "$1" 2> /dev/null || :; }' --
+fi | exec xargs -r -d '\n' -n 1 bash -"$-" -c 'udisksctl unmount -b "$1" && { [[ -v NO_POWER_OFF ]] || udisksctl power-off -b "$1" 2> /dev/null || :; }' --
