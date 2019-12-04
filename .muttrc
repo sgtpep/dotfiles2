@@ -48,4 +48,5 @@ set sort=date
 set spoolfile==Inbox
 set text_flowed
 set timeout=10
+set wrap=80
 unset wait_key
