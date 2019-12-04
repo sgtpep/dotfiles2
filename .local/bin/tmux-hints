@@ -23,18 +23,8 @@ function hintify-text {
   echo -n "$text"
 }
 
-function join-text {
-  local columns=$(tput cols)
-  local line
-  while IFS= read -r line; do
-    echo -n "$line"
-    [[ ${#line} == $columns ]] || echo
-  done < "$1"
-  rm "$1"
-}
-
 function main {
-  local text=$(join-text /tmp/"${0##*/}")
+  local text=$(< /tmp/"${0##*/}")
   local urls
   mapfile -t urls < <(parse-urls "$text")
   if [[ ${urls[@]} ]]; then
