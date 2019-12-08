@@ -1,6 +1,6 @@
 #!/bin/bash
 set -eu
-NO_POWER_OFF=1 unmount
+unmount -n
 install-packages gdisk
 sudo sgdisk -og "$1"
 sudo sgdisk -n 1:"$(sudo sgdisk -F "$1")":"$(sudo sgdisk -E "$1")" -t 1:0700 "$1"
