@@ -1,1 +1,3 @@
-urxvt
+#!/bin/bash
+set -eu
+exec urxvt "$@"

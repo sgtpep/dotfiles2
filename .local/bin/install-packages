@@ -6,23 +6,19 @@ declare -A commands=(
   [aria2c]=aria2
   [calc]=apcalc
   [convert]=imagemagick
-  [cwebp]=webp
   [dbus-launch]=dbus-x11
   [dig]=dnsutils
   [ebook-convert]=calibre
   [ebook-viewer]=calibre
   [exiftool]=libimage-exiftool-perl
-  [firefox]=firefox-esr
   [firejail]='firejail xpra-'
+  [mogrify]=imagemagick
   [notify-send]=libnotify-bin
   [pactl]=pulseaudio
-  [pdftotext]=poppler-utils
   [pip3]=python3-pip
   [rclone]='fuse rclone'
   [rg]=ripgrep
-  [rsvg-convert]=librsvg2-bin
   [scp]=openssh-client
-  [setxkbmap]='x11-xkb-utils xkb-data'
   [slock]=suckless-tools
   [ssh-add]=openssh-client
   [ssh-agent]=openssh-client
@@ -30,6 +26,7 @@ declare -A commands=(
   [start-pulseaudio-x11]=pulseaudio
   [udisksctl]=udisks2
   [unrar]=unrar-free
+  [urxvt]=rxvt-unicode
   [xclipboard]=x11-apps
   [xev]=x11-utils
   [xmodmap]=x11-xserver-utils
@@ -42,7 +39,7 @@ declare -A commands=(
 function install-packages {
   local packages=(${@/%*-})
   if ! packages-installed "${packages[@]}"; then
-    run-command bash -"$-" -c '[[ ! $(find /var/cache/apt/pkgcache.bin -mtime +7 2>&1) ]] || sudo apt update && sudo apt -y install "$@"' -- "$@"
+    run-detached bash -"$-" -c '[[ ! $(find /var/cache/apt/pkgcache.bin -mtime +7 2>&1) ]] || sudo apt update; sudo apt -y install "$@"' -- "$@"
     until packages-installed "${packages[@]}" && ! pgrep -x dpkg > /dev/null; do
       sleep 1
     done
@@ -68,8 +65,8 @@ function packages-installed {
   done
 }
 
-function run-command {
-  local command=(flock ~/.local/bin/install-packages online "$@")
+function run-detached {
+  local command=(bash -"$-" -c 'until ping -c 1 danil.mobi &> /dev/null; do sleep 1; done; flock /tmp/install-packages "$@"' -- "$@")
   local detached_command=(bash -"$-" -c '"$@" || read -s' -- "${command[@]}")
   local title=installing
   if [[ ! -t 1 && -v TMUX ]]; then

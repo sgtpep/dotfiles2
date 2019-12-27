@@ -1,18 +1,10 @@
 #!/bin/bash
 set -eu
-directory=~/.config/chromium
-if [[ ! -h $directory/SingletonLock ]]; then
-  path=$directory/Default/Preferences
-  content=$(< "$path")
-  key=content_settings
-  [[ $content != *"\"$key\":"[{* ]] || sed -i 's/\("'"$key"'":\[\){[^]]*\(]\)/\1\2/' "$path"
-  pattern='"x":.*"zoom_level": *[0-9.]*[ \n]*}[ \n]*}'
-  [[ $(< "$path".orig) =~ ${pattern//\n/$'\n'} ]]
-  match=${BASH_REMATCH[0]//[[:space:]]}
-  [[ $content == *"$match"* ]] || sed -i "s/$pattern/$match/" "$path"
+if [[ $(< /etc/os-release) == *=raspbian* ]]; then
+  command=chromium-browser
+else
+  command=chromium
 fi
-[[ -f ~/.job ]] || set -- --disable-notifications "$@"
-command=chromium
-set -- /usr/bin/"$command" --disable-features=TranslateUI --disable-infobars --disable-smooth-scrolling --enable-native-notifications --force-prefers-reduced-motion --load-extension=/usr/share/chromium/extensions/ublock-origin "$@"
-[[ -x $1 ]] || install-packages "$command" webext-ublock-origin
+set -- /usr/bin/"$command" "$@"
+[[ -x $1 ]] || install-packages "$command" fonts-liberation2
 exec "$@"

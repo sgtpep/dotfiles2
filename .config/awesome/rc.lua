@@ -39,23 +39,6 @@ function bind_alt_tab()
   end, stop_event = 'release', stop_key = modifier })
 end
 
-function configure_chromium(client)
-  local copy = function(callback, with_title)
-    input_shortcut(table.unpack(with_title and {{'Alt_L', 'Shift_L', 'y'}} or {{'Shift_L'}, {'Alt_L', 'y'}}))
-    gears.timer.start_new(0.1, callback)
-  end
-  local ebookify = function(arguments)
-    copy(function() run_or_raise(string.format('urxvtcd -title ebookify -e bash -c \'ebookify %s "$(xclip -o -selection clipboard)" || read -s\'', arguments or ''), { name = 'ebookify' }) end)
-  end
-  client:keys(gears.table.join(table.unpack({
-    awful.key({ 'Mod1' }, 'e', nil, function() ebookify() end),
-    awful.key({ 'Mod1' }, 'm', nil, function() copy(function() run_or_raise('urxvtcd -title sharing -e bash -c $\'output=$(xclip -o -selection clipboard); exec mutt -e \\\'set noabort_unmodified\\\' -i <(echo "${output##* }") -s "Link: ${output% *}"\'', { name = 'sharing' }, true) end, true) end),
-    awful.key({ 'Mod1' }, 'p', nil, function() copy(function() run_or_raise('urxvtcd -title password -e bash -c \': "$(xclip -o -selection clipboard)"; : "${_#*://}"; hostname=${_%%/*}; if [[ -f ~/.password-store/$hostname.gpg ]]; then pass "$hostname"; else pwdhash "$hostname" 2> /dev/null; fi | xclip -selection clipboard; [[ ${PIPESTATUS[0]} != 0 ]] || awesome-client <<< $1\' -- "input_shortcut({\'Alt_L\', \'Tab\'}) require(\'gears\').timer.start_new(0.1, function() input_shortcut({\'Control_L\', \'v\'}) require(\'gears\').timer.start_new(0.1, function() require(\'awful\').spawn.with_shell(\'xclip -selection clipboard <<< \\\'\\\'\') end) end)"', { name = 'password' }) end) end),
-    awful.key({ 'Mod1' }, 'v', nil, function() copy(function() run_or_raise('urxvtcd -title mpv -e bash -c \'mpv "$(xclip -o -selection clipboard)" || read -s\'', { class = 'mpv' }) end) end),
-    awful.key({ 'Mod1', 'Shift' }, 'e', nil, function() ebookify('-d') end),
-  })))
-end
-
 function configure_notifications()
   local size = 600
   beautiful.notification_max_height = size
@@ -74,42 +57,27 @@ function create_tag()
   awful.tag({ 0 }, awful.screen.focused(), awful.layout.suit.max)
 end
 
-function hp_stream()
-  return product_name():find('^HP Stream ') ~= nil
-end
-
-function input_shortcut(...)
-  for _, group in ipairs({...}) do
-    for _, key in ipairs(group) do
-      root.fake_input('key_press', key)
-    end
-    for _, key in ipairs(group) do
-      root.fake_input('key_release', key)
-    end
-  end
-end
-
 keys = {
   { { 'Control', 'Mod1' }, 'Tab', function() naughty.destroy_all_notifications() end },
   { { 'Control', 'Mod1' }, 'a', function() run_or_raise('urxvtcd -e calc', { name = 'calc' }) end },
   { { 'Control', 'Mod1' }, 'b', function() run_or_raise('urxvtcd -title acpi -e bash -c \'acpi; read -s -n 1\'', { name = 'acpi' }) end },
-  { { 'Control', 'Mod1' }, 'c', function() run_or_raise('pgrep -x chromium > /dev/null || exec chromium', { class = 'Chromium' }, true) end },
+  { { 'Control', 'Mod1' }, 'c', function() run_or_raise('command=chromium; pgrep -x "$command" > /dev/null || exec "$command"', { class = 'Chromium' }, true) end },
   { { 'Control', 'Mod1' }, 'd', function() run_or_raise('urxvtcd -e dictionary', { name = 'dictionary' }) end },
   { { 'Control', 'Mod1' }, 'e', function() run_or_raise(tmux_command('mutt'), { name = 'mutt' }) end },
-  { { 'Control', 'Mod1' }, 'f', function() run_or_raise(tmux_command('mutt -f =Feeds', 'feeds'), { name = 'feeds' }) end },
+  { { 'Control', 'Mod1' }, 'f', function() run_or_raise('command=firefox; pgrep -x "$command" > /dev/null || exec "$command"', { class = 'Firefox' }, true) end },
   { { 'Control', 'Mod1' }, 'g', function() awful.spawn.with_shell('[[ -f ~/.urls ]] && uniq ~/.urls{,~} && rm ~/.urls && exec xargs -r -a ~/.urls~ -d \'\\n\' x-www-browser') end },
-  { { 'Control', 'Mod1' }, 'q', function() run_or_raise('urxvtcd -title sshuttle -e bash -c \'online sshuttle -r personal -x danil.mobi --dns 0/0 |& grep -v DeprecationWarning\'', { name = 'sshuttle' }) end },
+  { { 'Control', 'Mod1' }, 'q', function() run_or_raise('urxvtcd -title sshuttle -e bash -c \'sshuttle -r personal -x danil.mobi --dns 0/0 |& grep -v DeprecationWarning\'', { name = 'sshuttle' }) end },
   { { 'Control', 'Mod1' }, 'r', function() run_or_raise('urxvtcd -e launch', { name = 'launch' }) end },
-  { { 'Control', 'Mod1' }, 's', function() run_or_raise('urxvtcd -title syncing -e bash -c \'online sync-all || read -s\'', { name = 'syncing' }) end },
+  { { 'Control', 'Mod1' }, 's', function() run_or_raise('urxvtcd -title syncing -e bash -c \'sync-all || read -s\'', { name = 'syncing' }) end },
   { { 'Control', 'Mod1' }, 't', function() run_or_raise('urxvtcd -e tmux new-session -A -s tmux', { name = 'tmux' }) end },
   { { 'Control', 'Mod1' }, 'w', function() run_or_raise(tmux_command('notes'), { name = 'notes' }) end },
   { { 'Control', 'Mod1' }, 'x', function() run_or_raise('urxvtcd -title calendar -e bash -c $\'printf \\\'%(%F %a %R)T\\n\\n\\\'; ncal -Mb -A 1; read -s -n 1\'', { name = 'calendar' }, true) end },
   { { 'Control', 'Mod1' }, 'z', function() awful.spawn('slock') end },
   { { 'Mod1' }, 'Escape', function() tag = root.tags()[1] tag.selected = not tag.selected end },
   { { 'Mod1' }, 'F4', function() if client.focus then client.focus:kill() end end },
-  { {}, 'XF86AudioLowerVolume', function() awful.spawn.with_shell(string.format('pactl set-sink-mute 0 no; pactl set-sink-volume 0 -10%%; pactl set-source-mute %d no', hp_stream() and 1 or 0)) end },
-  { {}, 'XF86AudioMute', function() awful.spawn.with_shell(string.format('pactl set-sink-mute 0 %s; pactl set-sink-volume 0 %d%%; pactl set-source-mute %d yes', table.unpack(hp_stream() and { 'no', 0, 1 } or { 'yes', 25, 0 }))) end },
-  { {}, 'XF86AudioRaiseVolume', function() awful.spawn.with_shell(string.format('pactl set-sink-mute 0 no; pactl set-sink-volume 0 +10%%; pactl set-source-mute %d no', hp_stream() and 1 or 0)) end },
+  { {}, 'XF86AudioLowerVolume', function() awful.spawn.with_shell('pactl set-sink-mute 0 no; pactl set-sink-volume 0 -10%; pactl set-source-mute 0 no') end },
+  { {}, 'XF86AudioMute', function() awful.spawn.with_shell('pactl set-sink-mute 0 yes; pactl set-source-mute 0 yes') end },
+  { {}, 'XF86AudioRaiseVolume', function() awful.spawn.with_shell('pactl set-sink-mute 0 no; pactl set-sink-volume 0 +10%; pactl set-source-mute 0 no') end },
 }
 
 function main()
@@ -127,19 +95,9 @@ function process_rule(rule)
   end, rule)
 end
 
-function product_name()
-  if not _product_name then
-    local file = io.open('/sys/class/dmi/id/product_name')
-    _product_name = file and file:read('*all') or ''
-  end
-  return _product_name
-end
-
 rules = {
-  { { class = 'Chromium', type = 'normal' }, { callback = function(client) configure_chromium(client) end } },
   { { class = 'XClipboard' }, { hidden = true } },
   { { name = 'Event Tester' }, { floating = true } },
-  { { role = 'GtkFileChooserDialog' }, { maximized_vertical = hp_stream() } },
   { { type = 'dialog' }, { callback = function(client) awful.placement.centered(client) end } },
 }
 
@@ -162,11 +120,9 @@ function set_background()
 end
 
 function set_keys()
-  root.keys(gears.table.join(table.unpack(gears.table.map(function(arguments)
-    return awful.key(table.unpack(arguments))
-  end, gears.table.join(keys, gears.table.map(function(key)
-    return #key[1] == 2 and gears.table.hasitem(key[1], 'Control') and gears.table.hasitem(key[1], 'Mod1') and { { 'Mod4' },  key[2], key[3] } or nil
-  end, keys))))))
+  root.keys(gears.table.join(table.unpack(gears.table.map(function(key)
+    return awful.key(table.unpack(key))
+  end, keys))))
 end
 
 function set_rules()

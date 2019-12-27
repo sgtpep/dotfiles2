@@ -1,3 +1,12 @@
+function s:configure_filetypes()
+  autocmd BufNewFile,BufRead *.ts,*.tsx setfiletype javascript
+  autocmd FileType * call s:define_comment_mappings()
+  autocmd FileType * let [&l:formatoptions, &l:shiftwidth, &l:softtabstop, &l:textwidth] = [&g:formatoptions, &g:shiftwidth, &g:softtabstop, &g:textwidth]
+  autocmd FileType css nnoremap <silent> <Leader>a :%!postcss<CR>:update<CR>
+  autocmd FileType mail if getline(0, '$') == [''] | startinsert | endif
+  autocmd FileType mail setlocal formatoptions+=w textwidth=72
+endfunction
+
 function s:configure_netrw()
   let g:netrw_banner = 0
   let g:netrw_hide = 1
@@ -11,7 +20,6 @@ function s:define_comment_mappings()
 endfunction
 
 function s:define_leader_mappings()
-  autocmd FileType css nnoremap <silent> <Leader>a :%!postcss<CR>:update<CR>
   nnoremap <Leader> <Nop>
   nnoremap <Leader>E :edit %:h/
   nnoremap <Leader>b :ls<CR>:buffer<Space>
@@ -48,8 +56,7 @@ endfunction
 
 function s:enable_filetypes()
   filetype plugin on
-  autocmd FileType * call s:define_comment_mappings()
-  autocmd FileType * let [&l:formatoptions, &l:shiftwidth, &l:softtabstop, &l:textwidth] = [&g:formatoptions, &g:shiftwidth, &g:softtabstop, &g:textwidth]
+  call s:configure_filetypes()
 endfunction
 
 function s:format_code()
@@ -72,7 +79,7 @@ function s:format_code()
   endif
 endfunction
 
-function s:is_git()
+function s:git()
   let path = expand('%:p:h')
   while path != '/'
     if isdirectory(printf('%s/.git', path))
@@ -101,9 +108,7 @@ function s:patch_matchparen()
 endfunction
 
 function s:set_options()
-  autocmd FileType mail if getline(0, '$') == [''] | startinsert | endif
-  autocmd FileType mail setlocal formatoptions+=w textwidth=72
-  let &grepprg = printf('%srg --vimgrep --', s:is_git() ? 'git ls-files \| xargs -r -d ''\n'' ' : '')
+  let &grepprg = printf('%srg --vimgrep --', s:git() ? 'git ls-files \| xargs -r -d ''\n'' ' : '')
   set autoindent
   set directory=/var/tmp//
   set expandtab
@@ -123,7 +128,7 @@ function s:set_options()
 endfunction
 
 function s:update_path()
-  let &path = join([''] + (s:is_git() ? uniq(sort(map(systemlist('git ls-files'), {_, path -> path =~ '/' ? substitute(path, '/[^/]*$', '', '') : ''}))) : map(filter(globpath(',', '{.,}*/', 1, 1), {_, path -> path !~# '^\(\.\.\|\.git\|dist\|node_modules\)/$'}), {_, path -> printf('%s**', path)})), ',')
+  let &path = join([''] + (s:git() ? uniq(sort(map(systemlist('git ls-files'), {_, path -> path =~ '/' ? substitute(path, '/[^/]*$', '', '') : ''}))) : map(filter(globpath(',', '{.,}*/', 1, 1), {_, path -> path !~# '^\(\.\.\|\.git\|dist\|node_modules\)/$'}), {_, path -> printf('%s**', path)})), ',')
 endfunction
 
 call s:main()

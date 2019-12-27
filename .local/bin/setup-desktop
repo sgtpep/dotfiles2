@@ -1,14 +1,18 @@
 #!/bin/bash
 set -eu
 
+function append {
+  grep -Fqx "$2" "$1" || sudo tee -a "$1" > /dev/null <<< $2
+}
+
 function clone-dotfiles {
   if [[ ! -d ~/.git ]]; then
     install-packages git
-    git -C ~ init
-    git -C ~ remote add origin https://"${repository%/*}"@github.com/"$repository".git
-    git -C ~ fetch
-    git -C ~ checkout -ft origin/master
-    git -C ~ ls-files | grep -Po '.+(?=\.orig$)' | xargs -r -I {} -d '\n' cp ~/{}{.orig,}
+    "${dotfiles_git[@]}" init
+    "${dotfiles_git[@]}" remote add origin https://"${repository%/*}"@"$repository_hostname"/"$repository".git
+    "${dotfiles_git[@]}" fetch
+    "${dotfiles_git[@]}" checkout -ft origin/master
+    "${dotfiles_git[@]}" ls-files | grep -Po '.+(?=\.orig$)' | xargs -r -I {} -d '\n' cp ~/{}{.orig,}
     configure-dotfiles
   fi
 }
@@ -21,18 +25,36 @@ function configure-console-font {
 }
 
 function configure-dotfiles {
-  [[ ! -f ~/.ssh/id_rsa ]] || git -C ~ remote set-url origin git@github.com:"$repository".git
-  git -C ~ config status.showUntrackedFiles no
+  [[ ! -f ~/.ssh/id_rsa ]] || "${dotfiles_git[@]}" remote set-url origin git@"$repository_hostname":"$repository".git
+  "${dotfiles_git[@]}" config status.showUntrackedFiles no
   local path=~/LICENSE
   rm -f "$path"
-  git -C ~ update-index --assume-unchanged "$path"
+  "${dotfiles_git[@]}" update-index --assume-unchanged "$path"
+}
+
+function configure-fontconfig {
+  if raspbian; then
+    local path=~/.config/fontconfig/conf.d/50-raspbian.conf
+    mkdir -p "${path%/*}"
+    cat >> "$path" << \EOF
+<fontconfig>
+  <match target="font">
+    <edit name="aspect">
+      <double>0.95</double>
+    </edit>
+    <edit name="rgba">
+      <const>rgb</const>
+    </edit>
+  </match>
+</fontconfig>
+EOF
+  fi
 }
 
 function configure-grub {
   local path=/etc/default/grub
   local checksum=$(md5sum "$path")
-  local name=GRUB_TIMEOUT_STYLE
-  grep -q "^$name=" "$path" || sudo tee -a "$path" > /dev/null <<< "$name=hidden"
+  append "$path" 'GRUB_TIMEOUT_STYLE=hidden'
   sudo sed -i -f - "$path" << \EOF
 s/^#*\(GRUB_TERMINAL=\).*/\1console/
 s/^\(GRUB_CMDLINE_LINUX_DEFAULT\)=.*/\1="quiet loglevel=3"/
@@ -41,39 +63,37 @@ EOF
   md5sum -c --status <<< $checksum || sudo update-grub
 }
 
+function configure-hostname {
+  local hostname=localhost
+  [[ $(< /etc/hostname) == $hostname ]] || sudo hostnamectl set-hostname "$hostname"
+}
+
 function configure-inotify {
   sudo tee /etc/sysctl.d/50-inotify.conf > /dev/null <<< 'fs.inotify.max_user_watches=524288'
 }
 
-function configure-networking {
-  local paths=(/sys/class/net/wl*)
-  if [[ -d ${paths[0]} ]]; then
-    local path=/etc/wpa_supplicant/wpa_supplicant.conf
-    if [[ ! -f $path ]]; then
-      sudo tee "$path" > /dev/null << \EOF
-ctrl_interface=DIR=/run/wpa_supplicant GROUP=netdev
-update_config=1
+function configure-keyboard {
+  sudo sed -i -f - /etc/default/keyboard << \EOF
+s/^\(XKBLAYOUT="\)[^"]*/\1us,ru/
+s/^\(XKBOPTIONS="\)[^"]*/\1ctrl:nocaps,grp:rshift_toggle,grp:switch,lv3:switch,misc:typo/
 EOF
-      sudo chmod 600 "$path"
-    fi
-    local interface=${paths[0]##*/}
-    ! hp-stream || interface=wlo1
-    sudo tee /etc/network/interfaces.d/"$interface" > /dev/null << EOF
-allow-hotplug $interface
-iface $interface inet manual
-  wpa-roam $path
-iface default inet dhcp
-EOF
+}
+
+function configure-locale {
+  local locale=en_US.UTF-8
+  sudo sed -i "s/^[^#]/# \0/; s/^#* *\(${locale/./\\.} \)/\1/" /etc/locale.gen
+  local path=/etc/default/locale
+  if [[ $(< "$path") != *=$locale ]]; then
+    sudo locale-gen
+    sudo tee "$path" > /dev/null <<< "LANG=$locale"
   fi
 }
 
 function configure-nopasswd {
   declare -A commands=(
-    [acpi]=/etc/acpi/default.sh
     [apt-install]='/usr/bin/apt -y install *'
     [apt-update]='/usr/bin/apt update'
-    [poweroff]=/usr/sbin/poweroff
-    [rfkill]=/usr/sbin/rfkill
+    [poweroff]=/sbin/poweroff
     [sshuttle]='/usr/bin/env PYTHONPATH=/usr/lib/python3/dist-packages /usr/bin/python3 /usr/bin/sshuttle --method auto --firewall'
   )
   local name
@@ -82,12 +102,8 @@ function configure-nopasswd {
   done
 }
 
-function configure-xorg {
-  if hp-stream; then
-    local path=/etc/X11/xorg.conf.d
-    mkdir -p "$path"
-    sudo ln -fs /usr/share/doc/xserver-xorg-video-intel/xorg.conf "$path"/50-intel.conf
-  fi
+function configure-timezone {
+  sudo ln -fs /usr/share/zoneinfo/"$timezone" /etc/localtime
 }
 
 function confirm-reboot {
@@ -97,14 +113,37 @@ function confirm-reboot {
   fi
 }
 
-function disable-power-key {
-  virtualbox-product || sudo sed -i 's/^#*\(HandlePowerKey=\).*/\1ignore/' /etc/systemd/logind.conf
+function create-user {
+  if ! id "$username" &> /dev/null; then
+    local groups=$(groups "$raspbian_username")
+    groups=${groups#* : * }
+    sudo useradd -m -G "${groups// /,}" "$username"
+  fi
+  sudo grep -q "^$username:\\$" /etc/shadow || sudo passwd "$username"
 }
 
-function enable-archive-area {
+function disable-bluetooth {
+  append /boot/config.txt 'dtoverlay=disable-bt'
+}
+
+function disable-boot-delay {
+  append /boot/config.txt 'boot_delay=0'
+}
+
+function disable-dhcp-wait {
+  sudo rm -f /etc/systemd/system/dhcpcd.service.d/wait.conf
+}
+
+function disable-wifi {
+  append /boot/config.txt 'dtoverlay=disable-wifi'
+}
+
+dotfiles_git=(git -C ~)
+
+function enable-area {
   local path=/etc/apt/sources.list.d/$1${2+-$2}.list
   if [[ ! -f $path ]]; then
-    sudo tee "$path" > /dev/null <<< "deb http://deb.debian.org/debian $(release-name)${2+-$2} $1"
+    sudo tee "$path" > /dev/null <<< "deb http://deb.debian.org/debian $(lsb_release -cs)${2+-$2} $1"
     sudo apt update -o APT::Get::List-Cleanup=0 -o Dir::Etc::sourcelist="$path" -o Dir::Etc::sourceparts=-
   fi
 }
@@ -115,29 +154,18 @@ function enable-autologin {
   sudo tee "$path"/autologin.conf > /dev/null << EOF
 [Service]
 ExecStart=
-ExecStart=-/usr/sbin/agetty -a $USER %I
+ExecStart=-$(raspbian || echo /usr)/sbin/agetty -a $USER %I
 EOF
 }
 
 function enable-fstrim {
-  sudo systemctl enable fstrim.timer
+  sudo ln -fs /lib/systemd/system/fstrim.timer /etc/systemd/system/timers.target.wants
 }
 
 function fix-efi {
   local path=/boot/efi/EFI
   sudo mkdir -p "$path"/boot
   sudo cp "$path"/{debian/grub,boot/boot}x64.efi
-}
-
-function hp-stream {
-  [[ $(product-name) == 'HP Stream '* ]]
-}
-
-function install-firmware {
-  if hp-stream; then
-    enable-archive-area non-free
-    install-packages firmware-iwlwifi
-  fi
 }
 
 function install-packages {
@@ -149,23 +177,36 @@ function install-unattended-upgrades {
   install-packages unattended-upgrades
 }
 
+function lock-user {
+  sudo grep -q "^$raspbian_username:!" /etc/shadow || sudo usermod -L -e 1970-01-02 "$raspbian_username"
+}
+
 function main {
-  clone-dotfiles
-  setup-system
-  upgrade-system
-  confirm-reboot
+  if raspbian && [[ $USER == $raspbian_username ]]; then
+    create-user
+    run-script
+    lock-user
+  else
+    clone-dotfiles
+    setup-system
+    upgrade-system
+    confirm-reboot
+  fi
 }
 
-function product-name {
-  local path=/sys/class/dmi/id/product_name
-  [[ ! -f $path ]] || echo "$(< "$path")"
+function raspbian {
+  [[ $(< /etc/os-release) == *=raspbian* ]]
 }
 
-function release-name {
-  lsb_release -cs
-}
+raspbian_username=pi
 
 repository=sgtpep/dotfiles
+
+repository_hostname=github.com
+
+function run-script {
+  sudo -u "$username" bash -"$-" -c '. <(curl https://raw.githubusercontent.com/"$1"/master/.local/bin/setup-desktop) && main' -- "$repository"
+}
 
 function schedule-syncing {
   local command=sync-cron
@@ -175,92 +216,68 @@ PATH=/usr/bin:/bin:$HOME/.local/bin
 EOF
 }
 
-function setup-acpid {
-  install-packages acpid
-  sudo ln -fs /lib/systemd/system/acpid.service /etc/systemd/system/multi-user.target.wants
-  sudo ln -fs /usr/share/doc/acpid/examples/default /etc/acpi/events
-  local path=/etc/acpi/default.sh
-  sudo tee "$path" > /dev/null << EOF
-#!/bin/bash
-set -eu
-if [[ \$1 == button/lid ]]; then
-  pkill -x sshuttle || :
-  rm -f $HOME/.ssh/ssh-*
-EOF
-  sudo tee -a "$path" > /dev/null << \EOF
-elif [[ $1 == video/brightness* ]]; then
-  paths=(/sys/class/backlight/*)
-  cd "${paths[0]}"
-  if [[ $1 == *down ]]; then
-    expression='/ 3 * 2'
-  elif [[ $1 == *up ]]; then
-    expression='* 3 / 2'
-  fi
-  path=brightness
-  echo "$(("$(< "$path")" "$expression"))" > "$path"
-  [[ $(< "$path") != 0 ]] || echo 2 > "$path"
-fi
-EOF
-  sudo chmod +x "$path"
-}
-
 function setup-cups {
-  if ! virtualbox-product; then
-    install-packages cups
-    sudo usermod -a -G lpadmin "$USER"
-    setup-printer
-  fi
+  install-packages cups
+  sudo usermod -a -G lpadmin "$USER"
+  ! raspbian || setup-printer
 }
 
-function setup-nginx {
-  install-packages nginx
-  local line=$'\t''add_header Cache-Control no-cache;'
-  local path=/etc/nginx/sites-enabled/default
-  grep -Fqx "$line" "$path" || sudo sed -i "/^server /a \\$line" "$path"
+function setup-debian {
+  if ! raspbian; then
+    configure-console-font
+    configure-grub
+  fi
 }
 
 function setup-printer {
-  if hp-stream; then
-    local name=HP_Ink_Tank_Wireless_410_series
-    if ! lpstat -p "$name" &>/dev/null; then
-      local url=$(sudo lpinfo -v | grep -o -m 1 "\bdnssd://${name//_/%20}.*" || :)
-      if [[ $url ]]; then
-        install-packages hplip
-        sudo lpadmin -m drv:///hpcups.drv/hp-ink_tank_wireless_410_series.ppd -o PageSize=A4 -p "$name" -v "$url" -E
-        sudo lpadmin -d "$name"
-      fi
+  local name=HP_Ink_Tank_Wireless_410_series
+  if ! lpstat -p "$name" &>/dev/null; then
+    local url=$(sudo lpinfo -v | grep -o -m 1 "\bdnssd://${name//_/%20}.*" || :)
+    if [[ $url ]]; then
+      install-packages hplip
+      sudo lpadmin -m drv:///hpcups.drv/hp-ink_tank_wireless_410_series.ppd -o PageSize=A4 -p "$name" -v "$url" -E
+      sudo lpadmin -d "$name"
     fi
   fi
 }
 
+function setup-raspbian {
+  if raspbian; then
+    configure-fontconfig
+    configure-hostname
+    configure-locale
+    configure-timezone
+    disable-bluetooth
+    disable-boot-delay
+    disable-dhcp-wait
+    disable-wifi
+    silence-boot
+  fi
+}
+
 function setup-system {
-  configure-console-font
-  configure-grub
   configure-inotify
-  configure-networking
+  configure-keyboard
   configure-nopasswd
-  configure-xorg
-  disable-power-key
   enable-autologin
   enable-fstrim
-  install-firmware
   install-unattended-upgrades
   schedule-syncing
-  setup-acpid
   setup-cups
-  setup-nginx
+  setup-debian
+  setup-raspbian
   setup-virtualbox
 }
 
 function setup-virtualbox {
-  if virtualbox-product; then
+  if virtualbox; then
     fix-efi
     setup-virtualbox-guest
   fi
 }
 
 function setup-virtualbox-guest {
-  enable-archive-area non-free
+  enable-area non-free
   install-packages dkms virtualbox-guest-additions-iso
   if ! ls /opt/VBoxGuestAdditions-* &> /dev/null; then
     sudo mount -o ro /usr/share/virtualbox/VBoxGuestAdditions.iso /mnt
@@ -268,8 +285,16 @@ function setup-virtualbox-guest {
     sudo umount /mnt
   fi
   sudo usermod -a -G vboxsf "$USER"
-  sudo rm -f /usr/lib/systemd/system/systemd-timesyncd.service.d/disable-with-time-daemon.conf
 }
+
+function silence-boot {
+  sudo sed -i -f - /boot/cmdline.txt << \EOF
+s/\b\(console=tty\)[^ ]*/\112/
+s/ rootwait$/\0 loglevel=3/
+EOF
+}
+
+timezone=Europe/Moscow
 
 function update-apt {
   [[ ! $(find /var/cache/apt/pkgcache.bin -mtime +7 2>&1) ]] || sudo apt update
@@ -287,8 +312,9 @@ function upgrade-system {
 
 username=danil
 
-function virtualbox-product {
-  [[ $(product-name) == VirtualBox ]]
+function virtualbox {
+  local path=/sys/class/dmi/id/product_name
+  [[ -f $path && $(< "$path") == VirtualBox ]]
 }
 
 [[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"

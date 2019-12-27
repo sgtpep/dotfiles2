@@ -7,7 +7,7 @@ mkdir -p "${path%/*}"
 cp "$mountpoint"/"${path##*/}" "$path"
 sudo umount "$mountpoint"
 chmod 600 "$path"
-sed -i 's/\bhttps:\/\/.*\(@github\.com\)\//git\1:/' ~/.git/config
+sed -i 's|\bhttps://.*\(@github\.com\)/|git\1:|' ~/.git/config
 until ssh-keygen -p -N '' -f "$path"; do
   :
 done

@@ -1,6 +1,6 @@
 #!/bin/bash
 set -eu
 path=~/notes
-[[ -d $path ]] || online sync-notes
+[[ -d $path ]] || sync-notes
 cd "$path"
 exec vim "$@"

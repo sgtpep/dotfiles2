@@ -2,5 +2,6 @@
 set -eu
 set -- /usr/bin/"${0##*/}" "$@"
 [[ -x $1 ]] || install-packages ruby
-ls /usr/include/ruby-*/ruby.h &> /dev/null || install-packages ruby-dev
+paths=(/usr/include/ruby-*/ruby.h)
+[[ -f ${paths[0]} ]] || install-packages ruby-dev
 exec "$@"

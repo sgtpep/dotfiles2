@@ -1,5 +1,1 @@
-#!/bin/bash
-set -eu
-set -- /usr/bin/urxvt "$@"
-[[ -x $1 ]] || install-packages rxvt-unicode
-exec "$@"
+install-packages

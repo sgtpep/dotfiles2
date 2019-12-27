@@ -1,20 +1,19 @@
 #!/bin/bash
 set -eu
-product_name=$(path=/sys/class/dmi/id/product_name; [[ ! -f $path ]] || echo "$(< "$path")")
-setxkbmap -option ctrl:nocaps,grp:rshift_toggle,grp:switch,lv3:switch,misc:typo us,ru
+[[ $(< /etc/os-release) != *=raspbian* ]] || raspbian=1
+path=/sys/class/dmi/id/product_name; [[ ! -f $path || $(< "$path") != VirtualBox ]] || virtualbox=1
 xrdb ~/.Xresources
 
-[[ $product_name != 'HP Stream '* ]] || xinput set-prop 'ETPS/2 Elantech Touchpad' 'libinput Tapping Enabled' 1
-[[ $product_name != VirtualBox ]] || /opt/VBoxGuestAdditions-*/other/98vboxadd-xclient &
-[[ $product_name != VirtualBox ]] || xset -dpms &
-[[ $product_name != VirtualBox ]] || { pactl set-sink-mute 0 no; pactl set-sink-volume 0 100%; } &
-[[ $product_name != VirtualBox || ! -f ~/.job ]] || xmodmap ~/.Xmodmap-job &
-battery-monitor &
-eval "$(dbus-launch --exit-with-session --sh-syntax)"
+[[ ! -v virtualbox ]] || /opt/VBoxGuestAdditions-*/other/98vboxadd-xclient &
+[[ ! -v virtualbox ]] || xset -dpms &
+[[ ! -v virtualbox ]] || { pactl set-sink-mute 0 no; pactl set-sink-volume 0 100%; } &
+[[ ! -v virtualbox || ! -f ~/.job ]] || xmodmap ~/.Xmodmap-job &
+[[ -v raspbian ]] || battery-monitor &
+[[ -v virtualbox ]] || unclutter -idle 1 -root &
+eval "$(dbus-launch --exit-with-x11 --sh-syntax)"
 export SSH_AUTH_SOCK=/tmp/ssh-agent; ssh-agent -a "$SSH_AUTH_SOCK" &
 start-pulseaudio-x11 &
 udisks-monitor &
-unclutter -idle 1 -root &
 { sleep 1; exec xclipboard; } &
 
 exec awesome

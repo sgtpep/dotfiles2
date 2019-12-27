@@ -1,6 +1,5 @@
 folder-hook . 'bind index D noop'
 folder-hook . 'bind index,pager F flag-message'
-folder-hook . 'push <first-entry>'
 reply-hook . 'set include'
 send-hook . 'unmy_hdr Chat-Version:'
 
@@ -17,12 +16,13 @@ color signature default default
 color status default default
 color tilde default default
 color tree default default
+folder-hook . 'push <first-entry>'
 folder-hook Feeds 'macro index D <first-entry><delete-pattern>~m-`echo "$(($(tput lines) - 2))"`<Return><sync-mailbox><Return>'
 folder-hook Feeds 'macro index,pager F <pipe-message>"grep -Po '\''(?<=\^X-RSS-URL: ).+'\'' >> ~/.urls"<Return>'
 macro attach s '<save-entry><kill-line>~/Downloads/<Return>y'
 macro index <Space>e '<change-folder>=Inbox<Return>'
 macro index <Space>f '<change-folder>=Feeds<Return>'
-macro index <Space>s '<shell-escape>printf \\ec; online sync-mail; printf \\ec<Return>'
+macro index <Space>s '<shell-escape>printf \\ec; sync-mail; printf \\ec<Return>'
 reply-hook '~h '\''^Chat-Disposition-Notification-To:'\''' 'set noinclude'
 send-hook '!(~s '\''.'\'')' 'my_hdr Chat-Version: 1.0'
 set beep_new
@@ -34,7 +34,6 @@ set include
 set mime_forward
 set noabort_nosubject
 set noabort_unmodified
-set nocrypt_use_gpgme
 set nohelp
 set nomarkers
 set nopostpone
