@@ -9,11 +9,16 @@ function clone-dotfiles {
   if [[ ! -d ~/.git ]]; then
     install-packages git
     "${dotfiles_git[@]}" init
-    "${dotfiles_git[@]}" remote add origin https://"${repository%/*}"@"$repository_hostname"/"$repository".git
+    if [[ -f ~/.ssh/id_rsa ]]; then
+      local url=git@$repository_hostname:$repository.git
+    else
+      local url=https://${repository%/*}@$repository_hostname/$repository.git
+    fi
+    "${dotfiles_git[@]}" remote add origin "$url"
     "${dotfiles_git[@]}" fetch
-    "${dotfiles_git[@]}" checkout -ft origin/master
+    "${dotfiles_git[@]}" checkout -f master
     "${dotfiles_git[@]}" ls-files | grep -Po '.+(?=\.orig$)' | xargs -r -I {} -d '\n' cp ~/{}{.orig,}
-    configure-dotfiles
+    remove-license
   fi
 }
 
@@ -22,14 +27,6 @@ function configure-console-font {
   local checksum=$(md5sum "$path")
   sudo sed -i 's/^\(FONTFACE="\)[^"]*/\1VGA/' "$path"
   md5sum -c --status <<< $checksum || sudo setupcon --save-only
-}
-
-function configure-dotfiles {
-  [[ ! -f ~/.ssh/id_rsa ]] || "${dotfiles_git[@]}" remote set-url origin git@"$repository_hostname":"$repository".git
-  "${dotfiles_git[@]}" config status.showUntrackedFiles no
-  local path=~/LICENSE
-  rm -f "$path"
-  "${dotfiles_git[@]}" update-index --assume-unchanged "$path"
 }
 
 function configure-fontconfig {
@@ -199,6 +196,12 @@ function raspbian {
 }
 
 raspbian_username=pi
+
+function remove-license {
+  local path=~/LICENSE
+  rm -f "$path"
+  "${dotfiles_git[@]}" update-index --assume-unchanged "$path"
+}
 
 repository=sgtpep/dotfiles
 
