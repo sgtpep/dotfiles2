@@ -59,19 +59,19 @@ end
 
 keys = {
   { { 'Control', 'Mod1' }, 'Tab', function() naughty.destroy_all_notifications() end },
-  { { 'Control', 'Mod1' }, 'a', function() run_or_raise('calc', 'urxvtcd -e %q') end },
-  { { 'Control', 'Mod1' }, 'b', function() run_or_raise('acpi', 'urxvtcd -title %q -e bash -c \'%s; read -s -n 1\'') end },
+  { { 'Control', 'Mod1' }, 'a', function() run_or_raise('calc', 'x-terminal-emulator -e %q') end },
+  { { 'Control', 'Mod1' }, 'b', function() run_or_raise('acpi', 'x-terminal-emulator -title %q -e bash -c \'%s; read -s -n 1\'') end },
   { { 'Control', 'Mod1' }, 'c', function() run_or_raise('chromium', 'pgrep -x %q > /dev/null || exec %q', { class = 'Chromium' }, true) end },
-  { { 'Control', 'Mod1' }, 'd', function() run_or_raise('dictionary', 'urxvtcd -e %q') end },
+  { { 'Control', 'Mod1' }, 'd', function() run_or_raise('dictionary', 'x-terminal-emulator -e %q') end },
   { { 'Control', 'Mod1' }, 'e', function() run_or_raise('mutt', tmux_command) end },
   { { 'Control', 'Mod1' }, 'f', function() run_or_raise('firefox', 'pgrep -x %q > /dev/null || exec %q', { class = 'Firefox' }, true) end },
   { { 'Control', 'Mod1' }, 'g', function() awful.spawn.with_shell('path=~/.urls; [[ -f $path ]] && uniq "$path"{,~} && rm "$path" && exec xargs -r -a "$path"~ -d \'\\n\' x-www-browser') end },
-  { { 'Control', 'Mod1' }, 'q', function() run_or_raise('sshuttle', 'urxvtcd -title %q -e bash -c \'%s -r personal -x danil.mobi --dns 0/0 |& grep -v DeprecationWarning\'') end },
-  { { 'Control', 'Mod1' }, 'r', function() run_or_raise('launch', 'urxvtcd -e %q') end },
-  { { 'Control', 'Mod1' }, 's', function() run_or_raise('sync-all', 'urxvtcd -title %q -e bash -c \'%s || read -s\'') end },
-  { { 'Control', 'Mod1' }, 't', function() run_or_raise('tmux', 'urxvtcd -e %q new-session -A -s %q') end },
+  { { 'Control', 'Mod1' }, 'q', function() run_or_raise('sshuttle', 'x-terminal-emulator -title %q -e bash -c \'%s -r personal -x danil.mobi --dns 0/0 |& grep -v DeprecationWarning\'') end },
+  { { 'Control', 'Mod1' }, 'r', function() run_or_raise('launch', 'x-terminal-emulator -e %q') end },
+  { { 'Control', 'Mod1' }, 's', function() run_or_raise('sync-all', 'x-terminal-emulator -title %q -e bash -c \'%s || read -s\'') end },
+  { { 'Control', 'Mod1' }, 't', function() run_or_raise('tmux', 'x-terminal-emulator -e %q new-session -A -s %q') end },
   { { 'Control', 'Mod1' }, 'w', function() run_or_raise('notes', tmux_command) end },
-  { { 'Control', 'Mod1' }, 'x', function() run_or_raise('calendar', 'urxvtcd -title %q -e bash -c \'printf "%(%F %a %R)T\\n\\n"; ncal -Mb -A 1; read -s -n 1\'') end },
+  { { 'Control', 'Mod1' }, 'x', function() run_or_raise('calendar', 'x-terminal-emulator -title %q -e bash -c \'printf "%(%F %a %R)T\\n\\n"; ncal -Mb -A 1; read -s -n 1\'') end },
   { { 'Control', 'Mod1' }, 'z', function() awful.spawn('slock') end },
   { { 'Mod1' }, 'Escape', function() tag = root.tags()[1] tag.selected = not tag.selected end },
   { { 'Mod1' }, 'F4', function() if client.focus then client.focus:kill() end end },
@@ -145,6 +145,6 @@ function set_rules()
   end, rules))
 end
 
-tmux_command = 'urxvtcd -title %q -e tmux new-session -Ad -s %q %q \\; set-option status off \\; attach-session -t %q'
+tmux_command = 'x-terminal-emulator -title %q -e tmux new-session -Ad -s %q %q \\; set-option status off \\; attach-session -t %q'
 
 main()
