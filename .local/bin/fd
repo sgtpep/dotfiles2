@@ -1,0 +1,5 @@
+#!/bin/bash
+set -eu
+set -- /usr/bin/fdfind "$@"
+[[ -x $1 ]] || install-packages fd-find
+exec "$@"
