@@ -59,19 +59,19 @@ end
 
 keys = {
   { { 'Control', 'Mod1' }, 'Tab', function() naughty.destroy_all_notifications() end },
-  { { 'Control', 'Mod1' }, 'a', function() run_or_raise('urxvtcd -e calc', { name = 'calc' }) end },
-  { { 'Control', 'Mod1' }, 'b', function() run_or_raise('urxvtcd -title acpi -e bash -c \'acpi; read -s -n 1\'', { name = 'acpi' }) end },
-  { { 'Control', 'Mod1' }, 'c', function() run_or_raise('command=chromium; pgrep -x "$command" > /dev/null || exec "$command"', { class = 'Chromium' }, true) end },
-  { { 'Control', 'Mod1' }, 'd', function() run_or_raise('urxvtcd -e dictionary', { name = 'dictionary' }) end },
-  { { 'Control', 'Mod1' }, 'e', function() run_or_raise(tmux_command('mutt'), { name = 'mutt' }) end },
-  { { 'Control', 'Mod1' }, 'f', function() run_or_raise('command=firefox; pgrep -x "$command" > /dev/null || exec "$command"', { class = 'Firefox' }, true) end },
-  { { 'Control', 'Mod1' }, 'g', function() awful.spawn.with_shell('[[ -f ~/.urls ]] && uniq ~/.urls{,~} && rm ~/.urls && exec xargs -r -a ~/.urls~ -d \'\\n\' x-www-browser') end },
-  { { 'Control', 'Mod1' }, 'q', function() run_or_raise('urxvtcd -title sshuttle -e bash -c \'sshuttle -r personal -x danil.mobi --dns 0/0 |& grep -v DeprecationWarning\'', { name = 'sshuttle' }) end },
-  { { 'Control', 'Mod1' }, 'r', function() run_or_raise('urxvtcd -e launch', { name = 'launch' }) end },
-  { { 'Control', 'Mod1' }, 's', function() run_or_raise('urxvtcd -title syncing -e bash -c \'sync-all || read -s\'', { name = 'syncing' }) end },
-  { { 'Control', 'Mod1' }, 't', function() run_or_raise('urxvtcd -e tmux new-session -A -s tmux', { name = 'tmux' }) end },
-  { { 'Control', 'Mod1' }, 'w', function() run_or_raise(tmux_command('notes'), { name = 'notes' }) end },
-  { { 'Control', 'Mod1' }, 'x', function() run_or_raise('urxvtcd -title calendar -e bash -c $\'printf \\\'%(%F %a %R)T\\n\\n\\\'; ncal -Mb -A 1; read -s -n 1\'', { name = 'calendar' }, true) end },
+  { { 'Control', 'Mod1' }, 'a', function() run_or_raise('calc', 'urxvtcd -e %q') end },
+  { { 'Control', 'Mod1' }, 'b', function() run_or_raise('acpi', 'urxvtcd -title %q -e bash -c \'%s; read -s -n 1\'') end },
+  { { 'Control', 'Mod1' }, 'c', function() run_or_raise('chromium', 'pgrep -x %q > /dev/null || exec %q', { class = 'Chromium' }, true) end },
+  { { 'Control', 'Mod1' }, 'd', function() run_or_raise('dictionary', 'urxvtcd -e %q') end },
+  { { 'Control', 'Mod1' }, 'e', function() run_or_raise('mutt', tmux_command) end },
+  { { 'Control', 'Mod1' }, 'f', function() run_or_raise('firefox', 'pgrep -x %q > /dev/null || exec %q', { class = 'Firefox' }, true) end },
+  { { 'Control', 'Mod1' }, 'g', function() awful.spawn.with_shell('path=~/.urls; [[ -f $path ]] && uniq "$path"{,~} && rm "$path" && exec xargs -r -a "$path"~ -d \'\\n\' x-www-browser') end },
+  { { 'Control', 'Mod1' }, 'q', function() run_or_raise('sshuttle', 'urxvtcd -title %q -e bash -c \'%s -r personal -x danil.mobi --dns 0/0 |& grep -v DeprecationWarning\'') end },
+  { { 'Control', 'Mod1' }, 'r', function() run_or_raise('launch', 'urxvtcd -e %q') end },
+  { { 'Control', 'Mod1' }, 's', function() run_or_raise('sync-all', 'urxvtcd -title %q -e bash -c \'%s || read -s\'') end },
+  { { 'Control', 'Mod1' }, 't', function() run_or_raise('tmux', 'urxvtcd -e %q new-session -A -s %q') end },
+  { { 'Control', 'Mod1' }, 'w', function() run_or_raise('notes', tmux_command) end },
+  { { 'Control', 'Mod1' }, 'x', function() run_or_raise('calendar', 'urxvtcd -title %q -e bash -c \'printf "%(%F %a %R)T\\n\\n"; ncal -Mb -A 1; read -s -n 1\'') end },
   { { 'Control', 'Mod1' }, 'z', function() awful.spawn('slock') end },
   { { 'Mod1' }, 'Escape', function() tag = root.tags()[1] tag.selected = not tag.selected end },
   { { 'Mod1' }, 'F4', function() if client.focus then client.focus:kill() end end },
@@ -91,7 +91,7 @@ end
 
 function process_rule(rule)
   return gears.table.map(function(pattern)
-    return string.format('^%s$', pattern)
+    return ('^%s$'):format(pattern)
   end, rule)
 end
 
@@ -101,17 +101,20 @@ rules = {
   { { type = 'dialog' }, { callback = function(client) awful.placement.centered(client) end } },
 }
 
-function run_or_raise(command, rule, shell)
+function run_or_raise(name, command, rule, shell)
   local clients = client.get()
   local client = awful.client.iterate(function(client)
-    return awful.rules.match(client, process_rule(rule))
+    return awful.rules.match(client, process_rule(rule or { name = name }))
   end, gears.math.cycle(#clients, (gears.table.hasitem(clients, client.focus) or 1) + 1))()
   if client then
     client:jump_to()
-  elseif shell then
-    awful.spawn.with_shell(command)
   else
-    awful.spawn(command)
+    local formatted_command = command:format(name, name, name, name)
+    if shell then
+      awful.spawn.with_shell(formatted_command)
+    else
+      awful.spawn(formatted_command)
+    end
   end
 end
 
@@ -142,12 +145,6 @@ function set_rules()
   end, rules))
 end
 
-function tmux_command(command, title)
-  geometry = awful.screen.focused().geometry
-  if not title then
-    title = command
-  end
-  return string.format('urxvtcd -g %dx%d -title %s -e tmux new-session -Ad -s %s %s \\; set-option status off \\; attach-session -t %s', geometry.width // 11, geometry.height // 24, title, title, command, title)
-end
+tmux_command = 'urxvtcd -title %q -e tmux new-session -Ad -s %q %q \\; set-option status off \\; attach-session -t %q'
 
 main()
