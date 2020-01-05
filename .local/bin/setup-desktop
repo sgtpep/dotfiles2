@@ -227,7 +227,7 @@ function setup-acpid {
 #!/bin/bash
 set -eu
 if [[ $1 == video/brightness* ]]; then
-  path=/sys/class/backlight/*/brightness
+  path=(/sys/class/backlight/*/brightness)
   [[ -f $path ]]
   if [[ $1 == *down ]]; then
     expression='/ 3 * 2'

@@ -311,7 +311,7 @@ function setup-maps {
 path=/sdcard/MapsWithMe
 rm -fr "$path"
 mkdir "$path"
-mountpoint=/storage/*-*
+mountpoint=(/storage/*-*)
 cat > "$path"/settings.ini << EOF2
 ScreenClipRect=37.6064088837 67.4336744786 0 -0.240503617395 -0.477666906771 0.240503617395 0.477666906771
 StoragePath=$mountpoint/${path##*/}/

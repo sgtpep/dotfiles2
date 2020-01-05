@@ -1,6 +1,6 @@
 #!/bin/bash
 set -eu
-path=/sys/class/net/wl*
+path=(/sys/class/net/wl*)
 command=(sudo wpa_cli -i "${path##*/}")
 if [[ $@ ]]; then
   path=/etc/wpa_supplicant/wpa_supplicant.conf
