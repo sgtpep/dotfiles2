@@ -90,9 +90,10 @@ function main()
 end
 
 function process_rule(rule)
-  return gears.table.map(function(pattern)
-    return ('^%s$'):format(pattern)
-  end, rule)
+  if rule.name then
+    rule.name = ('^%s$'):format(rule.name)
+  end
+  return rule
 end
 
 rules = {
