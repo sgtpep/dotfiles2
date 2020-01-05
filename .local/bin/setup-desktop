@@ -36,7 +36,7 @@ function configure-display {
   append "$boot_config" 'dtoverlay=rpi-ft5406,touchscreen-inverted-x=1,touchscreen-inverted-y=1'
   local path=~/.config/fontconfig/conf.d/50-display.conf
   mkdir -p "${path%/*}"
-  cat >> "$path" << \EOF
+  cat > "$path" << \EOF
 <fontconfig>
   <match target="font">
     <edit name="aspect">
