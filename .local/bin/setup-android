@@ -308,13 +308,13 @@ EOF
 function setup-maps {
   connect-wifi
   run-script com.github.axet.maps android.permission.{ACCESS_{COARSE,FINE}_LOCATION,{READ,WRITE}_EXTERNAL_STORAGE} << \EOF
-local path=/sdcard/MapsWithMe
+path=/sdcard/MapsWithMe
 rm -fr "$path"
 mkdir "$path"
-paths=(/storage/*-*)
+mountpoint=/storage/*-*
 cat > "$path"/settings.ini << EOF2
 ScreenClipRect=37.6064088837 67.4336744786 0 -0.240503617395 -0.477666906771 0.240503617395 0.477666906771
-StoragePath=${paths[0]}/${path##*/}/
+StoragePath=$mountpoint/${path##*/}/
 EOF2
 wait-ui 'NEXT'
 # Next
