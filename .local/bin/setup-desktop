@@ -5,6 +5,8 @@ function append {
   grep -Fqx "$2" "$1" || sudo tee -a "$1" > /dev/null <<< $2
 }
 
+boot_config=/boot/config.txt
+
 function clone-dotfiles {
   if [[ ! -d ~/.git ]]; then
     install-packages git
@@ -29,8 +31,10 @@ function configure-console-font {
   md5sum -c --status <<< $checksum || sudo setupcon --save-only
 }
 
-function configure-fontconfig {
-  local path=~/.config/fontconfig/conf.d/50-user.conf
+function configure-display {
+  append "$boot_config" 'display_lcd_rotate=2'
+  append "$boot_config" 'dtoverlay=rpi-ft5406,touchscreen-inverted-x=1,touchscreen-inverted-y=1'
+  local path=~/.config/fontconfig/conf.d/50-display.conf
   mkdir -p "${path%/*}"
   cat >> "$path" << \EOF
 <fontconfig>
@@ -39,7 +43,7 @@ function configure-fontconfig {
       <double>0.95</double>
     </edit>
     <edit name="rgba">
-      <const>rgb</const>
+      <const>bgr</const>
     </edit>
   </match>
 </fontconfig>
@@ -118,19 +122,16 @@ function create-user {
 }
 
 function disable-bluetooth {
-  append /boot/config.txt 'dtoverlay=disable-bt'
+  append "$boot_config" 'dtoverlay=disable-bt'
 }
 
 function disable-boot-delay {
-  append /boot/config.txt 'boot_delay=0'
+  append "$boot_config" 'boot_delay=0'
+  append "$boot_config" 'disable_splash=1'
 }
 
 function disable-dhcp-wait {
   sudo rm -f /etc/systemd/system/dhcpcd.service.d/wait.conf
-}
-
-function disable-wifi {
-  append /boot/config.txt 'dtoverlay=disable-wifi'
 }
 
 dotfiles_git=(git -C ~)
@@ -244,14 +245,13 @@ function setup-printer {
 
 function setup-raspbian {
   if raspbian; then
-    configure-fontconfig
+    configure-display
     configure-hostname
     configure-locale
     configure-timezone
     disable-bluetooth
     disable-boot-delay
     disable-dhcp-wait
-    disable-wifi
     silence-boot
   fi
 }
