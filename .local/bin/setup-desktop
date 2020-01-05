@@ -218,6 +218,29 @@ PATH=/usr/bin:/bin:$HOME/.local/bin
 EOF
 }
 
+function setup-acpid {
+  install-packages acpid
+  sudo ln -fs /lib/systemd/system/acpid.service /etc/systemd/system/multi-user.target.wants
+  sudo ln -fs /usr/share/doc/acpid/examples/default /etc/acpi/events
+  local path=/etc/acpi/default.sh
+  sudo tee "$path" > /dev/null << \EOF
+#!/bin/bash
+set -eu
+if [[ $1 == video/brightness* ]]; then
+  path=/sys/class/backlight/*/brightness
+  [[ -f $path ]]
+  if [[ $1 == *down ]]; then
+    expression='/ 3 * 2'
+  elif [[ $1 == *up ]]; then
+    expression='* 3 / 2'
+  fi
+  echo "$(($(< "$path") $expression))" > "$path"
+  [[ $(< "$path") != 0 ]] || echo 2 > "$path"
+fi
+EOF
+  sudo chmod +x "$path"
+}
+
 function setup-cups {
   install-packages cups
   sudo usermod -a -G lpadmin "$USER"
@@ -264,6 +287,7 @@ function setup-system {
   enable-fstrim
   install-unattended-upgrades
   schedule-syncing
+  setup-acpid
   setup-cups
   setup-debian
   setup-raspbian
