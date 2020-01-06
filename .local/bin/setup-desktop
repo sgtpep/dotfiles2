@@ -315,7 +315,7 @@ function setup-virtualbox-guest {
 function silence-boot {
   sudo sed -i -f - /boot/cmdline.txt << \EOF
 s/\b\(console=tty\)[^ ]*/\112/
-s/ rootwait$/\0 loglevel=3/
+s/\( rootwait\)\b.*$/\1 loglevel=3 logo.nologo/
 EOF
 }
 
