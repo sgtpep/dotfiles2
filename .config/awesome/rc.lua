@@ -89,13 +89,6 @@ function main()
   set_rules()
 end
 
-function process_rule(rule)
-  if rule.name then
-    rule.name = ('^%s$'):format(rule.name)
-  end
-  return rule
-end
-
 rules = {
   { { class = 'XClipboard' }, { hidden = true } },
   { { name = 'Event Tester' }, { floating = true } },
@@ -105,7 +98,7 @@ rules = {
 function run_or_raise(name, command, rule, shell)
   local clients = client.get()
   local client = awful.client.iterate(function(client)
-    return awful.rules.match(client, process_rule(rule or { name = name }))
+    return awful.rules.match(client, rule or { name = ('^%s$'):format(name) })
   end, gears.math.cycle(#clients, (gears.table.hasitem(clients, client.focus) or 1) + 1))()
   if client then
     client:jump_to()
@@ -142,7 +135,7 @@ function set_rules()
       awful.mouse.client.move(client)
     end) }, rule = { floating = true } },
   }, gears.table.map(function(rule)
-    return { properties = rule[2], rule = process_rule(rule[1]) }
+    return { properties = rule[2], rule = rule[1] }
   end, rules))
 end
 
