@@ -45,6 +45,9 @@ function configure-display {
     <edit name="rgba">
       <const>bgr</const>
     </edit>
+    <edit name="width">
+      <const>semicondensed</const>
+    </edit>
   </match>
 </fontconfig>
 EOF
