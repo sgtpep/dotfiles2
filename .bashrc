@@ -12,7 +12,7 @@ HISTCONTROL=ignoreboth
 HISTFILESIZE=-1
 HISTSIZE=10000
 PROMPT_COMMAND=': "$?" && [[ $_ == 0 ]] || echo -e "\e[4mExit status: $_\e[m" >&2; history -a'
-PS1=$'$([[ -h $PWD ]] && : "$(readlink "$PWD")" || : "$PWD"; while [[ $_ == ${HOME%/*}/* && ! -d $_/.git ]]; do : "${_%/*}"; done; [[ $_ == ~ ]] || __git_ps1 \'(%s) \')'$PS1
+PS1=$'$([[ -h $PWD ]] && : "$(readlink "$PWD")" || : "$PWD"; while [[ $_ == ${HOME%/*}/* && ! -d $_/.git ]]; do : "${_%/*}"; done; [[ $_ == ~ ]] || __git_ps1 \'(%s) \')'${PS1/\w/\W}
 [[ -v BASH_COMPLETION_COMPAT_DIR ]] || . /usr/share/bash-completion/bash_completion
 set -P
 shopt -s autocd
