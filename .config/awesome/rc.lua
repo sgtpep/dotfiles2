@@ -125,13 +125,7 @@ end
 
 function set_rules()
   awful.rules.rules = gears.table.join({
-    { properties = { callback = function(client)
-      client:connect_signal('request::geometry', function(client)
-        if client.fullscreen then
-          client.fullscreen = false
-        end
-      end)
-    end, focus = awful.client.focus.filter, raise = true, size_hints_honor = false }, rule = {} },
+    { properties = { focus = awful.client.focus.filter, raise = true, size_hints_honor = false }, rule = {} },
     { properties = { buttons = awful.button({ 'Mod1' }, 1, function(client)
       awful.mouse.client.move(client)
     end) }, rule = { floating = true } },
