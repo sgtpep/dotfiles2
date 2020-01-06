@@ -58,6 +58,7 @@ function create_tag()
 end
 
 keys = {
+  { { 'Control', 'Mod1' }, 'Delete', function() awful.spawn('sudo poweroff') end },
   { { 'Control', 'Mod1' }, 'Tab', function() naughty.destroy_all_notifications() end },
   { { 'Control', 'Mod1' }, 'a', function() run_or_raise('calc', 'x-terminal-emulator -e %q') end },
   { { 'Control', 'Mod1' }, 'b', function() run_or_raise('acpi', 'x-terminal-emulator -title %q -e bash -c \'%s; read -s -n 1\'') end },
