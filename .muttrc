@@ -6,6 +6,8 @@ send-hook . 'unmy_hdr Chat-Version:'
 alternative_order text/plain text/html
 auto_view text/html
 bind editor <Tab> complete-query
+bind index g reply
+bind index r group-reply
 color attachment default default
 color hdrdefault default default
 color indicator black white
