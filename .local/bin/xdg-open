@@ -12,6 +12,7 @@ else
     [application/vnd.ms-excel]='libreoffice "$1"'
     [application/vnd.openxmlformats-officedocument.spreadsheetml.sheet]='libreoffice "$1"'
     [application/vnd.openxmlformats-officedocument.wordprocessingml.document]='libreoffice "$1"'
+    [application/zip]='x-terminal-emulator -e vifm --select="$1"'
     [audio/*]='mpv -- "$1"'
     [image/*]='sxiv -- "$1"'
     [image/svg]='x-www-browser -- "$1"'
