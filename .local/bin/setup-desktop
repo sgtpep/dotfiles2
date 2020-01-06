@@ -38,7 +38,7 @@ function configure-display {
   mkdir -p "${path%/*}"
   cat > "$path" << \EOF
 <fontconfig>
-  <match target="font">
+  <match>
     <edit name="aspect">
       <double>0.95</double>
     </edit>
