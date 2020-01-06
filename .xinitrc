@@ -4,7 +4,7 @@ set -eu
 path=/sys/class/dmi/id/product_name; [[ ! -f $path || $(< "$path") != VirtualBox ]] || virtualbox=1
 xrdb ~/.Xresources
 
-[[ ! -v virtualbox ]] || /opt/VBoxGuestAdditions-*/other/98vboxadd-xclient &
+[[ ! -v virtualbox ]] || VBoxClient-all &
 [[ ! -v virtualbox ]] || xset -dpms &
 [[ ! -v virtualbox ]] || { pactl set-sink-mute 0 no; pactl set-sink-volume 0 100%; } &
 [[ ! -v virtualbox || ! -f ~/.job ]] || xmodmap ~/.Xmodmap-job &

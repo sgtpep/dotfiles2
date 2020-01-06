@@ -303,7 +303,7 @@ function setup-virtualbox {
 
 function setup-virtualbox-guest {
   enable-area non-free
-  install-packages dkms virtualbox-guest-additions-iso
+  install-packages dkms ntp virtualbox-guest-additions-iso
   if ! ls /opt/VBoxGuestAdditions-* &> /dev/null; then
     sudo mount -o ro /usr/share/virtualbox/VBoxGuestAdditions.iso /mnt
     sudo /mnt/VBoxLinuxAdditions.run || :
