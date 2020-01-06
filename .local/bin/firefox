@@ -1,5 +1,10 @@
 #!/bin/bash
 set -eu
-set -- /usr/bin/"${0##*/}" "$@"
+if [[ ${0##*/} == x-www-browser ]]; then
+  command=firefox
+else
+  command=${0##*/}
+fi
+set -- /usr/bin/"$command" "$@"
 [[ -x $1 ]] || install-packages firefox-esr fonts-liberation2
 exec "$@"
