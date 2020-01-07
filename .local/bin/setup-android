@@ -5,10 +5,10 @@ function add-language {
   run-script << \EOF
 am start -a android.settings.LOCALE_SETTINGS &> /dev/null
 # Add a language
-inputs keyevent\ KEYCODE_DPAD_{UP,DOWN,CENTER}
+inputs keyevent\ DPAD_{UP,DOWN,CENTER}
 wait-ui 'All languages'
 # Русский (Россия)
-inputs keyevent\ KEYCODE_{DPAD_{DOWN{,,},CENTER},BACK}
+inputs keyevent\ {DPAD_{DOWN{,,},CENTER},BACK}
 EOF
 }
 
@@ -49,10 +49,10 @@ function configure-camera {
 input tap 200 1300
 wait-ui 'DENY'
 # Deny, OK
-inputs keyevent\ KEYCODE_{TAB,DPAD_CENTER} tap\ 600\ 900
+inputs keyevent\ {TAB,DPAD_CENTER} tap\ 600\ 900
 wait-ui 'Settings'
 # menu icon, Shutter sound, Photos from rear camera, (4:3) 4MP, Photos from front camera, (4:3) 4MP, Video Resolution, Video from rear camera, HD 720P, Video from front camera, HD 720P
-inputs tap\ 50\ 100 keyevent\ KEYCODE_{DPAD_{DOWN,CENTER},PAGE_DOWN,DPAD_{CENTER{,},DOWN,CENTER,DOWN,CENTER,DOWN,CENTER},BACK,DPAD_{DOWN,CENTER{,},DOWN,CENTER,DOWN,CENTER,DOWN,CENTER},BACK{,,}}
+inputs tap\ 50\ 100 keyevent\ {DPAD_{DOWN,CENTER},PAGE_DOWN,DPAD_{CENTER{,},DOWN,CENTER,DOWN,CENTER,DOWN,CENTER},BACK,DPAD_{DOWN,CENTER{,},DOWN,CENTER,DOWN,CENTER,DOWN,CENTER},BACK{,,}}
 EOF
 }
 
@@ -75,7 +75,7 @@ function connect-wifi {
     run-script << \EOF
 am start com.android.settings/.wifi.WifiPickerActivity &> /dev/null
 # Use Wi-Fi
-inputs keyevent\ KEYCODE_{DPAD_{UP,CENTER},BACK}
+inputs keyevent\ {DPAD_{UP,CENTER},BACK}
 EOF
   fi
   if ! adb shell dumpsys wifi 2> /dev/null | grep -A 1 -m 1 ' Configured networks ' | grep -q '^ID:'; then
@@ -84,7 +84,7 @@ EOF
       run-script << EOF
 am start com.android.settings/.wifi.WifiPickerActivity &> /dev/null
 # first item
-inputs tap\ 0\ 300 text\ '$passphrase' keyevent\ KEYCODE_{TAB{,,,},DPAD_CENTER,BACK}
+inputs tap\ 0\ 300 text\ '$passphrase' keyevent\ {TAB{,,,},DPAD_CENTER,BACK}
 EOF
     fi
   fi
@@ -110,7 +110,7 @@ function disable-play-protect {
   run-script << \EOF
 am start -a android.settings.SECURITY_SETTINGS &> /dev/null
 # Google Play Protect, Scan device for security threats, OK
-inputs keyevent\ KEYCODE_{DPAD_{UP,CENTER,DOWN,CENTER},TAB{,},DPAD_CENTER,BACK{,}}
+inputs keyevent\ {DPAD_{UP,CENTER,DOWN,CENTER},TAB{,},DPAD_CENTER,BACK{,}}
 EOF
 }
 
@@ -118,7 +118,7 @@ function disable-screen-lock {
   run-script << \EOF
 am start -a android.settings.SECURITY_SETTINGS &> /dev/null
 # Screen lock, None
-inputs keyevent\ KEYCODE_{DPAD_{UP,DOWN{,,},CENTER{,}},BACK}
+inputs keyevent\ {DPAD_{UP,DOWN{,,},CENTER{,}},BACK}
 EOF
 }
 
@@ -126,7 +126,7 @@ function disable-sounds {
   run-script << \EOF
 am start -a android.settings.SOUND_SETTINGS &> /dev/null
 # Advanced, Dial pad tones, Screen locking sounds, Charging sounds, Touch vibration, Default notification sounds, None, OK
-inputs keyevent\ KEYCODE_{DPAD_{UP,DOWN{,,,,,,,,},CENTER,DOWN{,},CENTER,DOWN,CENTER,DOWN,CENTER,DOWN{,},CENTER,UP{,,,,,},CENTER},MOVE_HOME,DPAD_CENTER} tap\ 650\ 1350 keyevent\ KEYCODE_BACK
+inputs keyevent\ {DPAD_{UP,DOWN{,,,,,,,,},CENTER,DOWN{,},CENTER,DOWN,CENTER,DOWN,CENTER,DOWN{,},CENTER,UP{,,,,,},CENTER},MOVE_HOME,DPAD_CENTER} tap\ 650\ 1350 keyevent\ BACK
 EOF
 }
 
@@ -156,7 +156,7 @@ function main {
 function mute-volume {
   run-script << \EOF
 # mute down
-inputs keyevent\ KEYCODE_VOLUME_DOWN tap\ 650\ 850
+inputs keyevent\ VOLUME_DOWN tap\ 650\ 850
 EOF
 }
 
@@ -194,7 +194,7 @@ TMPDIR=/data/local/tmp
 function disable-notifications {
   am start -a android.settings.APPLICATION_DETAILS_SETTINGS -d package:"$1" &> /dev/null
   # Notifications, Show notifications
-  inputs keyevent\ KEYCODE_DPAD_{UP,DOWN,CENTER} tap\ 0\ 400 keyevent\ KEYCODE_BACK{,}
+  inputs keyevent\ DPAD_{UP,DOWN,CENTER} tap\ 0\ 400 keyevent\ BACK{,}
 }
 
 function inputs {
@@ -214,8 +214,8 @@ function wait-ui {
   rm "$path"
 }
 
-dumpsys window 2> /dev/null | grep -q -m 1 ' mAwake=true' || input keyevent KEYCODE_POWER
-dumpsys window 2> /dev/null | grep -q -m 1 ' mDreamingLockscreen=false' || input keyevent KEYCODE_MENU
+dumpsys window 2> /dev/null | grep -q -m 1 ' mAwake=true' || input keyevent POWER
+dumpsys window 2> /dev/null | grep -q -m 1 ' mDreamingLockscreen=false' || input keyevent MENU
 [[ ! ${1-} ]] || monkey -p "$1" 1 &> /dev/null || :
 EOF
     echo "$input"
@@ -228,7 +228,7 @@ local path=/data/local/tmp/wallpaper.gif
 base64 -d <<< 'R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==' > "$path"
 am start -d file://"$path" -a android.service.wallpaper.CROP_AND_SET_WALLPAPER -f 0x1 com.android.wallpaperpicker/.WallpaperCropActivity &> /dev/null
 # Set wallpaper, Home screen
-inputs tap\ 0\ 100 keyevent\ KEYCODE_{DPAD_DOWN,MOVE_END,DPAD_CENTER}
+inputs tap\ 0\ 100 keyevent\ {DPAD_DOWN,MOVE_END,DPAD_CENTER}
 rm "$path"
 EOF
 }
@@ -257,27 +257,27 @@ function setup-delta-chat {
   run-script com.b44t.messenger android.permission.{CAMERA,READ_CONTACTS,READ_EXTERNAL_STORAGE,RECORD_AUDIO} << EOF
 wait-ui 'START MESSAGING'
 # Start messaging, Email address, Password, Advanced, IMAP server, SMTP server, confirm icon
-inputs tap\ 300\ 1250 text\ $email keyevent\ KEYCODE_TAB text\ $(netrc-password "$imap_hostname" "$email") keyevent\ KEYCODE_{TAB{,,},DPAD_CENTER,TAB{,}} text\ $imap_hostname keyevent\ KEYCODE_TAB{,,,,,} text\ $smtp_hostname tap\ 650\ 100
+inputs tap\ 300\ 1250 text\ $email keyevent\ TAB text\ $(netrc-password "$imap_hostname" "$email") keyevent\ {TAB{,,},DPAD_CENTER,TAB{,}} text\ $imap_hostname keyevent\ TAB{,,,,,} text\ $smtp_hostname tap\ 650\ 100
 wait-ui 'Delta Chat'
 # menu icon, Settings, Your profile info, Signature text, Select all, confirm icon, Chats and media, Enter key sends, Show classic emails, All, plus icon, Me, OK, close icon
-inputs tap\ 650\ 100 keyevent\ KEYCODE_{TAB,MOVE_END,DPAD_{CENTER,CENTER}} swipe\ 100\ 400\ 100\ 400\ 500 tap\ 500\ 300 keyevent\ KEYCODE_DEL tap\ 650\ 100 keyevent\ KEYCODE_{DPAD_{DOWN{,,,,},CENTER,DOWN{,},CENTER,DOWN{,},CENTER,DOWN{,},CENTER},BACK{,}} tap\ {650\ 1350,1\ 400} keyevent\ KEYCODE_{TAB{,},DPAD_CENTER,BACK} tap\ 700\ 200 keyevent\ KEYCODE_BACK
+inputs tap\ 650\ 100 keyevent\ {TAB,MOVE_END,DPAD_{CENTER,CENTER}} swipe\ 100\ 400\ 100\ 400\ 500 tap\ 500\ 300 keyevent\ DEL tap\ 650\ 100 keyevent\ {DPAD_{DOWN{,,,,},CENTER,DOWN{,},CENTER,DOWN{,},CENTER,DOWN{,},CENTER},BACK{,}} tap\ {650\ 1350,1\ 400} keyevent\ {TAB{,},DPAD_CENTER,BACK} tap\ 700\ 200 keyevent\ BACK
 EOF
 }
 
 function setup-f-droid {
   connect-wifi
   run-script org.fdroid.fdroid https://f-droid.org/FDroid.apk << \EOF
-inputs swipe\ 0\ 500\ 0\ 1000 keyevent\ KEYCODE_BACK
+inputs swipe\ 0\ 500\ 0\ 1000 keyevent\ BACK
 disable-notifications "$1"
 EOF
 }
 
 function setup-fennec {
   run-script org.mozilla.fennec_fdroid << \EOF
-input keyevent KEYCODE_MENU
+input keyevent MENU
 wait-ui 'Report site issue'
 # Settings, General, Home, Top Sites, Hide, Bookmarks, Hide, History, Hide, Search, Google, Privacy, Do not track, Tracking Protection, Enabled, Fennec Health Report, No, tabs icon, close icon
-inputs keyevent\ KEYCODE_{TAB,MOVE_END,DPAD_{UP{,},CENTER,DOWN,CENTER{,},DOWN{,},CENTER,DOWN,CENTER,DOWN,CENTER,DOWN,CENTER,DOWN,CENTER,DOWN,CENTER},BACK{,},DPAD_{DOWN,CENTER},MOVE_HOME,DPAD_{DOWN,CENTER{,}},BACK,DPAD_{DOWN,CENTER,CENTER,DOWN{,},CENTER,UP,CENTER},MOVE_END,DPAD_CENTER,BACK{,}} tap\ 100\ 100 text\ - tap\ 500\ 200 keyevent\ KEYCODE_BACK{,} tap\ {600\ 100,325\ 200} keyevent\ KEYCODE_BACK
+inputs keyevent\ {TAB,MOVE_END,DPAD_{UP{,},CENTER,DOWN,CENTER{,},DOWN{,},CENTER,DOWN,CENTER,DOWN,CENTER,DOWN,CENTER,DOWN,CENTER,DOWN,CENTER},BACK{,},DPAD_{DOWN,CENTER},MOVE_HOME,DPAD_{DOWN,CENTER{,}},BACK,DPAD_{DOWN,CENTER,CENTER,DOWN{,},CENTER,UP,CENTER},MOVE_END,DPAD_CENTER,BACK{,}} tap\ 100\ 100 text\ - tap\ 500\ 200 keyevent\ BACK{,} tap\ {600\ 100,325\ 200} keyevent\ BACK
 disable-notifications "$1"
 EOF
 }
@@ -286,7 +286,7 @@ function setup-keikai-launcher {
   run-script com.anpmech.launcher << \EOF
 pm set-home-activity "$1"/.activities.SearchActivity
 # Settings, Open keyboard automatically, Allow orientation change
-inputs keyevent\ KEYCODE_{MENU,DPAD_{CENTER{,},DOWN{,,},CENTER},BACK,HOME}
+inputs keyevent\ {MENU,DPAD_{CENTER{,},DOWN{,,},CENTER},BACK,HOME}
 EOF
 }
 
@@ -294,7 +294,7 @@ function setup-kiwix {
   run-script org.kiwix.kiwixmobile android.permission.{READ,WRITE}_EXTERNAL_STORAGE << \EOF
 wait-ui 'More options'
 # Get Content, Device, Wiktionary
-inputs tap\ 100\ 800 swipe\ 0\ 300\ 500\ 300 keyevent\ KEYCODE_{DPAD_{DOWN{,},CENTER},BACK}
+inputs tap\ 100\ 800 swipe\ 0\ 300\ 500\ 300 keyevent\ {DPAD_{DOWN{,},CENTER},BACK}
 EOF
 }
 
@@ -311,9 +311,9 @@ StoragePath=$mountpoint/${path##*/}/
 EOF2
 wait-ui 'NEXT'
 # Next
-inputs keyevent\ KEYCODE_{FOCUS,DPAD_CENTER}
+inputs keyevent\ {FOCUS,DPAD_CENTER}
 wait-ui 'My Position'
-input keyevent KEYCODE_BACK
+input keyevent BACK
 EOF
 }
 
@@ -321,40 +321,43 @@ function setup-pmetro {
   connect-wifi
   run-script com.utyf.pmetro << \EOF
 # Catalog, update icon
-inputs keyevent\ KEYCODE_DPAD_{UP,RIGHT,CENTER{,}}
+inputs keyevent\ DPAD_{UP,RIGHT,CENTER{,}}
 wait-ui 'Австралия'
 # Россия, Москва, Load, Local Maps, Moscow
-inputs keyevent\ KEYCODE_{DPAD_DOWN,PAGE_DOWN{,,,,},DPAD_{DOWN,CENTER},PAGE_DOWN,DPAD_{DOWN,CENTER{,}},MOVE_HOME,DPAD_{UP{,},LEFT,CENTER,CENTER},BACK}
+inputs keyevent\ {DPAD_DOWN,PAGE_DOWN{,,,,},DPAD_{DOWN,CENTER},PAGE_DOWN,DPAD_{DOWN,CENTER{,}},MOVE_HOME,DPAD_{UP{,},LEFT,CENTER,CENTER},BACK}
 EOF
 }
 
 function setup-sd-card {
   run-script << \EOF
 # SD card, Portable storage, Done, SD Card
-inputs keyevent\ KEYCODE_HOME swipe\ 0\ 0\ 0\ 1000 tap\ 10\ 600 keyevent\ KEYCODE_DPAD_{DOWN{,},CENTER,DOWN,CENTER} swipe\ {0\ 0\ 0\ 1000,10\ 500\ 1000\ 500} keyevent\ KEYCODE_BACK
+inputs keyevent\ HOME swipe\ 0\ 0\ 0\ 1000 tap\ 10\ 600 keyevent\ DPAD_{DOWN{,},CENTER,DOWN,CENTER} swipe\ {0\ 0\ 0\ 1000,10\ 500\ 1000\ 500} keyevent\ BACK
 EOF
 }
 
 function setup-simple-gallery {
   run-script com.simplemobiletools.gallery.pro android.permission.{READ,WRITE}_EXTERNAL_STORAGE << \EOF
 # settings icon, Settings, settings icon, Settings, Customize colors, Theme, OK, Black & White, App icon color, orange, OK, apply icon, Allow instantly changing media by clicking on screen sides, Move items into the Recycle Bin instead of deleting
-inputs keyevent\ KEYCODE_MENU tap\ 400\ 800 keyevent\ KEYCODE_MENU tap\ 400\ 800 keyevent\ {DPAD_{DOWN,CENTER,DOWN,CENTER},KEYCODE_TAB,DPAD_{CENTER,DOWN{,,,},CENTER,DOWN{,,,},CENTER}} tap\ 500\ 700 keyevent\ {KEYCODE_TAB{,},DPAD_CENTER} tap\ 700\ 100 swipe\ 0\ 850\ 0\ 0{,} keyevent\ DPAD_{DOWN{,},CENTER} swipe\ 0\ 850\ 0\ 0{,} keyevent\ {DPAD_{DOWN{,,},CENTER},KEYCODE_BACK{,}}
+inputs keyevent\ MENU tap\ 400\ 800 keyevent\ MENU tap\ 400\ 800 keyevent\ {DPAD_{DOWN,CENTER,DOWN,CENTER},TAB,DPAD_{CENTER,DOWN{,,,},CENTER,DOWN{,,,},CENTER}} tap\ 500\ 700 keyevent\ {TAB{,},DPAD_CENTER} tap\ 700\ 100 swipe\ 0\ 850\ 0\ 0{,} keyevent\ DPAD_{DOWN{,},CENTER} swipe\ 0\ 850\ 0\ 0{,} keyevent\ {DPAD_{DOWN{,,},CENTER},BACK{,}}
 EOF
 }
 
 function setup-simple-keyboard {
   run-script rkr.simplekeyboard.inputmethod << \EOF
-settings put secure enabled_input_methods "$1"/.latin.LatinIME
-am start com.android.settings/.Settings\$LanguageAndInputSettingsActivity &> /dev/null
-# Virtual keyboard, Simple Keyboard, Preferences, Vibrate on keypress, Popup on keypress
-inputs keyevent\ KEYCODE_{DPAD_{UP,DOWN,CENTER{,},DOWN,CENTER,DOWN,CENTER,DOWN{,},CENTER},BACK{,,,},HOME}
+# Preferences, Vibrate on keypress, Popup on keypress
+inputs keyevent\ {DPAD_{DOWN{,},CENTER,DOWN,CENTER,DOWN{,},CENTER},BACK{,}}
+
+#settings put secure enabled_input_methods "$1"/.latin.LatinIME
+#am start com.android.settings/.Settings\$LanguageAndInputSettingsActivity &> /dev/null
+## Virtual keyboard, Simple Keyboard, Preferences, Vibrate on keypress, Popup on keypress
+#inputs keyevent\ {DPAD_{UP,DOWN,CENTER{,},DOWN,CENTER,DOWN,CENTER,DOWN{,},CENTER},BACK{,,,},HOME}
 EOF
 }
 
 function setup-wifi-automatic {
   run-script de.j4velin.wifiAutoOff << \EOF
-# when device gets unlocked, screen is off, Turn WiFi off when... screen is off, 10, 5, OK
-inputs keyevent\ KEYCODE_{DPAD_{UP,DOWN,CENTER,DOWN{,,,,},CENTER{,}},TAB,5,ENTER,DPAD_CENTER,BACK}
+# when device gets unlocked, screen is off, screen is off, 5, OK
+inputs keyevent\ {DPAD_{UP,DOWN,CENTER,DOWN{,,,,},CENTER{,}},TAB,5,ENTER,DPAD_CENTER,BACK}
 disable-notifications "$1"
 EOF
 }
