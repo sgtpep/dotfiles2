@@ -235,7 +235,6 @@ EOF
 
 function setup-packages {
   local commands=(
-    setup-camera-roll
     setup-delta-chat
     setup-f-droid
     setup-fennec
@@ -243,17 +242,11 @@ function setup-packages {
     setup-kiwix
     setup-maps
     setup-pmetro
+    setup-simple-gallery
     setup-simple-keyboard
     setup-wifi-automatic
   )
   run-once "${commands[@]}"
-}
-
-function setup-camera-roll {
-  run-script us.koller.cameraroll android.permission.{READ,WRITE}_EXTERNAL_STORAGE << \EOF
-# settings icon, Settings, Theme, Black, Style, Nested RecyclerView, OK, Show Animations
-inputs keyevent\ KEYCODE_{MENU,DPAD_UP,MOVE_END,DPAD_{UP,CENTER,DOWN{,},CENTER,DOWN{,},CENTER,DOWN{,,},CENTER,RIGHT{,,,,,},DOWN},TAB,DPAD_{CENTER,DOWN{,},CENTER},BACK{,}}
-EOF
 }
 
 function setup-delta-chat {
@@ -339,6 +332,13 @@ function setup-sd-card {
   run-script << \EOF
 # SD card, Portable storage, Done, SD Card
 inputs keyevent\ KEYCODE_HOME swipe\ 0\ 0\ 0\ 1000 tap\ 10\ 600 keyevent\ KEYCODE_DPAD_{DOWN{,},CENTER,DOWN,CENTER} swipe\ {0\ 0\ 0\ 1000,10\ 500\ 1000\ 500} keyevent\ KEYCODE_BACK
+EOF
+}
+
+function setup-simple-gallery {
+  run-script com.simplemobiletools.gallery.pro android.permission.{READ,WRITE}_EXTERNAL_STORAGE << \EOF
+# settings icon, Settings, settings icon, Settings, Customize colors, Theme, OK, Black & White, App icon color, orange, OK, apply icon, Allow instantly changing media by clicking on screen sides, Move items into the Recycle Bin instead of deleting
+inputs keyevent\ KEYCODE_MENU tap\ 400\ 800 keyevent\ KEYCODE_MENU tap\ 400\ 800 keyevent\ {DPAD_{DOWN,CENTER,DOWN,CENTER},KEYCODE_TAB,DPAD_{CENTER,DOWN{,,,},CENTER,DOWN{,,,},CENTER}} tap\ 500\ 700 keyevent\ {KEYCODE_TAB{,},DPAD_CENTER} tap\ 700\ 100 swipe\ 0\ 850\ 0\ 0{,} keyevent\ DPAD_{DOWN{,},CENTER} swipe\ 0\ 850\ 0\ 0{,} keyevent\ {DPAD_{DOWN{,,},CENTER},KEYCODE_BACK{,}}
 EOF
 }
 
