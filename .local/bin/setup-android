@@ -276,8 +276,8 @@ function setup-fennec {
   run-script org.mozilla.fennec_fdroid << \EOF
 input keyevent MENU
 wait-ui 'Report site issue'
-# Settings, General, Home, Top Sites, Hide, Bookmarks, Hide, History, Hide, Search, Google, Privacy, Do not track, Tracking Protection, Enabled, Fennec Health Report, No, tabs icon, close icon
-inputs keyevent\ {TAB,MOVE_END,DPAD_{UP{,},CENTER,DOWN,CENTER{,},DOWN{,},CENTER,DOWN,CENTER,DOWN,CENTER,DOWN,CENTER,DOWN,CENTER,DOWN,CENTER},BACK{,},DPAD_{DOWN,CENTER},MOVE_HOME,DPAD_{DOWN,CENTER{,}},BACK,DPAD_{DOWN,CENTER,CENTER,DOWN{,},CENTER,UP,CENTER},MOVE_END,DPAD_CENTER,BACK{,}} tap\ 100\ 100 text\ - tap\ 500\ 200 keyevent\ BACK{,} tap\ {600\ 100,325\ 200} keyevent\ BACK
+# Settings, General, Home, Top Sites, Hide, Bookmarks, Hide, History, Hide, Privacy, Do not track, Tracking Protection, Enabled, Fennec Health Report, No, tabs icon, close icon
+inputs keyevent\ {TAB,MOVE_END,DPAD_{UP{,},CENTER,DOWN,CENTER{,},DOWN{,},CENTER,DOWN,CENTER,DOWN,CENTER,DOWN,CENTER,DOWN,CENTER,DOWN,CENTER},BACK{,},DPAD_{DOWN{,},CENTER{,},DOWN{,},CENTER,UP,CENTER},MOVE_END,DPAD_CENTER,BACK{,}} tap\ 100\ 100 text\ - tap\ 500\ 200 keyevent\ BACK{,} tap\ {600\ 100,325\ 200} keyevent\ BACK
 disable-notifications "$1"
 EOF
 }
