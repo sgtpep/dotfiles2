@@ -230,15 +230,17 @@ function setup-acpid {
 #!/bin/bash
 set -eu
 if [[ $1 == video/brightness* ]]; then
+  factor1=3
+  factor2=4
+  if [[ $1 == *down ]]; then
+    expression="/ $factor2 * $factor1"
+  elif [[ $1 == *up ]]; then
+    expression="* $factor2 / $factor1"
+  fi
   path=(/sys/class/backlight/*/brightness)
   [[ -f $path ]]
-  if [[ $1 == *down ]]; then
-    expression='/ 3 * 2'
-  elif [[ $1 == *up ]]; then
-    expression='* 3 / 2'
-  fi
   echo "$(($(< "$path") $expression))" > "$path"
-  [[ $(< "$path") != 0 ]] || echo 2 > "$path"
+  [[ $(< "$path") != 0 ]] || echo "$factor1" > "$path"
 fi
 EOF
   sudo chmod +x "$path"
