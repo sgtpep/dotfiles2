@@ -146,6 +146,13 @@ function setup-rss2email {
 0 */3 * * * $USER ${command[@]} > /dev/null 2>&1
 0 1 * * 0 $USER ${command[@]} 2>&1 | grep -v '^\(HTTP status 5\|sax parsing error:\)'
 EOF
+  sudo tee /usr/lib/python3/dist-packages/rss2email/post_process/unwrap.py > /dev/null << \EOF
+import re
+
+def process(message, **kwargs):
+  message.set_payload(re.sub('(?<!\n)\n(?!\n)', ' ', message.get_payload()))
+  return message
+EOF
 }
 
 function setup-certbot {
