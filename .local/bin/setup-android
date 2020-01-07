@@ -204,18 +204,23 @@ function inputs {
   done
 }
 
+function power-on {
+  dumpsys window 2> /dev/null | grep -q -m 1 ' mAwake=true' || input keyevent POWER
+  dumpsys window 2> /dev/null | grep -q -m 1 ' mDreamingLockscreen=false' || input keyevent MENU
+}
+
 function wait-ui {
   local path=/sdcard/window_dump.xml
   while :; do
     uiautomator dump &> /dev/null
     ! grep -Fqs "\"$1\"" "$path" || break
     sleep 1
+    power-on
   done
   rm "$path"
 }
 
-dumpsys window 2> /dev/null | grep -q -m 1 ' mAwake=true' || input keyevent POWER
-dumpsys window 2> /dev/null | grep -q -m 1 ' mDreamingLockscreen=false' || input keyevent MENU
+power-on
 [[ ! ${1-} ]] || monkey -p "$1" 1 &> /dev/null || :
 EOF
     echo "$input"
@@ -259,8 +264,8 @@ wait-ui 'START MESSAGING'
 # Start messaging, Email address, Password, Advanced, IMAP server, SMTP server, confirm icon
 inputs tap\ 300\ 1250 text\ $email keyevent\ TAB text\ $(netrc-password "$imap_hostname" "$email") keyevent\ {TAB{,,},DPAD_CENTER,TAB{,}} text\ $imap_hostname keyevent\ TAB{,,,,,} text\ $smtp_hostname tap\ 650\ 100
 wait-ui 'Delta Chat'
-# menu icon, Settings, Your profile info, Signature text, Select all, confirm icon, Chats and media, Enter key sends, Show classic emails, All, plus icon, Me, OK, close icon
-inputs tap\ 650\ 100 keyevent\ {TAB,MOVE_END,DPAD_{CENTER,CENTER}} swipe\ 100\ 400\ 100\ 400\ 500 tap\ 500\ 300 keyevent\ DEL tap\ 650\ 100 keyevent\ {DPAD_{DOWN{,,,,},CENTER,DOWN{,},CENTER,DOWN{,},CENTER,DOWN{,},CENTER},BACK{,}} tap\ {650\ 1350,1\ 400} keyevent\ {TAB{,},DPAD_CENTER,BACK} tap\ 700\ 200 keyevent\ BACK
+# menu icon, Settings, Your profile info, Signature text, Select all, confirm icon, Notifications, In-chat sounds, Chats and media, Enter key sends, Show classic emails, All, plus icon, Me, OK, close icon
+inputs tap\ 650\ 100 keyevent\ {TAB,MOVE_END,DPAD_{CENTER,CENTER}} swipe\ 100\ 400\ 100\ 400\ 500 tap\ 400\ 300 keyevent\ DEL tap\ 650\ 100 keyevent\ {DPAD_{DOWN{,},CENTER,DOWN{,,,,},CENTER},BACK,DPAD_{DOWN{,,,},CENTER,DOWN{,},CENTER,DOWN{,},CENTER,DOWN{,},CENTER},BACK{,}} tap\ {650\ 1350,1\ 400} keyevent\ {TAB{,},DPAD_CENTER,BACK} tap\ 700\ 200 keyevent\ BACK
 EOF
 }
 
