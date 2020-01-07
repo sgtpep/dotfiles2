@@ -71,7 +71,7 @@ function process-html {
   echo -n "Processing $1..." >&2
   cd /tmp
   local token='<title>'
-  wkhtmltopdf -B 0 -L 0 -R 0 -T 0 --debug-javascript --page-height 297pt --page-width 225pt --run-script "console.log('$token' + document.title.trim())" --window-status '' "$1" "$2" |& grep -Po -m 1 "(?<=$token).+"
+  wkhtmltopdf -B 0 -L 0 -R 0 -T 0 --debug-javascript --page-height 297pt --page-width 225pt --run-script "console.log(\`$token\${document.title.trim()}$token\`)" --window-status '' "$1" "$2" |& grep -Po -m 1 "(?<=$token).+(?=$token)"
   cd - > /dev/null
   echo >&2
 }
