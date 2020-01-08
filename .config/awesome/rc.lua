@@ -93,6 +93,7 @@ end
 rules = {
   { { class = 'XClipboard' }, { hidden = true } },
   { { name = 'Event Tester' }, { floating = true } },
+  { { role = 'GtkFileChooserDialog' }, { maximized = true } },
   { { type = 'dialog' }, { callback = function(client) awful.placement.centered(client) end } },
 }
 
