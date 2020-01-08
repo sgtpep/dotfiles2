@@ -12,23 +12,34 @@ function generate-label {
 }
 
 function hintify-text {
+  local index=0
   local text=$1
-  local urls=("${@:2}")
-  local index
-  for index in "${!urls[@]}"; do
-    local label=$(generate-label "$index" "${#urls[@]}")
-    printf "%s\e[7m%s\e[m%s" "${text%%${urls[$index]}*}" "$label" "${urls[$index]:${#label}}"
-    text=${text#*${urls[$index]}}
+  while [[ $text =~ $regex ]]; do
+    local label=$(generate-label "$index" "$2")
+    printf "%s\e[7m%s\e[m%s" "${text%%${BASH_REMATCH[0]}*}" "$label" "${BASH_REMATCH[0]:${#label}}"
+    ((index += 1))
+    text=${text#*${BASH_REMATCH[0]}}
   done
   echo -n "$text"
 }
 
+function join-text {
+  local columns=$(tput cols)
+  local width=80
+  (($columns < $width)) || columns=$width
+  local line
+  while IFS= read -r line; do
+    echo -n "$line"
+    [[ $line != *[[:space:]]* ]] && ((${#line} >= $columns)) || echo
+  done <<< $1
+}
+
 function main {
-  local text=$(< /tmp/"${0##*/}")
+  local text=$(read-text)
   local urls
   mapfile -t urls < <(parse-urls "$text")
   if [[ ${urls[@]} ]]; then
-    output-text "$(hintify-text "$text" "${urls[@]}")"
+    output-text "$(hintify-text "$text" "${#urls[@]}")"
     process-input "${urls[@]}"
   fi
 }
@@ -39,8 +50,11 @@ function output-text {
 }
 
 function parse-urls {
-  local regex='\bhttps?://[^[:space:]"]*[[:alnum:]/-]'
-  local text=$1
+  if [[ ${1##*$'\n'} == *' -- ('*')' ]]; then
+    local text=$(join-text "$1")
+  else
+    local text=$1
+  fi
   while [[ $text =~ $regex ]]; do
     echo "${BASH_REMATCH[0]}"
     text=${text#*${BASH_REMATCH[0]}}
@@ -69,5 +83,13 @@ function process-input {
     fi
   fi
 }
+
+function read-text {
+  local path=/tmp/${0##*/}
+  echo "$(< "$path")"
+  rm "$path"
+}
+
+regex='\bhttps?://[^[:space:]"]*[[:alnum:]/-]'
 
 [[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"
