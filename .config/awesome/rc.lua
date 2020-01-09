@@ -90,11 +90,14 @@ function main()
   set_rules()
 end
 
+function raspbian()
+  return io.open('/etc/os-release'):read('*all'):find('ID=raspbian') ~= nil
+end
+
 rules = {
   { { class = 'XClipboard' }, { hidden = true } },
   { { name = 'Event Tester' }, { floating = true } },
-  { { role = 'GtkFileChooserDialog' }, { maximized = true } },
-  { { type = 'dialog' }, { callback = function(client) awful.placement.centered(client) end } },
+  { { type = 'dialog' }, { callback = function(client) awful.placement.centered(client) end, maximized = raspbian() and true or nil } },
 }
 
 function run_or_raise(name, command, rule, shell)
