@@ -75,7 +75,7 @@ function s:format_code()
       call winrestview(view)
       execute 'goto' output[-1] + 1
     endif
-    update
+    write
   endif
 endfunction
 
