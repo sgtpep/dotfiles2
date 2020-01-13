@@ -2,7 +2,7 @@ folder-hook . 'bind index D noop'
 folder-hook . 'bind index,pager F flag-message'
 folder-hook . 'set index_format="%3C %Z %{%b %d} %-15.15L (%?l?%4l&%4c?) %s"'
 reply-hook . 'set include'
-send-hook . 'unmy_hdr Chat-Version:'
+send-hook . 'unmy_hdr Chat-Version'
 
 alternative_order text/plain text/html
 auto_view text/html
