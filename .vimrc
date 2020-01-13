@@ -22,7 +22,7 @@ endfunction
 function s:define_leader_mappings()
   nnoremap <Leader> <Nop>
   nnoremap <Leader>E :edit %:h/
-  nnoremap <Leader>b :ls<CR>:buffer<Space>
+  nnoremap <Leader>b :buffer<Space><C-D>
   nnoremap <Leader>e :edit<Space>
   nnoremap <Leader>f :find<Space>
   nnoremap <Leader>g :grep<Space>
