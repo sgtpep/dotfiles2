@@ -1,5 +1,0 @@
-#!/bin/bash
-set -eu
-path=$1~
-ffmpeg -i "$1" -codec copy -metadata:s:v rotate="$2" "$path"
-mv "$path" "$1"
