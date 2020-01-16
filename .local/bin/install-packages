@@ -6,6 +6,7 @@ declare -A commands=(
   [aria2c]=aria2
   [calc]=apcalc
   [convert]=imagemagick
+  [ctags]=universal-ctags
   [dbus-launch]=dbus-x11
   [dig]=dnsutils
   [ebook-convert]=calibre
