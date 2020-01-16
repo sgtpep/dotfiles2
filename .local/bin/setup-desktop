@@ -95,7 +95,8 @@ function configure-nopasswd {
   declare -A commands=(
     [apt-install]='/usr/bin/apt -y install *'
     [apt-update]='/usr/bin/apt update'
-    [poweroff]=/sbin/poweroff
+    [poweroff]=$(raspbian || echo /usr)/sbin/poweroff
+    [screensaver]='/usr/bin/xss-lock -n screensaver true'
     [sshuttle]='/usr/bin/env PYTHONPATH=/usr/lib/python3/dist-packages /usr/bin/python3 /usr/bin/sshuttle --method auto --firewall'
   )
   local name
@@ -277,8 +278,23 @@ function setup-raspbian {
     disable-bluetooth
     disable-boot-delay
     disable-dhcp-wait
+    setup-screensaver
     silence-boot
   fi
+}
+
+function setup-screensaver {
+  install-packages xss-lock
+  sudo tee /usr/sbin/screensaver > /dev/null << \EOF
+#!/bin/bash
+set -eu
+path=/sys/class/backlight/rpi_backlight/bl_power
+echo 1 > "$path"
+trap "echo 0 > $path" HUP
+sleep infinity &
+wait
+EOF
+  sudo chmod +x /usr/sbin/screensaver
 }
 
 function setup-system {

@@ -4,7 +4,7 @@ set -eu
 path=/sys/class/dmi/id/product_name; [[ ! -f $path || $(< "$path") != VirtualBox ]] || virtualbox=1
 xrdb ~/.Xresources
 
-[[ ! -v raspbian ]] || xset dpms 60 &
+[[ ! -v raspbian ]] || { xset s 60; sudo xss-lock -n screensaver true; } &
 [[ ! -v virtualbox ]] || VBoxClient-all &
 [[ ! -v virtualbox ]] || xset -dpms &
 [[ ! -v virtualbox ]] || { pactl set-sink-mute 0 no; pactl set-sink-volume 0 100%; } &
