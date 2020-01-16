@@ -31,6 +31,7 @@ function s:define_leader_mappings()
   nnoremap <silent> <Leader>N :bnext<CR>
   nnoremap <silent> <Leader>P :bprevious<CR>
   nnoremap <silent> <Leader>R :edit!<CR>
+  nnoremap <silent> <Leader>T :call system(<SID>git() ? 'git ls-files \| xargs -r -d ''\n'' ctags' : 'ctags -R')<CR>
   nnoremap <silent> <Leader>V :let @" = system('xclip -o -selection clipboard')<CR>P
   nnoremap <silent> <Leader>c Vy:call system('xclip -selection clipboard', getreg())<CR>
   nnoremap <silent> <Leader>h :set hlsearch!<CR>
