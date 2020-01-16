@@ -264,8 +264,9 @@ wait-ui 'START MESSAGING'
 # Start messaging, Email address, Password, Advanced, IMAP server, SMTP server, confirm icon
 inputs tap\ 300\ 1250 text\ $email keyevent\ TAB text\ $(netrc-password "$imap_hostname" "$email") keyevent\ {TAB{,,},DPAD_CENTER,TAB{,}} text\ $imap_hostname keyevent\ TAB{,,,,,} text\ $smtp_hostname tap\ 650\ 100
 wait-ui 'Delta Chat'
-# menu icon, Settings, Your profile info, Signature text, Select all, confirm icon, Notifications, In-chat sounds, Chats and media, Enter key sends, Show classic emails, All, plus icon, Me, OK, close icon
-inputs tap\ 650\ 100 keyevent\ {TAB,MOVE_END,DPAD_{CENTER,CENTER}} swipe\ 100\ 400\ 100\ 400\ 500 tap\ 400\ 300 keyevent\ DEL tap\ 650\ 100 keyevent\ {DPAD_{DOWN{,},CENTER,DOWN{,,,,},CENTER},BACK,DPAD_{DOWN{,,,},CENTER,DOWN{,},CENTER,DOWN{,},CENTER,DOWN{,},CENTER},BACK{,}} tap\ {650\ 1350,1\ 400} keyevent\ {TAB{,},DPAD_CENTER,BACK} tap\ 700\ 200 keyevent\ BACK
+# menu icon, Settings, Notifications, In-chat sounds, Chats and media, Show classic emails, All, plus icon, Me, OK, close icon
+inputs tap\ 650\ 100 keyevent\ {TAB,MOVE_END,DPAD_{CENTER,DOWN,CENTER,DOWN{,,,,},CENTER},BACK,DPAD_{DOWN{,,,},CENTER,DOWN{,,,},CENTER,DOWN{,},CENTER},BACK{,}} tap\ {650\ 1350,1\ 400} keyevent\ {TAB{,},DPAD_CENTER,BACK} tap\ 700\ 200 keyevent\ BACK
+
 EOF
 }
 
