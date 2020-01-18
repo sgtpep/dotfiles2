@@ -1,4 +1,4 @@
-bind '"\C-gA": "\C-e\C-ugit add "'
+bind '"\C-gA": "\C-e\C-ugit add -p "'
 bind '"\C-gC": "\C-e\C-ugit commit --amend \n"'
 bind '"\C-gD": "\C-e\C-ugit diff --cached \n"'
 bind '"\C-gL": "\C-e\C-ugit log -p "'
