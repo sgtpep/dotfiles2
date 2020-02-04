@@ -7,7 +7,7 @@ path=/sys/class/dmi/id/product_name; [[ ! -f $path ]] || product=$(< "$path")
 xrdb ~/.Xresources
 
 [[ ! -v parallels ]] || xrdb -merge <<< 'Xft.dpi: 196'
-[[ ! -v parallels ]] || { setxkbmap -option altwin:swap_alt_win; xmodmap ~/.Xmodmap-parallels; } &
+[[ ! -v parallels ]] || { setxkbmap -option altwin:swap_alt_win,lv3:rwin_switch; xmodmap ~/.Xmodmap-parallels; } &
 [[ ! -v raspbian ]] || { xset s 60; sudo xss-lock -n screensaver true; } &
 [[ ! -v virtualbox ]] || VBoxClient-all &
 [[ ! -v virtualbox ]] || xset -dpms &
