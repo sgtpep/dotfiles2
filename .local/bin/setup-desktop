@@ -71,7 +71,7 @@ function configure-hostname {
 }
 
 function configure-inotify {
-  sudo tee /etc/sysctl.d/50-inotify.conf > /dev/null <<< 'fs.inotify.max_user_watches=524288'
+  sudo tee /etc/sysctl.d/50-inotify.conf > /dev/null <<< 'fs.inotify.max_user_watches = 524288'
 }
 
 function configure-keyboard {
@@ -136,6 +136,10 @@ function disable-boot-delay {
 
 function disable-dhcp-wait {
   sudo rm -f /etc/systemd/system/dhcpcd.service.d/wait.conf
+}
+
+function disable-ipv6 {
+  sudo tee /etc/sysctl.d/50-disable-ipv6.conf > /dev/null <<< 'net.ipv6.conf.all.disable_ipv6 = 1'
 }
 
 dotfiles_git=(git -C ~)
@@ -301,6 +305,7 @@ function setup-system {
   configure-inotify
   configure-keyboard
   configure-nopasswd
+  disable-ipv6
   enable-autologin
   enable-fstrim
   install-unattended-upgrades
