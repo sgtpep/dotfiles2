@@ -22,8 +22,8 @@ function change-settings {
   )
   declare -A secure_settings=(
     [assist_gesture_enabled]=0
-    [icon_blacklist]=airplane,headset,rotate,volume
-    [sysui_qs_tiles]=wifi,airplane,rotation,flashlight
+    [icon_blacklist]=headset,rotate,volume
+    [sysui_qs_tiles]=wifi,rotation,flashlight
   )
   declare -A system_settings=(
     [screen_brightness_mode]=0
