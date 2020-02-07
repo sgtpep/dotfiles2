@@ -26,7 +26,6 @@ function change-settings {
     [sysui_qs_tiles]=wifi,airplane,rotation,flashlight
   )
   declare -A system_settings=(
-    [screen_brightness]=25
     [screen_brightness_mode]=0
   )
   local commands=()
