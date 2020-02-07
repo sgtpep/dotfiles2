@@ -342,7 +342,7 @@ s/\( rootwait\)\b.*$/\1 loglevel=3 logo.nologo/
 EOF
 }
 
-timezone=Europe/Moscow
+timezone=Canada/Eastern
 
 function update-apt {
   [[ ! $(find /var/cache/apt/pkgcache.bin -mtime +7 2>&1) ]] || sudo apt update
