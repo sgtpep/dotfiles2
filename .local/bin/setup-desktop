@@ -82,7 +82,7 @@ EOF
 }
 
 function configure-locale {
-  local locale=en_US.UTF-8
+  local locale=en_CA.UTF-8
   sudo sed -i "s/^[^#]/# \0/; s/^#* *\(${locale/./\\.} \)/\1/" /etc/locale.gen
   local path=/etc/default/locale
   if [[ $(< "$path") != *=$locale ]]; then

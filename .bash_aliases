@@ -1,4 +1,4 @@
-alias cal='ncal -Mb'
+alias cal='ncal -b'
 alias cp='cp -i'
 alias dd='dd bs=4M oflag=sync status=progress'
 alias df='df -h'

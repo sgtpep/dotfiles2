@@ -72,7 +72,7 @@ keys = {
   { { 'Control', 'Mod1' }, 's', function() run_or_raise('sync-all', 'x-terminal-emulator -title %q -e bash -c \'%s || read -s\'') end },
   { { 'Control', 'Mod1' }, 't', function() run_or_raise('tmux', 'x-terminal-emulator -e %q new-session -A -s %q') end },
   { { 'Control', 'Mod1' }, 'w', function() run_or_raise('notes', tmux_command) end },
-  { { 'Control', 'Mod1' }, 'x', function() run_or_raise('calendar', 'x-terminal-emulator -title %q -e bash -c \'printf "%%(%%F %%a %%R)T\\n\\n"; ncal -Mb -A 1; read -s -n 1\'') end },
+  { { 'Control', 'Mod1' }, 'x', function() run_or_raise('calendar', 'x-terminal-emulator -title %q -e bash -c \'printf "%%(%%F %%a %%I:%%M %%p)T\\n\\n"; ncal -b -A 1; read -s -n 1\'') end },
   { { 'Control', 'Mod1' }, 'z', function() awful.spawn('slock') end },
   { { 'Mod1' }, 'Escape', function() tag = root.tags()[1] tag.selected = not tag.selected end },
   { { 'Mod1' }, 'F4', function() if client.focus then client.focus:kill() end end },
