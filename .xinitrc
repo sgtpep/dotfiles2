@@ -7,6 +7,7 @@ path=/sys/class/dmi/id/product_name; [[ ! -f $path ]] || product=$(< "$path")
 [[ $(< /etc/os-release) != *=raspbian* ]] || raspbian=1
 
 [[ ! -v parallels && ! -v virtualbox ]] || { pactl set-sink-mute 0 no; pactl set-sink-volume 0 100%; } &
+[[ ! -v parallels ]] || export GDK_SCALE=2 GDK_DPI_SCALE=0.5
 [[ ! -v parallels ]] || xrdb -merge <<< 'Xft.dpi: 192'
 [[ ! -v parallels ]] || { setxkbmap -option altwin:swap_alt_win,grp:rwin_switch,lv3:ralt_switch; xmodmap ~/.Xmodmap-parallels; } &
 [[ ! -v raspbian ]] || { xset s 60; sudo xss-lock -n screensaver true; } &
