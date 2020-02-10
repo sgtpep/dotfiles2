@@ -2,14 +2,7 @@
 set -eu
 
 function add-language {
-  run-script << \EOF
-am start -a android.settings.LOCALE_SETTINGS &> /dev/null
-# Add a language
-inputs keyevent\ DPAD_{UP,DOWN,CENTER}
-wait-ui 'All languages'
-# Русский (Россия)
-inputs keyevent\ {DPAD_{DOWN{,,},CENTER},BACK}
-EOF
+  instruction 'Settings, System, Languages & input, Languages, Add a language, Русский'
 }
 
 function change-settings {
@@ -42,59 +35,39 @@ function change-settings {
 }
 
 function configure-camera {
-  run-script com.hmdglobal.app.camera << \EOF
-# Skip
-input tap 200 1300
-wait-ui 'DENY'
-# Deny, OK
-inputs keyevent\ {TAB,DPAD_CENTER} tap\ 600\ 900
-wait-ui 'Settings'
-# menu icon, Shutter sound, Photos from rear camera, (4:3) 4MP, Photos from front camera, (4:3) 4MP, Video Resolution, Video from rear camera, HD 720P, Video from front camera, HD 720P
-inputs tap\ 50\ 100 keyevent\ {DPAD_{DOWN,CENTER},PAGE_DOWN,DPAD_{CENTER{,},DOWN,CENTER,DOWN,CENTER,DOWN,CENTER},BACK,DPAD_{DOWN,CENTER{,},DOWN,CENTER,DOWN,CENTER,DOWN,CENTER},BACK{,,}}
-EOF
+  instruction 'Camera, Skip, Deny, OK, menu icon, Shutter sound, Photo Resolution, Photos from rear camera, (4:3) 4MP, Photos from front camera, (4:3) 4MP, Video Resolution, Video from rear camera, HD 720P, Video from front camera, HD 720P'
+}
+
+function configure-contacts {
+  instruction 'Contacts, Skip, long tap Contacts, App info, Notifications, Google Play services availability'
+}
+
+function configure-dialer {
+  instruction 'Long tap Phone, App info, Notifications, Google Play services availability'
+}
+
+function configure-messages {
+  instruction 'Long tap Messages, App info, Notifications, Google Play services availability'
 }
 
 function configure-system {
   local commands=(
     add-language
     configure-camera
-    disable-play-protect
+    configure-contacts
+    configure-dialer
+    configure-messages
     disable-screen-lock
     disable-sounds
-    mute-volume
     set-wallpaper
     setup-sd-card
   )
   run-once "${commands[@]}"
 }
 
-function connect-wifi {
-  if adb shell dumpsys wifi 2> /dev/null | grep -qx -m 1 'Wi-Fi is disabled'; then
-    run-script << \EOF
-am start com.android.settings/.wifi.WifiPickerActivity &> /dev/null
-# Use Wi-Fi
-inputs keyevent\ {DPAD_{UP,CENTER},BACK}
-EOF
-  fi
-  if ! adb shell dumpsys wifi 2> /dev/null | grep -A 1 -m 1 ' Configured networks ' | grep -q '^ID:'; then
-    local passphrase=$(wifi-passphrase)
-    if [[ $passphrase ]]; then
-      run-script << EOF
-am start com.android.settings/.wifi.WifiPickerActivity &> /dev/null
-# first item
-inputs tap\ 0\ 300 text\ '$passphrase' keyevent\ {TAB{,,,},DPAD_CENTER,BACK}
-EOF
-    fi
-  fi
-  run-script << \EOF
-until ping -c 1 1.1.1.1 &> /dev/null; do
-  sleep 1
-done
-EOF
-}
-
 function disable-packages {
   local packages=(
+    android.autoinstalls.config.hmdglobal.panther
     com.android.{bluetooth,chrome,dreams.{basic,phototable},stk,vending}
     com.google.android.apps.{docs,googleassistant,maps,nbu.files,photos,turbo,wallpaper,wellbeing}
     com.google.android.{as,calendar,deskclock,gm,gms,googlequicksearchbox,ims,inputmethod.latin,tts,youtube}
@@ -104,33 +77,12 @@ function disable-packages {
   [[ ! $enabled_packages ]] || adb shell "$(sed 's/^/pm disable-user /' <<< $enabled_packages)"
 }
 
-function disable-play-protect {
-  run-script << \EOF
-am start -a android.settings.SECURITY_SETTINGS &> /dev/null
-# Google Play Protect, Scan device for security threats, OK
-inputs keyevent\ {DPAD_{UP,CENTER,DOWN,CENTER},TAB{,},DPAD_CENTER,BACK{,}}
-EOF
-}
-
 function disable-screen-lock {
-  run-script << \EOF
-am start -a android.settings.SECURITY_SETTINGS &> /dev/null
-# Screen lock, None
-inputs keyevent\ {DPAD_{UP,DOWN{,,},CENTER{,}},BACK}
-EOF
+  instruction 'Settings, Security & location, Screen lock, None'
 }
 
 function disable-sounds {
-  run-script << \EOF
-am start -a android.settings.SOUND_SETTINGS &> /dev/null
-# Advanced, Dial pad tones, Screen locking sounds, Charging sounds, Touch vibration, Default notification sounds, None, OK
-inputs keyevent\ {DPAD_{UP,DOWN{,,,,,,,,},CENTER,DOWN{,},CENTER,DOWN,CENTER,DOWN,CENTER,DOWN{,},CENTER,UP{,,,,,},CENTER},MOVE_HOME,DPAD_CENTER} tap\ 650\ 1350 keyevent\ BACK
-EOF
-}
-
-function grant-permissions {
-  local permissions=($(comm -23 <(printf '%s\n' "${@:2}" | sort) <(adb shell dumpsys package "$1" 2> /dev/null | grep -Po '[^\s]*(?=: granted=true$)' | sort -u)))
-  [[ ! ${permissions[@]} ]] || adb shell "$(printf '%s\n' "${permissions[@]/#/pm grant $1 }")"
+  instruction 'Settings, Sound, Advanced, Default notification sound, None, OK, Dial pad tones, Screen locking sounds, Charging sounds, Touch vibration'
 }
 
 function install-package {
@@ -142,20 +94,19 @@ function install-package {
   fi
 }
 
+function instruction {
+  run-script
+  echo "$1"
+  read -s
+  echo
+}
+
 function main {
-  connect-wifi
   disable-packages
   uninstall-packages
   change-settings
   configure-system
   setup-packages
-}
-
-function mute-volume {
-  run-script << \EOF
-# mute down
-inputs keyevent\ VOLUME_DOWN tap\ 650\ 850
-EOF
 }
 
 function run-once {
@@ -171,69 +122,48 @@ function run-once {
 }
 
 function run-script {
-  local input=$(cat)
-  if [[ ${1-} ]]; then
-    local url
-    if [[ ${2-} == https://* ]]; then
-      url=$2
-      set -- "$1" "${@:3}"
-    fi
-    install-package "$1" "${url-}"
-    adb shell pm clear "$1"
-    grant-permissions "$1" "${@:2}"
-  fi
-  adb shell "$(
-    local options=eu
-    [[ $- != *x* ]] || options=${options}x
-    echo "set -$options -- ${1-}"
-    cat << \EOF
-TMPDIR=/data/local/tmp
-
-function disable-notifications {
-  am start -a android.settings.APPLICATION_DETAILS_SETTINGS -d package:"$1" &> /dev/null
-  # Notifications, Show notifications
-  inputs keyevent\ DPAD_{UP,DOWN,CENTER} tap\ 0\ 400 keyevent\ BACK{,}
-}
-
-function inputs {
-  local arguments
-  for arguments; do
-    input $arguments
-  done
-}
-
-function power-on {
-  dumpsys window 2> /dev/null | grep -q -m 1 ' mAwake=true' || input keyevent POWER
-  dumpsys window 2> /dev/null | grep -q -m 1 ' mDreamingLockscreen=false' || input keyevent MENU
-}
-
-function wait-ui {
-  local path=/sdcard/window_dump.xml
-  while :; do
-    uiautomator dump &> /dev/null
-    ! grep -Fqs "\"$1\"" "$path" || break
-    sleep 1
-    power-on
-  done
-  rm "$path"
-}
-
-power-on
-[[ ! ${1-} ]] || monkey -p "$1" 1 &> /dev/null || :
-EOF
-    echo "$input"
-  )"
+  adb shell $'
+dumpsys window 2> /dev/null | grep -q -m 1 \' mAwake=true\' || input keyevent POWER
+dumpsys window 2> /dev/null | grep -q -m 1 \' mDreamingLockscreen=false\' || input keyevent MENU
+'"${1-}"
 }
 
 function set-wallpaper {
-  run-script << \EOF
-local path=/data/local/tmp/wallpaper.gif
-base64 -d <<< 'R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==' > "$path"
-am start -d file://"$path" -a android.service.wallpaper.CROP_AND_SET_WALLPAPER -f 0x1 com.android.wallpaperpicker/.WallpaperCropActivity &> /dev/null
-# Set wallpaper, Home screen
-inputs tap\ 0\ 100 keyevent\ {DPAD_DOWN,MOVE_END,DPAD_CENTER}
-rm "$path"
-EOF
+  local path=/data/local/tmp/wallpaper.gif
+  run-script "
+base64 -d <<< 'R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==' > $path
+am start -d file://$path -a android.service.wallpaper.CROP_AND_SET_WALLPAPER -f 0x1 com.android.wallpaperpicker/.WallpaperCropActivity &> /dev/null
+"
+  instruction 'Set wallpaper, Home screen and lock screen'
+  adb shell "rm $path"
+}
+
+function setup-delta-chat {
+  install-package chat.delta https://download.delta.chat/android/deltachat-gplay-release-1.1.2.apk
+  local path=/sdcard/Download/avatar.png
+  adb shell "curl -o $path https://avatars0.githubusercontent.com/u/142021"
+  instruction 'Settings, Storage, SD card, long tap delta-chat-*, menu icon, Move to..., Move, Delta Chat, Import backup, Continue, Allow, OK, Device messages, Tap here to receive messages, Allow, menu icon, Settings, Danil Semelenov, camera icon. Allow, Files, avatar.png, resize, Done, apply icon, Notifications, In-chat sounds'
+  adb shell "rm $path /sdcard/Download/delta-chat-*"
+}
+
+function setup-f-droid {
+  install-package org.fdroid.fdroid https://f-droid.org/FDroid.apk
+  instruction 'F-Droid, Updates, Update, Settings, Allow from this source, Install'
+}
+
+function setup-fennec {
+  install-package org.mozilla.fennec_fdroid
+  instruction 'Fennec F-Droid, menu icon, Settings, General, Home, Top Sites, Hide, Bookmarks, Hide, History, Hide, Search, Bing, Remove, Amazon.ca, Remove, DuckDuckGo, Remove, Twitter, Remove, Wikipedia, Remove, Show search suggestions, Privacy, Do not track, Tracking Protection, Enabled, Fennec Health Report, Notifications, Clear all'
+}
+
+function setup-kiwix {
+  install-package org.kiwix.kiwixmobile
+  instruction 'Kiwix, menu icon, Get Content, Allow, Wiktionary'
+}
+
+function setup-osmand {
+  install-package net.osmand.plus
+  instruction 'OsmAnd~, Get started, Change, Allow, Memory card, Download, Show map, target icon, Allow'
 }
 
 function setup-packages {
@@ -241,128 +171,26 @@ function setup-packages {
     setup-delta-chat
     setup-f-droid
     setup-fennec
-    setup-keikai-launcher
     setup-kiwix
-    setup-maps
-    setup-pmetro
+    setup-osmand
     setup-simple-gallery
     setup-simple-keyboard
-    setup-wifi-automatic
   )
   run-once "${commands[@]}"
 }
 
-function setup-delta-chat {
-  connect-wifi
-  local email=mail'@'danil.mobi
-  local imap_hostname=imap.fastmail.com
-  local smtp_hostname=smtp.fastmail.com
-  run-script chat.delta https://download.delta.chat/android/deltachat-gplay-release-1.0.3.apk android.permission.{CAMERA,READ_CONTACTS,READ_EXTERNAL_STORAGE,RECORD_AUDIO} << EOF
-wait-ui 'START MESSAGING'
-# Start messaging, Email address, Password, Advanced, IMAP server, SMTP server, confirm icon
-inputs keyevent\ DPAD_{DOWN,CENTER,DOWN} text\ $email keyevent\ TAB text\ $(netrc-password "$imap_hostname" "$email") keyevent\ {TAB{,,},DPAD_CENTER,TAB{,}} text\ $imap_hostname keyevent\ TAB{,,,,,} text\ $smtp_hostname tap\ 650\ 100
-wait-ui 'Delta Chat'
-# menu icon, Settings, Your profile info, Your name, apply icon, Notifications, In-chat sounds, Chats and media, Show classic emails, All, Device messages
-inputs keyevent\ {MENU,DPAD_DOWN,MOVE_END,DPAD_CENTER{,},TAB} text\ $(grep -Po $'(?<= from=\').+(?= <)' ~/.muttrc | sed 's/ /%s/g') tap\ 650\ 100 keyevent\ {DPAD_{DOWN{,},CENTER,DOWN{,,,,},CENTER},BACK,DPAD_{DOWN{,,,},CENTER,DOWN{,,,},CENTER,DOWN{,},CENTER},BACK{,},DPAD_CENTER,BACK{,}}
-EOF
-}
-
-function setup-f-droid {
-  connect-wifi
-  run-script org.fdroid.fdroid https://f-droid.org/FDroid.apk << \EOF
-inputs swipe\ 0\ 500\ 0\ 1000 keyevent\ BACK
-disable-notifications "$1"
-EOF
-}
-
-function setup-fennec {
-  run-script org.mozilla.fennec_fdroid << \EOF
-input keyevent MENU
-wait-ui 'Report site issue'
-# Settings, General, Home, Top Sites, Hide, Bookmarks, Hide, History, Hide, Privacy, Do not track, Tracking Protection, Enabled, Fennec Health Report, No, tabs icon, close icon
-inputs keyevent\ {TAB,MOVE_END,DPAD_{UP{,},CENTER,DOWN,CENTER{,},DOWN{,},CENTER,DOWN,CENTER,DOWN,CENTER,DOWN,CENTER,DOWN,CENTER,DOWN,CENTER},BACK{,},DPAD_{DOWN{,},CENTER{,},DOWN{,},CENTER,UP,CENTER},MOVE_END,DPAD_CENTER,BACK{,}} tap\ 100\ 100 text\ - tap\ 500\ 200 keyevent\ BACK{,} tap\ {600\ 100,325\ 200} keyevent\ BACK
-disable-notifications "$1"
-EOF
-}
-
-function setup-keikai-launcher {
-  run-script com.anpmech.launcher << \EOF
-pm set-home-activity "$1"/.activities.SearchActivity
-# Settings, Open keyboard automatically, Allow orientation change
-inputs keyevent\ {MENU,DPAD_{CENTER{,},DOWN{,,},CENTER},BACK,HOME}
-EOF
-}
-
-function setup-kiwix {
-  run-script org.kiwix.kiwixmobile android.permission.{READ,WRITE}_EXTERNAL_STORAGE << \EOF
-wait-ui 'More options'
-# Get Content, Device, Wiktionary
-inputs tap\ 100\ 800 swipe\ 0\ 300\ 500\ 300 keyevent\ {DPAD_{DOWN{,},CENTER},BACK}
-EOF
-}
-
-function setup-maps {
-  connect-wifi
-  run-script com.github.axet.maps android.permission.{ACCESS_{COARSE,FINE}_LOCATION,{READ,WRITE}_EXTERNAL_STORAGE} << \EOF
-path=/sdcard/MapsWithMe
-rm -fr "$path"
-mkdir "$path"
-mountpoint=(/storage/*-*)
-cat > "$path"/settings.ini << EOF2
-ScreenClipRect=37.6064088837 67.4336744786 0 -0.240503617395 -0.477666906771 0.240503617395 0.477666906771
-StoragePath=$mountpoint/${path##*/}/
-EOF2
-wait-ui 'NEXT'
-# Next
-inputs keyevent\ {FOCUS,DPAD_CENTER}
-wait-ui 'My Position'
-input keyevent BACK
-EOF
-}
-
-function setup-pmetro {
-  connect-wifi
-  run-script com.utyf.pmetro << \EOF
-# Catalog, update icon
-inputs keyevent\ DPAD_{UP,RIGHT,CENTER{,}}
-wait-ui 'Австралия'
-# Россия, Москва, Load, Local Maps, Moscow
-inputs keyevent\ {DPAD_DOWN,PAGE_DOWN{,,,,},DPAD_{DOWN,CENTER},PAGE_DOWN,DPAD_{DOWN,CENTER{,}},MOVE_HOME,DPAD_{UP{,},LEFT,CENTER,CENTER},BACK}
-EOF
-}
-
 function setup-sd-card {
-  run-script << \EOF
-# SD card, Portable storage, Done, SD Card
-inputs keyevent\ HOME swipe\ 0\ 0\ 0\ 1000 tap\ 10\ 600 keyevent\ DPAD_{DOWN{,},CENTER,DOWN,CENTER} swipe\ {0\ 0\ 0\ 1000,10\ 500\ 1000\ 500} keyevent\ BACK
-EOF
+  instruction 'Notifications, SD card, Portable storage, Done, Notifications, Clear all'
 }
 
 function setup-simple-gallery {
-  run-script com.simplemobiletools.gallery.pro android.permission.{READ,WRITE}_EXTERNAL_STORAGE << \EOF
-# settings icon, Settings, settings icon, Settings, Customize colors, Theme, OK, Black & White, App icon color, orange, OK, apply icon, Allow instantly changing media by clicking on screen sides, Move items into the Recycle Bin instead of deleting
-inputs keyevent\ MENU tap\ 400\ 800 keyevent\ MENU tap\ 400\ 800 keyevent\ {DPAD_{DOWN,CENTER,DOWN,CENTER},TAB,DPAD_{CENTER,DOWN{,,,},CENTER,DOWN{,,,},CENTER}} tap\ 500\ 700 keyevent\ {TAB{,},DPAD_CENTER} tap\ 700\ 100 swipe\ 0\ 850\ 0\ 0{,} keyevent\ DPAD_{DOWN{,},CENTER} swipe\ 0\ 850\ 0\ 0{,} keyevent\ {DPAD_{DOWN{,,},CENTER},BACK{,}}
-EOF
+  install-package com.simplemobiletools.gallery.pro
+  instruction 'Gallery, allow, menu icon, Settings, Customize colors, Theme, OK, Black & White, App icon color, orange, OK, apply icon, Allow instantly changing media by clicking on screen sides, Move items into the Recycle Bin instead of deleting'
 }
 
 function setup-simple-keyboard {
-  run-script rkr.simplekeyboard.inputmethod << \EOF
-# Preferences, Vibrate on keypress, Popup on keypress
-inputs keyevent\ {DPAD_{DOWN{,},CENTER,DOWN,CENTER,DOWN{,},CENTER},BACK{,}}
-
-#settings put secure enabled_input_methods "$1"/.latin.LatinIME
-#am start com.android.settings/.Settings\$LanguageAndInputSettingsActivity &> /dev/null
-## Virtual keyboard, Simple Keyboard, Preferences, Vibrate on keypress, Popup on keypress
-#inputs keyevent\ {DPAD_{UP,DOWN,CENTER{,},DOWN,CENTER,DOWN,CENTER,DOWN{,},CENTER},BACK{,,,},HOME}
-EOF
-}
-
-function setup-wifi-automatic {
-  run-script de.j4velin.wifiAutoOff << \EOF
-# when device gets unlocked, screen is off, screen is off, 5, OK
-inputs keyevent\ {DPAD_{UP,DOWN,CENTER,DOWN{,,,,},CENTER{,}},TAB,5,ENTER,DPAD_CENTER,BACK}
-disable-notifications "$1"
-EOF
+  install-package rkr.simplekeyboard.inputmethod
+  instruction 'Simple Keyboard, OK, Simple Keyboard, OK, OK, Preferences, Vibrate on keypress, Popup on keypress'
 }
 
 function uninstall-packages {
@@ -372,14 +200,6 @@ function uninstall-packages {
   )
   local installed_packages=$(comm -12 <(adb shell cmd package list packages | cut -d : -f 2 | sort) <(printf '%s\n' "${packages[@]}" | sort))
   [[ ! $installed_packages ]] || adb shell "$(sed 's/^/pm uninstall /' <<< $installed_packages)"
-}
-
-function wifi-passphrase {
-  local path=/etc/wpa_supplicant/wpa_supplicant.conf
-  if [[ -f $path ]]; then
-    local paths=(/sys/class/net/wl*)
-    sudo grep -A 1 "\bssid=\"$(sudo wpa_cli -i "${paths[0]##*/}" status | grep -Po '(?<=^ssid=).+')\"" "$path" | grep -Po '(?<=\bpsk=")[^"]+'
-  fi
 }
 
 [[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"
