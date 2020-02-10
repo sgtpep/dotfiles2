@@ -142,6 +142,10 @@ function disable-ipv6 {
   sudo tee /etc/sysctl.d/50-disable-ipv6.conf > /dev/null <<< 'net.ipv6.conf.all.disable_ipv6 = 1'
 }
 
+function disable-transient-hostnames {
+  sudo sed -i 's/, host-name\b//' /etc/dhcp/dhclient.conf
+}
+
 dotfiles_git=(git -C ~)
 
 function enable-area {
@@ -306,6 +310,7 @@ function setup-system {
   configure-keyboard
   configure-nopasswd
   disable-ipv6
+  disable-transient-hostnames
   enable-autologin
   enable-fstrim
   install-unattended-upgrades
