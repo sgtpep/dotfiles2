@@ -2,7 +2,8 @@
 set -eu
 
 function add-language {
-  instruction 'Settings, System, Languages & input, Languages, Add a language, Русский'
+  run-package com.android.settings
+  instruction 'System, Languages & input, Languages, Add a language, Русский'
 }
 
 function change-settings {
@@ -35,19 +36,28 @@ function change-settings {
 }
 
 function configure-camera {
-  instruction 'Camera, Skip, Deny, OK, menu icon, Shutter sound, Photo Resolution, Photos from rear camera, (4:3) 4MP, Photos from front camera, (4:3) 4MP, Video Resolution, Video from rear camera, HD 720P, Video from front camera, HD 720P'
+  run-package com.hmdglobal.app.camera
+  instruction 'Skip, Deny, OK, menu icon, Shutter sound, Photo Resolution, Photos from rear camera, (4:3) 4MP, Photos from front camera, (4:3) 4MP, Video Resolution, Video from rear camera, HD 720P, Video from front camera, HD 720P'
 }
 
 function configure-contacts {
-  instruction 'Contacts, Skip, long tap Contacts, App info, Notifications, Google Play services availability'
+  run-package com.google.android.contacts
+  instruction 'Skip, Settings, Apps & notifications, Contacts, Notifications, Google Play services availability'
+}
+
+function configure-data-warning {
+  run-package com.android.settings
+  instruction 'Network & Internet, Data usage, Data warning & limit, Data warning, 500, MB, Set'
 }
 
 function configure-dialer {
-  instruction 'Long tap Phone, App info, Notifications, Google Play services availability'
+  run-package com.android.settings
+  instruction 'Apps & notifications, Phone, Notifications, Google Play services availability'
 }
 
 function configure-messages {
-  instruction 'Long tap Messages, App info, Notifications, Google Play services availability'
+  run-package com.android.settings
+  instruction 'Apps & notifications, Messages, Notifications, Google Play services availability'
 }
 
 function configure-system {
@@ -55,14 +65,22 @@ function configure-system {
     add-language
     configure-camera
     configure-contacts
+    configure-data-warning
     configure-dialer
     configure-messages
+    configure-time-format
     disable-screen-lock
+    disable-sim2
     disable-sounds
     set-wallpaper
     setup-sd-card
   )
   run-once "${commands[@]}"
+}
+
+function configure-time-format {
+  run-package com.android.settings
+  instruction 'System, Date & time, Automatic 24-hour format'
 }
 
 function disable-packages {
@@ -78,11 +96,18 @@ function disable-packages {
 }
 
 function disable-screen-lock {
-  instruction 'Settings, Security & location, Screen lock, None'
+  run-package com.android.settings
+  instruction 'Security & location, Screen lock, None'
+}
+
+function disable-sim2 {
+  run-package com.android.settings
+  instruction 'Network & Internet, SIM cards, SIM 2, OK'
 }
 
 function disable-sounds {
-  instruction 'Settings, Sound, Advanced, Default notification sound, None, OK, Dial pad tones, Screen locking sounds, Charging sounds, Touch vibration'
+  run-package com.android.settings
+  instruction 'Sound, Also vibrate for calls, Advanced, Default notification sound, None, OK, Dial pad tones, Screen locking sounds, Charging sounds, Touch vibration'
 }
 
 function install-package {
@@ -115,19 +140,27 @@ function run-once {
   for command; do
     local key=setup:$command
     if ! grep -Fqx "$key=1" <<< $settings; then
+      echo "Running $command"
       "$command"
       adb shell settings put global "$key" 1
     fi
   done
 }
 
-function run-script {
-  adb shell $'
-dumpsys window 2> /dev/null | grep -q -m 1 \' mAwake=true\' || input keyevent POWER
-dumpsys window 2> /dev/null | grep -q -m 1 \' mDreamingLockscreen=false\' || input keyevent MENU
-'"${1-}"
+function run-package {
+  run-script monkey -p "$1" 1 &> /dev/null
 }
 
+function run-script {
+  local options=eu
+  [[ $- != *x* ]] || options=${options}x
+  adb shell "set -$options"$'
+dumpsys window 2> /dev/null | grep -q -m 1 \' mAwake=true\' || input keyevent POWER
+dumpsys window 2> /dev/null | grep -q -m 1 \' mDreamingLockscreen=false\' || input keyevent MENU
+'"$@"
+}
+
+# TODO
 function set-wallpaper {
   local path=/data/local/tmp/wallpaper.gif
   run-script "
@@ -135,46 +168,108 @@ base64 -d <<< 'R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==' > $
 am start -d file://$path -a android.service.wallpaper.CROP_AND_SET_WALLPAPER -f 0x1 com.android.wallpaperpicker/.WallpaperCropActivity &> /dev/null
 "
   instruction 'Set wallpaper, Home screen and lock screen'
-  adb shell "rm $path"
+  adb shell rm "$path"
+}
+
+function setup-aurora {
+  local package=com.aurora.store
+  install-package "$package"
+  run-package "$package"
+  instruction 'Next, Ask, Allow, Anonyous'
+}
+
+function setup-authenticator {
+  local package=com.google.android.apps.authenticator2
+  install-package "$package" https://github.com/google/google-authenticator-android/releases/download/v5.00/authenticator.apk
+  run-package "$package"
+  instruction 'Begin, Skip'
+}
+
+function setup-bliss-launcher {
+  local package=foundation.e.blisslauncher
+  install-package "$package"
+  adb shell pm disable-user com.android.launcher3
+  instruction $'Bliss Launcher, Permit usage access, Deny, Restart, Don\'t ask again, Deny'
 }
 
 function setup-delta-chat {
   install-package chat.delta https://download.delta.chat/android/deltachat-gplay-release-1.1.2.apk
   local path=/sdcard/Download/avatar.png
-  adb shell "curl -o $path https://avatars0.githubusercontent.com/u/142021"
-  instruction 'Settings, Storage, SD card, long tap delta-chat-*, menu icon, Move to..., Move, Delta Chat, Import backup, Continue, Allow, OK, Device messages, Tap here to receive messages, Allow, menu icon, Settings, Danil Semelenov, camera icon. Allow, Files, avatar.png, resize, Done, apply icon, Notifications, In-chat sounds'
-  adb shell "rm $path /sdcard/Download/delta-chat-*"
+  adb shell curl -o "$path" https://avatars0.githubusercontent.com/u/142021
+  run-package com.android.settings
+  instruction 'Storage, SD card, long tap delta-chat-*, menu icon, Move to..., Move, Delta Chat, Import backup, Continue, Allow, OK, Device messages, Tap here to receive messages, Allow, menu icon, Settings, Danil Semelenov, camera icon. Allow, Files, avatar.png, resize, Done, apply icon, Notifications, In-chat sounds'
+  adb shell rm "$path" /sdcard/Download/delta-chat-\*
 }
 
 function setup-f-droid {
-  install-package org.fdroid.fdroid https://f-droid.org/FDroid.apk
-  instruction 'F-Droid, Updates, Update, Settings, Allow from this source, Install'
+  local package=org.fdroid.fdroid
+  install-package "$package" https://f-droid.org/FDroid.apk
+  run-package "$package"
+  instruction 'Updates, Update, Settings, Allow from this source, Install'
 }
 
 function setup-fennec {
-  install-package org.mozilla.fennec_fdroid
-  instruction 'Fennec F-Droid, menu icon, Settings, General, Home, Top Sites, Hide, Bookmarks, Hide, History, Hide, Search, Bing, Remove, Amazon.ca, Remove, DuckDuckGo, Remove, Twitter, Remove, Wikipedia, Remove, Show search suggestions, Privacy, Do not track, Tracking Protection, Enabled, Fennec Health Report, Notifications, Clear all'
+  local package=org.fdroid.fdroid
+  install-package "$package"
+  run-package "$package"
+  instruction 'menu icon, Settings, General, Home, Top Sites, Hide, Bookmarks, Hide, History, Hide, Search, Bing, Remove, Amazon.ca, Remove, DuckDuckGo, Remove, Twitter, Remove, Wikipedia, Remove, Show search suggestions, Privacy, Do not track, Tracking Protection, Enabled, Fennec Health Report, Notifications, Clear all'
+}
+
+function setup-forcedoze {
+  local package=com.suyashsrijan.forcedoze
+  install-package "$package"
+  local permission
+  for permission in android.permission.{DUMP,WRITE_SECURE_SETTINGS}; do
+    adb shell pm grant "$package" "$permission"
+  done
+  run-package "$package"
+  instruction $'OK, menu icon, Settings, Show persistent notification, Disable WiFi during Doze, Disable motion sensing for Doze, toggle, OKAY, Notifications, ForceDoze, Not optimised, All apps, ForceDoze, Don\'t optimise, Done, Notifications, Clear all, ForceDoze, Close'
 }
 
 function setup-kiwix {
-  install-package org.kiwix.kiwixmobile
-  instruction 'Kiwix, menu icon, Get Content, Allow, Wiktionary'
+  local package=org.kiwix.kiwixmobile
+  install-package "$package"
+  run-package "$package"
+  instruction 'menu icon, Get Content, Allow, Wiktionary'
+}
+
+function setup-mupdf-viewer {
+  local package=com.artifex.mupdf.viewer.app
+  install-package "$package"
+  run-package "$package"
+  instruction 'Allow'
+}
+
+function setup-obsqr {
+  local package=trikita.obsqr
+  install-package "$package"
+  run-package "$package"
+  instruction 'Allow'
 }
 
 function setup-osmand {
-  install-package net.osmand.plus
-  instruction 'OsmAnd~, Get started, Change, Allow, Memory card, Download, Show map, target icon, Allow'
+  local package=trikita.obsqr
+  install-package "$package"
+  run-package "$package"
+  instruction 'Get started, Change, Allow, Memory card, Download, Show map, target icon, Allow'
 }
 
 function setup-packages {
   local commands=(
+    setup-aurora
+    setup-authenticator
+    setup-bliss-launcher
     setup-delta-chat
     setup-f-droid
     setup-fennec
+    setup-forcedoze
     setup-kiwix
+    setup-mupdf-viewer
+    setup-obsqr
     setup-osmand
     setup-simple-gallery
     setup-simple-keyboard
+    setup-slack
   )
   run-once "${commands[@]}"
 }
@@ -184,13 +279,22 @@ function setup-sd-card {
 }
 
 function setup-simple-gallery {
-  install-package com.simplemobiletools.gallery.pro
-  instruction 'Gallery, allow, menu icon, Settings, Customize colors, Theme, OK, Black & White, App icon color, orange, OK, apply icon, Allow instantly changing media by clicking on screen sides, Move items into the Recycle Bin instead of deleting'
+  local package=com.simplemobiletools.gallery.pro
+  install-package "$package"
+  run-package "$package"
+  instruction 'allow, menu icon, Settings, Customize colors, Theme, OK, Black & White, App icon color, orange, OK, apply icon, Allow instantly changing media by clicking on screen sides, Move items into the Recycle Bin instead of deleting'
 }
 
 function setup-simple-keyboard {
-  install-package rkr.simplekeyboard.inputmethod
-  instruction 'Simple Keyboard, OK, Simple Keyboard, OK, OK, Preferences, Vibrate on keypress, Popup on keypress'
+  local package=rkr.simplekeyboard.inputmethod
+  install-package "$package"
+  run-package "$package"
+  instruction 'OK, Simple Keyboard, OK, OK, Preferences, Vibrate on keypress, Popup on keypress'
+}
+
+function setup-slack {
+  run-package com.aurora.store
+  instruction $'Search apps & games, Slack, Install, Settings, Allow from this source, Install, Notifications, Clear all, Open, Sign in, I\'ll sign in manually, Workspace URL, Sign in with Google, Email or phone, Password, Sign in, Enter the 6-digit code, Done, OK, Fennec F-Droid, google.com, Sign out, Settings, Apps & notifications, Slack, Notifications, Google Play services availability'
 }
 
 function uninstall-packages {
