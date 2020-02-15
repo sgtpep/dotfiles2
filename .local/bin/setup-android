@@ -19,9 +19,7 @@ function change-settings {
     [icon_blacklist]=headset,rotate,volume
     [sysui_qs_tiles]=wifi,cell,rotation,flashlight
   )
-  declare -A system_settings=(
-    [screen_brightness_mode]=0
-  )
+  declare -A system_settings=()
   local commands=()
   local namespace
   for namespace in global secure system; do
