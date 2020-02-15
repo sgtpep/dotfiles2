@@ -191,11 +191,11 @@ function setup-bliss-launcher {
 }
 
 function setup-delta-chat {
-  install-package chat.delta https://download.delta.chat/android/deltachat-gplay-release-1.1.2.apk
+  install-package com.b44t.messenger
   local path=/sdcard/Download/avatar.png
   adb shell curl -o "$path" https://avatars0.githubusercontent.com/u/142021
   run-package com.android.settings
-  instruction 'Storage, SD card, long tap delta-chat-*, menu icon, Move to..., Move, Delta Chat, Import backup, Continue, Allow, OK, Device messages, Tap here to receive messages, Allow, menu icon, Settings, Danil Semelenov, camera icon. Allow, Files, avatar.png, resize, Done, apply icon, Notifications, In-chat sounds'
+  instruction 'Storage, SD card, long tap delta-chat-*, menu icon, Move to..., Move, Delta Chat, Import backup, Continue, Allow, OK, Device messages, Tap here to receive messages, Allow, menu icon, Settings, Danil Semelenov, camera icon. Allow, Files, Downloads, avatar.png, resize, Done, apply icon, Notifications, In-chat sounds'
   adb shell rm "$path" /sdcard/Download/delta-chat-\*
 }
 
