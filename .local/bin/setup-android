@@ -67,6 +67,7 @@ function configure-system {
     configure-dialer
     configure-messages
     configure-time-format
+    configure-white-balance
     disable-screen-lock
     disable-sim2
     disable-sounds
@@ -79,6 +80,11 @@ function configure-system {
 function configure-time-format {
   run-package com.android.settings
   instruction 'System, Date & time, Automatic 24-hour format'
+}
+
+function configure-white-balance {
+  run-package com.android.settings
+  instruction 'Display, White balance, Colour temperature'
 }
 
 function disable-packages {
