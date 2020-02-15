@@ -77,7 +77,7 @@ function configure-inotify {
 function configure-keyboard {
   sudo sed -i -f - /etc/default/keyboard << \EOF
 s/^\(XKBLAYOUT="\)[^"]*/\1us,ru/
-s/^\(XKBOPTIONS="\)[^"]*/\1ctrl:nocaps,grp:rshift_toggle,grp:switch,lv3:switch,misc:typo/
+s/^\(XKBOPTIONS="\)[^"]*/\1ctrl:nocaps,grp:rshift_toggle,lv3:ralt_switch,misc:typo/
 EOF
 }
 
