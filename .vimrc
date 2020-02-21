@@ -1,5 +1,5 @@
 function s:configure_filetypes()
-  autocmd BufNewFile,BufRead *.ts,*.tsx setfiletype javascript
+  autocmd BufNewFile,BufRead *.ts,*.tsx setlocal filetype=typescript
   autocmd FileType * call s:define_comment_mappings()
   autocmd FileType * let [&l:formatoptions, &l:shiftwidth, &l:softtabstop, &l:textwidth] = [&g:formatoptions, &g:shiftwidth, &g:softtabstop, &g:textwidth]
   autocmd FileType css nnoremap <silent> <Leader>a :%!postcss<CR>:update<CR>
