@@ -15,8 +15,8 @@ path=/sys/class/dmi/id/product_name; [[ ! -f $path ]] || product=$(< "$path")
 [[ ! -v virtualbox ]] || VBoxClient-all &
 [[ ! -v virtualbox ]] || xset -dpms &
 [[ -v macbook || ! -v parallels ]] || xmodmap ~/.Xmodmap-parallels &
+[[ -v parallels || -v virtualbox ]] || unclutter -idle 1 -root &
 [[ -v raspbian ]] || battery-monitor &
-[[ -v virtualbox ]] || unclutter -idle 1 -root &
 eval "$(dbus-launch --exit-with-x11 --sh-syntax)"
 export SSH_AUTH_SOCK=/tmp/ssh-agent; ssh-agent -a "$SSH_AUTH_SOCK" &
 start-pulseaudio-x11 &
