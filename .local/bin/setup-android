@@ -40,7 +40,7 @@ function configure-camera {
 
 function configure-contacts {
   run-package com.google.android.contacts
-  instruction 'Skip, Settings, Apps & notifications, Contacts, Notifications, Google Play services availability'
+  instruction 'Skip, Settings, Apps & notifications, Contacts, menu icon, Settings, Calling accounts, Answer alert, Notifications, Google Play services availability'
 }
 
 function configure-data-warning {
