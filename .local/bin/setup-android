@@ -17,7 +17,7 @@ function change-settings {
   declare -A secure_settings=(
     [assist_gesture_enabled]=0
     [icon_blacklist]=headset,rotate,volume
-    [sysui_qs_tiles]=wifi,cell,rotation,flashlight
+    [sysui_qs_tiles]=wifi,cell,airplane,flashlight
   )
   declare -A system_settings=()
   local commands=()
