@@ -22,5 +22,5 @@ function paginate {
 }
 
 function pwdhash {
-  command "${FUNCNAME[0]}" "$@" | xclip -selection clipboard
+  command "${FUNCNAME[0]}" "$@" | tr -d '\n' | xclip -selection clipboard
 }
