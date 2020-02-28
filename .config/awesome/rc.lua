@@ -4,11 +4,11 @@ local gears = require('gears')
 local naughty = require('naughty')
 require('awful.autofocus')
 
-function activate_previous_client()
+function activate_history_client(previous)
   local clients = {}
   for _, client in ipairs(awful.client.focus.history.list) do
     if not client.hidden then
-      table.insert(clients, client)
+      table.insert(clients, table.unpack(previous and { 1, client } or { client }))
     end
   end
   clients[gears.table.hasitem(clients, client.focus) % #clients + 1]:jump_to()
@@ -20,7 +20,11 @@ function bind_alt_tab()
   awful.keygrabber({ export_keybindings = true, keybindings = {
     { { modifier }, 'Tab', function()
       count = count + 1
-      activate_previous_client()
+      activate_history_client()
+    end },
+    { { modifier, 'Shift' }, 'Tab', function()
+      count = count + 1
+      activate_history_client(true)
     end },
   }, start_callback = function()
     count = 0
