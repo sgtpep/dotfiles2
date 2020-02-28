@@ -9,12 +9,11 @@ path=/sys/class/dmi/id/product_name; [[ ! -f $path ]] || product=$(< "$path")
 
 [[ ! -v macbook ]] || export GDK_SCALE=2 GDK_DPI_SCALE=0.5
 [[ ! -v macbook ]] || xrdb -merge <<< 'Xft.dpi: 192'
-[[ ! -v macbook ]] || { setxkbmap -option altwin:swap_alt_win,lv3:rwin_switch; xmodmap ~/.Xmodmap-parallels; } &
 [[ ! -v parallels && ! -v virtualbox ]] || { pactl set-sink-mute 0 no; pactl set-sink-volume 0 100%; } &
+[[ ! -v parallels ]] || { setxkbmap -option altwin:swap_alt_win,lv3:rwin_switch; [[ -v macbook ]] || xmodmap ~/.Xmodmap-parallels; } &
 [[ ! -v raspbian ]] || { xset s 60; sudo xss-lock -n screensaver true; } &
 [[ ! -v virtualbox ]] || VBoxClient-all &
 [[ ! -v virtualbox ]] || xset -dpms &
-[[ -v macbook || ! -v parallels ]] || xmodmap ~/.Xmodmap-parallels &
 [[ -v parallels || -v virtualbox ]] || unclutter -idle 1 -root &
 [[ -v raspbian ]] || battery-monitor &
 eval "$(dbus-launch --exit-with-x11 --sh-syntax)"
