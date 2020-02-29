@@ -40,7 +40,7 @@ function configure-camera {
 
 function configure-contacts {
   run-package com.google.android.contacts
-  instruction 'Skip, Settings, Apps & notifications, Contacts, menu icon, Settings, Calling accounts, Answer alert, Notifications, Google Play services availability'
+  instruction 'Skip'
 }
 
 function configure-data-warning {
@@ -48,14 +48,20 @@ function configure-data-warning {
   instruction 'Network & Internet, Data usage, Data warning & limit, Data warning, 500, MB, Set'
 }
 
-function configure-dialer {
-  run-package com.android.settings
-  instruction 'Apps & notifications, Phone, Notifications, Google Play services availability'
+function configure-messages {
+  local package=com.google.android.apps.messaging
+  run-package "$package"
+  instruction 'menu icon, Settings, Hear outgoing message sounds'
+  package-settings "$package"
+  instruction 'Notifications, Google Play services availability'
 }
 
-function configure-messages {
-  run-package com.android.settings
-  instruction 'Apps & notifications, Messages, Notifications, Google Play services availability'
+function configure-phone {
+  local package=com.google.android.dialer
+  run-package "$package"
+  instruction 'menu icon, Settings, Calling accounts, Answer alert'
+  package-settings "$package"
+  instruction 'Notifications, Google Play services availability'
 }
 
 function configure-system {
@@ -64,7 +70,7 @@ function configure-system {
     configure-camera
     configure-contacts
     configure-data-warning
-    configure-dialer
+    configure-phone
     configure-messages
     configure-time-format
     configure-white-balance
@@ -114,6 +120,10 @@ function disable-sounds {
   instruction 'Sound, Also vibrate for calls, Advanced, Default notification sound, None, OK, Dial pad tones, Screen locking sounds, Charging sounds, Touch vibration'
 }
 
+function expand-notifications {
+  adb shell cmd statusbar expand-notifications
+}
+
 function install-package {
   if ! adb shell cmd package list packages | grep -Fqx "package:$1"; then
     local url=${2:-$(wget -O - https://f-droid.org/en/packages/"$1"/ 2> /dev/null | grep -o -m 1 "[^\"]*/${1//./\\.}_.*\.apk\b")}
@@ -136,6 +146,10 @@ function main {
   change-settings
   configure-system
   setup-packages
+}
+
+function package-settings {
+  am start -a android.settings.APPLICATION_DETAILS_SETTINGS -d package:"$1" &> /dev/null
 }
 
 function run-once {
@@ -164,7 +178,6 @@ dumpsys window 2> /dev/null | grep -q -m 1 \' mDreamingLockscreen=false\' || inp
 '"$@"
 }
 
-# TODO
 function set-wallpaper {
   local path=/data/local/tmp/wallpaper.gif
   run-script "
@@ -179,7 +192,7 @@ function setup-aurora {
   local package=com.aurora.store
   install-package "$package"
   run-package "$package"
-  instruction 'Next, Ask, Allow, Anonyous'
+  instruction 'Next, Ask, Allow, Anonymous'
 }
 
 function setup-authenticator {
@@ -201,7 +214,7 @@ function setup-delta-chat {
   local path=/sdcard/Download/avatar.png
   adb shell curl -o "$path" https://avatars0.githubusercontent.com/u/142021
   run-package com.android.settings
-  instruction 'Storage, SD card, long tap delta-chat-*, menu icon, Move to..., Move, Delta Chat, Import backup, Continue, Allow, OK, Device messages, Tap here to receive messages, Allow, menu icon, Settings, Danil Semelenov, camera icon. Allow, Files, Downloads, avatar.png, resize, Done, apply icon, Notifications, In-chat sounds'
+  instruction 'Storage, SD card, long tap delta-chat-*, menu icon, Move to..., Move, Delta Chat, Import backup, Continue, Allow, OK, Device messages, Tap here to receive messages, Allow, menu icon, Settings, Danil Semelenov, camera icon, Allow, Files, Downloads, avatar.png, resize, Done, apply icon, Notifications, In-chat sounds'
   adb shell rm "$path" /sdcard/Download/delta-chat-\*
 }
 
@@ -216,7 +229,9 @@ function setup-fennec {
   local package=org.fdroid.fdroid
   install-package "$package"
   run-package "$package"
-  instruction 'menu icon, Settings, General, Home, Top Sites, Hide, Bookmarks, Hide, History, Hide, Search, Bing, Remove, Amazon.ca, Remove, DuckDuckGo, Remove, Twitter, Remove, Wikipedia, Remove, Show search suggestions, Privacy, Do not track, Tracking Protection, Enabled, Fennec Health Report, Notifications, Clear all'
+  instruction 'menu icon, Settings, General, Home, Top Sites, Hide, Bookmarks, Hide, History, Hide, Search, Bing, Remove, Amazon.ca, Remove, DuckDuckGo, Remove, Twitter, Remove, Wikipedia, Remove, Show search suggestions, Privacy, Do not track, Tracking Protection, Enabled, Fennec Health Report'
+  expand-notifications
+  instruction 'Clear all'
 }
 
 function setup-forcedoze {
@@ -227,7 +242,11 @@ function setup-forcedoze {
     adb shell pm grant "$package" "$permission"
   done
   run-package "$package"
-  instruction $'OK, menu icon, Settings, Show persistent notification, Disable WiFi during Doze, Disable motion sensing for Doze, toggle, OKAY, Notifications, ForceDoze, Not optimised, All apps, ForceDoze, Don\'t optimise, Done, Notifications, Clear all, ForceDoze, Close'
+  instruction 'OK, menu icon, Settings, Show persistent notification, Disable WiFi during Doze, Disable motion sensing for Doze, toggle, OKAY'
+  expand-notifications
+  instruction $'ForceDoze, Not optimised, All apps, ForceDoze, Don\'t optimise, Done, Notifications'
+  expand-notifications
+  instruction 'Clear all'
 }
 
 function setup-kiwix {
@@ -279,7 +298,10 @@ function setup-packages {
 }
 
 function setup-sd-card {
-  instruction 'Notifications, SD card, Portable storage, Done, Notifications, Clear all'
+  expand-notifications
+  instruction 'SD card, Portable storage, Done'
+  expand-notifications
+  instruction 'Clear all'
 }
 
 function setup-simple-gallery {
@@ -298,7 +320,13 @@ function setup-simple-keyboard {
 
 function setup-slack {
   run-package com.aurora.store
-  instruction $'Search apps & games, Slack, Install, Settings, Allow from this source, Install, Notifications, Clear all, Open, Sign in, I\'ll sign in manually, Workspace URL, Sign in with Google, Email or phone, Password, Sign in, Enter the 6-digit code, Done, OK, Fennec F-Droid, google.com, Sign out, Settings, Apps & notifications, Slack, Notifications, Google Play services availability'
+  instruction $'Search apps & games, Slack, Install, Settings, Allow from this source, Install'
+  expand-notifications 'Clear all'
+  local package=com.Slack
+  run-package "$package"
+  instruction $'Sign in, I\'ll sign in manually, Workspace URL, Sign in with Google, Email or phone, Password, Sign in, Enter the 6-digit code, Done, OK, Fennec F-Droid, google.com, Sign out'
+  package-settings "$package"
+  instruction 'Notifications, Google Play services availability'
 }
 
 function uninstall-packages {
