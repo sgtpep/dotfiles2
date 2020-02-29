@@ -91,7 +91,7 @@ function disable-packages {
   local packages=(
     android.autoinstalls.config.hmdglobal.panther
     com.android.{bluetooth,chrome,dreams.{basic,phototable},stk,vending}
-    com.google.android.apps.{docs,googleassistant,maps,nbu.files,photos,turbo,wallpaper,wellbeing}
+    com.google.android.apps.{docs,googleassistant,magazines,maps,nbu.files,photos,turbo,wallpaper,wellbeing}
     com.google.android.{as,calendar,gm,gms,googlequicksearchbox,ims,inputmethod.latin,tts,youtube}
     com.hmdglobal.{app.{activation,fmradio},support}
   )
