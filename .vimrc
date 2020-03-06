@@ -109,7 +109,7 @@ function s:patch_matchparen()
 endfunction
 
 function s:set_options()
-  let &grepprg = printf('%srg --vimgrep --', s:git() ? 'git ls-files \| xargs -r -d ''\n'' ' : '')
+  let &grepprg = printf('%srg --sort=path --vimgrep --', s:git() ? 'git ls-files \| xargs -r -d ''\n'' ' : '')
   set autoindent
   set directory=/var/tmp//
   set expandtab
