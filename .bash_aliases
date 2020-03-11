@@ -1,4 +1,5 @@
 alias cal='ncal -b'
+alias copy='xclip -selection clipboard'
 alias cp='cp -i'
 alias dd='dd bs=4M oflag=sync status=progress'
 alias df='df -h'
