@@ -1,4 +1,5 @@
 TAB: menu-complete
+set completion-ignore-case On
 set keyseq-timeout 0
 set menu-complete-display-prefix On
 set show-all-if-ambiguous On
