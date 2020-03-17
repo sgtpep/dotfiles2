@@ -106,7 +106,7 @@ function configure-nopasswd {
 }
 
 function configure-timezone {
-  sudo ln -fs /usr/share/zoneinfo/"$timezone" /etc/localtime
+  sudo timedatectl set-timezone "$timezone"
 }
 
 function confirm-reboot {
