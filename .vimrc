@@ -31,7 +31,7 @@ function s:define_leader_mappings()
   nnoremap <silent> <Leader>N :bnext<CR>
   nnoremap <silent> <Leader>P :bprevious<CR>
   nnoremap <silent> <Leader>R :edit!<CR>
-  nnoremap <silent> <Leader>T :call system(<SID>git() ? 'git ls-files --exclude-standard \| xargs -r -d ''\n'' ctags' : 'ctags -R')<CR>
+  nnoremap <silent> <Leader>T :call system(<SID>git() ? 'git ls-files \| xargs -r -d ''\n'' ctags' : 'ctags -R')<CR>
   nnoremap <silent> <Leader>V :let @" = system('xclip -o -selection clipboard')<CR>P
   nnoremap <silent> <Leader>c Vy:call system('xclip -selection clipboard', getreg())<CR>
   nnoremap <silent> <Leader>h :set hlsearch!<CR>
@@ -109,7 +109,7 @@ function s:patch_matchparen()
 endfunction
 
 function s:set_options()
-  let &grepprg = printf('%srg --sort=path --vimgrep --', s:git() ? 'git ls-files --exclude-standard \| xargs -r -d ''\n'' ' : '')
+  let &grepprg = printf('%srg --sort=path --vimgrep --', s:git() ? 'git ls-files \| xargs -r -d ''\n'' ' : '')
   set autoindent
   set directory=/var/tmp//
   set expandtab
@@ -136,7 +136,7 @@ function s:set_options()
 endfunction
 
 function s:update_path()
-  let &path = join([''] + (s:git() ? uniq(sort(map(systemlist('git ls-files --exclude-standard'), {_, path -> path =~ '/' ? substitute(path, '/[^/]*$', '', '') : ''}))) : map(filter(globpath(',', '{.,}*/', 1, 1), {_, path -> path !~# '^\(\.\.\|\.git\|dist\|node_modules\)/$'}), {_, path -> printf('%s**', path)})), ',')
+  let &path = join([''] + (s:git() ? uniq(sort(map(systemlist('git ls-files'), {_, path -> path =~ '/' ? substitute(path, '/[^/]*$', '', '') : ''}))) : map(filter(globpath(',', '{.,}*/', 1, 1), {_, path -> path !~# '^\(\.\.\|\.git\|dist\|node_modules\)/$'}), {_, path -> printf('%s**', path)})), ',')
 endfunction
 
 call s:main()
