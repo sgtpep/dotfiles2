@@ -11,7 +11,7 @@ alias ls='ls -h'
 alias mv='mv -i'
 alias pngquant='pngquant -f --ext=.png'
 alias rclone='aws rclone'
-alias rg='paginate rg -p'
+alias rg='paginate rg -p --sort=path'
 alias rm='rm -I'
 alias sxiv='sxiv -r'
 alias vi=vim
