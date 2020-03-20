@@ -109,11 +109,11 @@ function s:patch_matchparen()
 endfunction
 
 function s:set_options()
-  let &grepprg = printf('%srg --sort=path --vimgrep --', s:git() ? 'git ls-files \| xargs -r -d ''\n'' ' : '')
   set autoindent
   set directory=/var/tmp//
   set expandtab
   set grepformat=%f:%l:%c:%m
+  set grepprg=rg\ --sort=path\ --vimgrep\ --
   set ignorecase
   set noruler
   set nostartofline
