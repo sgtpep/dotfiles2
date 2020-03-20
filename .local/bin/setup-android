@@ -19,7 +19,9 @@ function change-settings {
     [icon_blacklist]=headset,rotate,volume
     [sysui_qs_tiles]=wifi,cell,airplane,flashlight
   )
-  declare -A system_settings=()
+  declare -A system_settings=(
+    [screen_brightness_mode]=0
+  )
   local commands=()
   local namespace
   for namespace in global secure system; do
@@ -41,6 +43,8 @@ function configure-camera {
 function configure-contacts {
   run-package com.google.android.contacts
   instruction 'Skip'
+  package-settings "$package"
+  instruction 'Notifications, Google Play services availability'
 }
 
 function configure-data-warning {
@@ -149,7 +153,7 @@ function main {
 }
 
 function package-settings {
-  am start -a android.settings.APPLICATION_DETAILS_SETTINGS -d package:"$1" &> /dev/null
+  am start -a android.settings.APPLICATION_DETAILS_SETTINGS -d package:"$1" &> /dev/null || :
 }
 
 function run-once {
@@ -331,7 +335,7 @@ function setup-slack {
 
 function uninstall-packages {
   local packages=(
-    com.google.android.apps.{magazines,tachyon,walletnfcrel}
+    com.google.android.apps.{tachyon,walletnfcrel}
     com.google.android.{calculator,keep,music,videos}
   )
   local installed_packages=$(comm -12 <(adb shell cmd package list packages | cut -d : -f 2 | sort) <(printf '%s\n' "${packages[@]}" | sort))
