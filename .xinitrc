@@ -4,7 +4,7 @@ xrdb ~/.Xresources
 [[ $(< /etc/os-release) != *=raspbian* ]] || raspbian=1
 path=/sys/class/dmi/id/product_name; [[ ! -f $path ]] || product=$(< "$path")
 [[ ${product-} != Parallels\ * ]] || parallels=1
-[[ ! -v parallels || $(xrandr) != *' 3360x2100+'* ]] || macbook=1
+[[ ! -v parallels || $(xrandr) != *' 2880x1800+'* ]] || macbook=1
 [[ ${product-} != VirtualBox ]] || virtualbox=1
 
 [[ ! -v macbook ]] || export GDK_SCALE=2 GDK_DPI_SCALE=0.5
