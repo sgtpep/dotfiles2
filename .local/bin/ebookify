@@ -60,9 +60,9 @@ function install-puppeteer {
   else
     local package=chromium
   fi
-  local version=chrome-$(dpkg -s "$package" | grep -Po '(?<=^Version: )[^.]+')
-  local package=puppeteer
-  grep -qs "\"$version\"" "$NODE_PATH"/"$package"/package.json || npm install -g --ignore-scripts "$package"@"$version" >&2
+  local package=puppeteer-core
+  local version=chrome-79 #$(dpkg -s "$package" | grep -Po '(?<=^Version: )[^.]+')
+  grep -qs "\"$version\"" "$NODE_PATH"/"$package"/package.json || npm install -g "$package"@"$version" >&2
 }
 
 declare -A javascript_enabled_hosts=(
@@ -124,7 +124,7 @@ function process-html {
   echo -n "Processing $1..." >&2
   local host=$(extract-host "$1")
   javascript_enabled=${javascript_enabled-${javascript_enabled_hosts[$host]-}} print_media=${print_media-${print_media_hosts[$host]-}} scale=${scale-${host_scales[$host]-1.375}} script=${script-${host_scripts[$host]-}} style=${style-${host_styles[$host]-}} styles_disabled=${styles_disabled-${styles_disabled_hosts[$host]-}} node - "$1" "$2" << \EOF
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
 
 (async () => {
   try {
