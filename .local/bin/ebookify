@@ -16,6 +16,10 @@ function confirm-upload {
   [[ $REPLY =~ ^[Yy]*$ ]]
 }
 
+function copy-article {
+  rsync -ahsz --progress "$@"
+}
+
 function deactivate-links {
   local string='/S /URI'
   sed -i "s|$string\b|$(printf "%${#string}s")|g" "$1"
@@ -26,7 +30,7 @@ function download-articles {
   local filename
   while IFS= read -r filename; do
     local article=$articles/$filename
-    scp personal:"$article" "$path"/documents/"$articles"/"$(sanitize-filename "${filename%.*}")".pdf
+    copy-article personal:"$article" "$path"/documents/"$articles"/"$(sanitize-filename "${filename%.*}")".pdf
     ssh personal xargs -d '\\n' rm <<< $article
   done < <(list-articles)
   unmount "$path"
@@ -264,7 +268,7 @@ function upload-article {
     echo "'$filename' already exists." >&2
     return 1
   else
-    scp "$1" personal:"$articles"/"$filename"
+    copy-article "$1" personal:"$articles"/"$filename"
   fi
 }
 
