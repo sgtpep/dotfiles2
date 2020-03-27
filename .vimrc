@@ -95,6 +95,7 @@ function s:main()
   call s:define_mappings()
   call s:enable_filetypes()
   call s:patch_matchparen()
+  call s:preserve_view()
   call s:set_options()
   call s:update_path()
 endfunction
@@ -106,6 +107,12 @@ function s:patch_matchparen()
     call writefile(map(readfile(printf('%s/plugin/%s', $VIMRUNTIME, fnamemodify(path, ':t'))), {_, line -> substitute(line, ' || (&t_Co .*\|\[c_lnum,[^]]*], ', '', '')}), path)
   endif
   highlight MatchParen term=underline
+endfunction
+
+function s:preserve_view()
+  autocmd BufWinEnter * silent! loadview
+  autocmd BufWinLeave * silent! mkview
+  set viewdir=/tmp
 endfunction
 
 function s:set_options()
