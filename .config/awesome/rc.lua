@@ -105,10 +105,10 @@ rules = {
 }
 
 function run_or_raise(name, command, rule, shell)
-  local clients = client.get()
-  local client = awful.client.iterate(function(client)
+  function matcher(client)
     return awful.rules.match(client, rule or { name = ('^%s$'):format(name) })
-  end, gears.math.cycle(#clients, (gears.table.hasitem(clients, client.focus) or 1) + 1))()
+  end
+  local client = awful.client.focus.history.get(awful.screen.focused(), matcher(client.focus) and 1 or 0, matcher)
   if client then
     client:jump_to()
   else
