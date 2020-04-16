@@ -1,7 +1,6 @@
 export CARGO_HOME=~/.cargo
 export EDITOR=vim
 export GEM_HOME=~/.gem
-export HUSKY_SKIP_HOOKS=1
 export LESS='-FRXi -j 3'
 export MANWIDTH=80
 export NODE_PATH=~/.npm/lib/node_modules

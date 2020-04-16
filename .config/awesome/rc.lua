@@ -105,10 +105,9 @@ rules = {
 }
 
 function run_or_raise(name, command, rule, shell)
-  function matcher(client)
+  local client = awful.client.focus.history.get(awful.screen.focused(), 0, function(client)
     return awful.rules.match(client, rule or { name = ('^%s$'):format(name) })
-  end
-  local client = awful.client.focus.history.get(awful.screen.focused(), matcher(client.focus) and 1 or 0, matcher)
+  end)
   if client then
     client:jump_to()
   else
