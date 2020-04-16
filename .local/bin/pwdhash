@@ -1,6 +1,8 @@
 #!/bin/bash
 set -eu
-unset DISPLAY
 set -- "$PYTHONUSERBASE"/bin/"${0##*/}" "$@"
-[[ -x $1 ]] || pip3 install pwdhash.py >&2
+if [[ ! -x $1 ]]; then
+  pip3 install pwdhash.py >&2
+  sed -i $'s/\\bsys\.stdout\.write(generated\\b.*/import subprocess; subprocess.run([\'xclip\', \'-selection\', \'clipboard\'], input=generated.encode(\'utf8\'))/' "$PYTHONUSERBASE"/lib/python*/site-packages/pwdhash.py
+fi
 exec "$@"

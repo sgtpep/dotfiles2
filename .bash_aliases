@@ -21,7 +21,3 @@ function paginate {
   "$@" |& less
   return "${PIPESTATUS[0]}"
 }
-
-function pwdhash {
-  command "${FUNCNAME[0]}" "$@" | tr -d '\n' | xclip -selection clipboard
-}
