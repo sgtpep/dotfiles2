@@ -6,5 +6,5 @@ else
   command=${0##*/}
 fi
 set -- /usr/bin/"$command" "$@"
-[[ -x $1 ]] || install-packages firefox-esr fonts-liberation2
+[[ -x $1 ]] || install-packages firefox-esr fonts-liberation2 webext-ublock-origin
 exec "$@"
