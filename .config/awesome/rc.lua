@@ -69,7 +69,7 @@ keys = {
   { { 'Control', 'Mod1' }, 'c', function() run_or_raise('chromium', 'pgrep \'^%s\\b\' > /dev/null || exec %q', { class = 'Chromium' }, true) end },
   { { 'Control', 'Mod1' }, 'd', function() run_or_raise('dictionary', 'x-terminal-emulator -e %q') end },
   { { 'Control', 'Mod1' }, 'e', function() run_or_raise('mutt', tmux_command) end },
-  { { 'Control', 'Mod1' }, 'f', function() run_or_raise('firefox', 'pgrep \'^%s\\b\' > /dev/null || exec %q', { class = 'Firefox' }, true) end },
+  { { 'Control', 'Mod1' }, 'f', function() local workarea = awful.screen.focused().workarea run_or_raise('firefox', ('pgrep \'^%%s\\b\' > /dev/null || exec %%q --width=%d --height=%d'):format(workarea.width, workarea.height), { class = 'Firefox' }, true) end },
   { { 'Control', 'Mod1' }, 'g', function() awful.spawn.with_shell('path=~/.urls; [[ -f $path ]] && uniq "$path"{,~} && rm "$path" && exec xargs -r -a "$path"~ -d \'\\n\' x-www-browser') end },
   { { 'Control', 'Mod1' }, 'q', function() run_or_raise('sshuttle', 'x-terminal-emulator -title %q -e bash -c \'%s -r personal -x danil.mobi --dns 0/0 |& grep -v DeprecationWarning\'') end },
   { { 'Control', 'Mod1' }, 'r', function() run_or_raise('launch', 'x-terminal-emulator -e %q') end },
