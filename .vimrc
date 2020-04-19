@@ -4,7 +4,7 @@ function s:configure_filetypes()
   autocmd FileType * let [&l:formatoptions, &l:shiftwidth, &l:softtabstop, &l:textwidth] = [&g:formatoptions, &g:shiftwidth, &g:softtabstop, &g:textwidth]
   autocmd FileType css nnoremap <silent> <Leader>a :%!postcss<CR>:update<CR>
   autocmd FileType mail if getline(0, '$') == [''] | startinsert | endif
-  autocmd FileType mail setlocal formatoptions+=w | let &l:textwidth = min([72, winwidth(0) - 1])
+  autocmd FileType mail setlocal formatoptions+=w textwidth=72
 endfunction
 
 function s:configure_netrw()

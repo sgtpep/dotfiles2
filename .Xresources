@@ -19,7 +19,7 @@ URxvt.font: xft:monospace:size=14
 URxvt.internalBorder: 0
 URxvt.iso14755: False
 URxvt.keysym.C-V: eval:paste_clipboard
-URxvt.letterSpace: -1
+URxvt.letterSpace: -2
 URxvt.lineSpace: 1
 URxvt.perl-ext-common: eval,selection-to-clipboard
 URxvt.pointerBlank: True
