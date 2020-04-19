@@ -73,7 +73,7 @@ keys = {
   { { 'Control', 'Mod1' }, 'g', function() awful.spawn.with_shell('path=~/.urls; [[ -f $path ]] && uniq "$path"{,~} && rm "$path" && exec xargs -r -a "$path"~ -d \'\\n\' x-www-browser') end },
   { { 'Control', 'Mod1' }, 'q', function() run_or_raise('sshuttle', 'x-terminal-emulator -title %q -e bash -c \'%s -r personal -x danil.mobi --dns 0/0 |& grep -v DeprecationWarning\'') end },
   { { 'Control', 'Mod1' }, 'r', function() run_or_raise('launch', 'x-terminal-emulator -e %q') end },
-  { { 'Control', 'Mod1' }, 's', function() run_or_raise('sync-all', 'x-terminal-emulator -title %q -e bash -c \'%s || read -s\'') end },
+  { { 'Control', 'Mod1' }, 's', function() run_or_raise('sync-all', 'x-terminal-emulator -title %q -e bash -c \'%s || read -s -n 1\'') end },
   { { 'Control', 'Mod1' }, 't', function() run_or_raise('tmux', 'x-terminal-emulator -e %q new-session -A -s %q') end },
   { { 'Control', 'Mod1' }, 'w', function() run_or_raise('notes', tmux_command) end },
   { { 'Control', 'Mod1' }, 'x', function() run_or_raise('calendar', 'x-terminal-emulator -title %q -e bash -c \'calendar; read -s -n 1\'') end },

@@ -7,4 +7,12 @@ if ls ~/.msmtpqueue/* &> /dev/null; then
   "$command"
 fi
 set -- "${@/#/default:}"
-exec mbsync ${CRON+-q} "${@--a}"
+mbsync ${CRON+-q} "${@--a}"
+for path in ~/mail/*; do
+  paths=("$path"/new/*)
+  if [[ -f ${paths[0]} ]]; then
+    echo "${path##*/}: ${#paths[@]}"
+    status=1
+  fi
+done
+exit "${status-0}"
