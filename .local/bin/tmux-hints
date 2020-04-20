@@ -30,14 +30,14 @@ function join-text {
   local line
   while IFS= read -r line; do
     echo -n "$line"
-    [[ $line != *[[:space:]]* ]] && ((${#line} >= $columns)) || echo
+    [[ ! ${line: -1} =~ [[:space:]] ]] && ((${#line} >= $columns)) || echo
   done <<< $1
 }
 
 function main {
   local text=$(read-text)
   local urls
-  mapfile -t urls < <(parse-urls "$text")
+  mapfile -t urls < <(parse-urls "$(join-text "$text")")
   if [[ ${urls[@]} ]]; then
     output-text "$(hintify-text "$text" "${#urls[@]}")"
     process-input "${urls[@]}"
@@ -50,11 +50,7 @@ function output-text {
 }
 
 function parse-urls {
-  if [[ ${1##*$'\n'} == *' -- ('*')' ]]; then
-    local text=$(join-text "$1")
-  else
-    local text=$1
-  fi
+  local text=$1
   while [[ $text =~ $regex ]]; do
     echo "${BASH_REMATCH[0]}"
     text=${text#*${BASH_REMATCH[0]}}
