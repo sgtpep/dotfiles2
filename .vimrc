@@ -59,20 +59,26 @@ function s:enable_filetypes()
 endfunction
 
 function s:format_code()
-  let output = filter(systemlist(printf('PATH=node_modules/.bin:$PATH prettier --cursor-offset=%d --stdin-filepath=%s', abs(line2byte(line('.'))) + col('.') - 2, expand('%')), getline(1, '$')), {_, line -> line !~# '^(node:'})
+  let rust = &filetype ==# 'rust'
+  let output = systemlist(rust ? 'rustfmt' : printf('PATH=node_modules/.bin:$PATH prettier --cursor-offset=%d --stdin-filepath=%s', abs(line2byte(line('.'))) + col('.') - 2, shellescape(expand('%'))), getline(1, '$'))
   if v:shell_error
+    let [output] = rust ? [output] : [output]
     echo join(output, "\n")
-    let match = matchlist(get(output, 0, ''), '(\(\d\+\):\(\d\+\))')
+    echo get(output, rust ? 1 : 0, '')
+    let match = matchlist(get(output, rust ? 1 : 0, ''), rust ? ':\(\d\+\):\(\d\+\)$' : '(\(\d\+\):\(\d\+\))$')
     if len(match)
       call cursor(match[1], match[2])
     endif
   else
-    if output[:-2] !=# getline(1, '$')
+    let [offset, output] = rust ? [-1, output] : [output[-1], output[:-2]]
+    if output !=# getline(1, '$')
       let view = winsaveview()
-      call setline(1, output[:-2])
-      silent! execute printf('%d,$delete _', len(output))
+      call setline(1, output)
+      silent! execute printf('%d,$delete _', len(output) + 1)
       call winrestview(view)
-      execute 'goto' output[-1] + 1
+      if offset != -1
+        execute 'goto' offset + 1
+      endif
     endif
   endif
   write
