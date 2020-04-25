@@ -74,8 +74,8 @@ function s:format_code()
       call winrestview(view)
       execute 'goto' output[-1] + 1
     endif
-    write
   endif
+  write
 endfunction
 
 function s:git()
