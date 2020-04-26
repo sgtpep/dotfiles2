@@ -255,25 +255,12 @@ EOF
 function setup-cups {
   install-packages cups
   sudo usermod -a -G lpadmin "$USER"
-  ! raspbian || setup-printer
 }
 
 function setup-debian {
   if ! raspbian; then
     configure-console-font
     configure-grub
-  fi
-}
-
-function setup-printer {
-  local name=HP_Ink_Tank_Wireless_410_series
-  if ! lpstat -p "$name" &>/dev/null; then
-    local url=$(sudo lpinfo -v | grep -o -m 1 "\bdnssd://${name//_/%20}.*" || :)
-    if [[ $url ]]; then
-      install-packages hplip
-      sudo lpadmin -m drv:///hpcups.drv/hp-ink_tank_wireless_410_series.ppd -o PageSize=A4 -p "$name" -v "$url" -E
-      sudo lpadmin -d "$name"
-    fi
   fi
 }
 
