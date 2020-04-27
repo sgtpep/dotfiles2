@@ -7,6 +7,9 @@ pager = perl -I /usr/share/doc/git/contrib/diff-highlight -MDiffHighlight -e 'Di
 [interactive]
 diffFilter = perl -I /usr/share/doc/git/contrib/diff-highlight -MDiffHighlight -e 'DiffHighlight::highlight_stdin()'
 
+[pager]
+status = true
+
 [pull]
 rebase = true
 
