@@ -35,9 +35,9 @@ function join-text {
 }
 
 function main {
-  local text=$(join-text "$(read-text)")
+  local text=$(read-text)
   local urls
-  mapfile -t urls < <(parse-urls "$text")
+  mapfile -t urls < <(parse-urls "$(join-text "$text")")
   if [[ ${urls[@]} ]]; then
     output-text "$(hintify-text "$text" "${#urls[@]}")"
     process-input "${urls[@]}"
