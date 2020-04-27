@@ -37,7 +37,7 @@ function join-text {
 function main {
   local text=$(read-text)
   local urls
-  mapfile -t urls < <(parse-urls "$(join-text "$text")")
+  mapfile -t urls < <(parse-urls "$text")
   if [[ ${urls[@]} ]]; then
     output-text "$(hintify-text "$text" "${#urls[@]}")"
     process-input "${urls[@]}"
@@ -50,7 +50,11 @@ function output-text {
 }
 
 function parse-urls {
-  local text=$1
+  if [[ ${1##*$'\n'} == *' -- ('*')' ]]; then
+    local text=$(join-text "$1")
+  else
+    local text=$1
+  fi
   while [[ $text =~ $regex ]]; do
     echo "${BASH_REMATCH[0]}"
     text=${text#*${BASH_REMATCH[0]}}
