@@ -18,3 +18,4 @@ user_pref("general.warnOnAboutConfig", false);
 user_pref("privacy.donottrackheader.enabled", true);
 user_pref("signon.rememberSignons", false);
 user_pref("toolkit.cosmeticAnimations.enabled", false);
+user_pref("toolkit.telemetry.reportingpolicy.firstRun", false);
