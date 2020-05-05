@@ -1,8 +1,10 @@
 function s:configure_filetypes()
   autocmd BufNewFile,BufRead *.ts,*.tsx setlocal filetype=javascript
   autocmd FileType * call s:define_comment_mappings()
+  autocmd FileType * let &l:formatoptions = &g:formatoptions
   autocmd FileType css nnoremap <silent> <Leader>a :%!postcss<CR>:update<CR>
-  autocmd FileType mail if getline(0, '$') == [''] | startinsert | endif | setlocal formatoptions+=w
+  autocmd FileType mail if getline(0, '$') == [''] | startinsert | endif
+  autocmd FileType mail setlocal formatoptions+=w
 endfunction
 
 function s:configure_netrw()
@@ -32,7 +34,7 @@ function s:define_leader_mappings()
   nnoremap <silent> <Leader>T :call system(<SID>git() ? 'git ls-files \| xargs -r -d ''\n'' ctags' : 'ctags -R')<CR>
   nnoremap <silent> <Leader>V :let @" = system('xclip -o -selection clipboard')<CR>P
   nnoremap <silent> <Leader>c Vy:call system('xclip -selection clipboard', getreg())<CR>
-  nnoremap <silent> <Leader>h :set hlsearch!<CR>
+  nnoremap <silent> <Leader>h :setlocal hlsearch!<CR>
   nnoremap <silent> <Leader>n :cnext<CR>
   nnoremap <silent> <Leader>p :cprevious<CR>
   nnoremap <silent> <Leader>r :call <SID>format_code()<CR>
