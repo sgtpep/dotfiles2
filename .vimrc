@@ -1,10 +1,10 @@
 function s:configure_filetypes()
   autocmd BufNewFile,BufRead *.ts,*.tsx setlocal filetype=javascript
   autocmd FileType * call s:define_comment_mappings()
-  autocmd FileType * let &l:formatoptions = &g:formatoptions
+  autocmd FileType * let [&l:formatoptions, &l:textwidth] = [&g:formatoptions, &g:textwidth]
   autocmd FileType css nnoremap <silent> <Leader>a :%!postcss<CR>:update<CR>
   autocmd FileType mail if getline(0, '$') == [''] | startinsert | endif
-  autocmd FileType mail setlocal formatoptions+=w
+  autocmd FileType mail setlocal formatoptions+=w textwidth=72
 endfunction
 
 function s:configure_netrw()
