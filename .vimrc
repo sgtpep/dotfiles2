@@ -128,7 +128,6 @@ function s:set_options()
   set grepformat=%f:%l:%c:%m
   set grepprg=rg\ --sort=path\ --vimgrep\ --
   set ignorecase
-  set modeline
   set noruler
   set nostartofline
   set notitle
