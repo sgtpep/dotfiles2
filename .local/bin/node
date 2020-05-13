@@ -1,6 +1,5 @@
 #!/bin/bash
 set -eu
-version=12.14.0
 if [[ $(< /etc/os-release) == *=raspbian* ]]; then
   arch=armv7l
   checksum=bc7d4614a52782a65126fc1cc89c8490fc81eb317255b11e05b9e072e70f141d
@@ -8,13 +7,14 @@ else
   arch=x64
   checksum=82ae74ee0a204de7ebf7767eaa8e382518d9b49668dcbb5bd7fd003154445d1f
 fi
+version=12.14.0
 command=${0##*/}
 set -- "${NODE_PATH%/*/*}"/bin/"$command" "$@"
 if [[ ! -x $1 ]]; then
   url=https://nodejs.org/dist/v$version/node-v$version-linux-$arch.tar.xz
   path=/tmp/${url##*/}
   wget -O "$path" "$url" || rm -f "$path"
-  [[ $(sha256sum "$path") == $checksum\ * ]] || rm -f "$path"
+  sha256sum -c <<< "$checksum $path"
   directory=${1%/*/*}
   mkdir -p "$directory"
   tar -x -C "$directory" -f "$path" --strip-components=1
