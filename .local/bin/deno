@@ -1,0 +1,16 @@
+#!/bin/bash
+set -eu
+checksum=6158af25218377105ec3538eaed2d0fd73ebbf70be70e543027cb3f293ef762a
+version=1.0.0
+command=${0##*/}
+set -- "$DENO_HOME"/bin/"$command" "$@"
+if [[ ! -x $1 ]]; then
+  url=https://github.com/denoland/deno/releases/download/v$version/deno-x86_64-unknown-linux-gnu.zip
+  path=/tmp/${url##*/}
+  wget -O "$path" "$url" || rm -f "$path"
+  sha256sum -c <<< "$checksum $path"
+  directory=${1%/*}
+  mkdir -p "$directory"
+  unzip "$path" deno -d "$directory"
+fi
+exec "$@"
