@@ -7,7 +7,7 @@ path=/sys/class/dmi/id/product_name; [[ ! -f $path ]] || product=$(< "$path")
 [[ ! -v parallels || $(xrandr) != *' 2880x1800+'* ]] || macbook=1
 [[ ${product-} != VirtualBox ]] || virtualbox=1
 
-[[ ! -v macbook ]] || export GDK_SCALE=2 GDK_DPI_SCALE=0.5
+[[ ! -v macbook ]] || export GDK_SCALE=2 GDK_DPI_SCALE=0.5 PATH=~/google-cloud-sdk/bin:$PATH
 [[ ! -v macbook ]] || xrdb -merge <<< 'Xft.dpi: 192'
 [[ ! -v parallels && ! -v virtualbox ]] || { pactl set-sink-mute 0 no; pactl set-sink-volume 0 100%; } &
 [[ ! -v parallels ]] || { setxkbmap -option altwin:swap_alt_win,lv3:rwin_switch; xmodmap ~/.Xmodmap-"$([[ -v macbook ]] && echo macbook || echo parallels)"; } &
