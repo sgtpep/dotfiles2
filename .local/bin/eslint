@@ -1,0 +1,5 @@
+#!/bin/bash
+set -eu
+set -- "${NODE_PATH%/*/*}"/bin/"${0##*/}" "$@"
+[[ -x $1 ]] || eval npm install -g @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint typescript
+exec "$@"
