@@ -136,16 +136,11 @@ function s:set_options()
   set smartcase
   set smartindent
   set softtabstop=2
-  set suffixesadd=.js
   set t_Co=0
   set undodir=/tmp
   set undofile
   set wildignorecase
   set wildmode=list:longest,list:full
-  if filereadable('tsconfig.json')
-    set suffixes+=.js,.jsx
-    set suffixesadd=.ts,.tsx
-  endif
 endfunction
 
 function s:update_path()
