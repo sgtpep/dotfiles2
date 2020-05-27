@@ -38,7 +38,6 @@ function s:define_leader_mappings()
   nnoremap <silent> <Leader>n :cnext<CR>
   nnoremap <silent> <Leader>p :cprevious<CR>
   nnoremap <silent> <Leader>r :call <SID>format_code()<CR>
-  nnoremap <silent> <Leader>t :find todo<CR>
   nnoremap <silent> <Leader>v :let @" = system('xclip -o -selection clipboard')<CR>p
   nnoremap <silent> <Leader>w :write<CR>
   nnoremap <silent> <Leader>x Vx:call system('xclip -selection clipboard', getreg())<CR>
