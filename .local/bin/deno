@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eu
-checksum=6158af25218377105ec3538eaed2d0fd73ebbf70be70e543027cb3f293ef762a
-version=1.0.0
+checksum=7705fd832a05b2a2d5fc1e5bce6a9009ef295217103ddb7139aaafad8986c458
+version=1.0.2
 command=${0##*/}
 set -- "$DENO_HOME"/bin/"$command" "$@"
 if [[ ! -x $1 ]]; then
