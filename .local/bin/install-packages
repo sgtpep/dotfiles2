@@ -29,7 +29,6 @@ declare -A commands=(
   [udisksctl]=udisks2
   [unrar]=unrar-free
   [urxvt]=rxvt-unicode
-  [xclipboard]=x11-apps
   [xev]=x11-utils
   [xmodmap]=x11-xserver-utils
   [xprop]=x11-utils

@@ -99,7 +99,6 @@ function raspbian()
 end
 
 rules = {
-  { { class = 'XClipboard' }, { hidden = true } },
   { { name = 'Event Tester' }, { floating = true } },
   { { type = 'dialog' }, { callback = function(client) awful.placement.centered(client) end, maximized = raspbian() and true or nil } },
 }
