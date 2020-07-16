@@ -176,9 +176,9 @@ function setup-tasks {
   local mail='mail -E -a "Date: $(date -R)" -s'
   sudo tee /etc/cron.d/"$command" > /dev/null << EOF
 PATH=/usr/bin:/bin:$HOME/.local/bin
-0 5 * * * $USER $command today | $mail Today $USER
-0 5 * * * $USER $command tomorrow | $mail Tomorrow $USER
-0 5 * * 0 $USER $command | $mail Week $USER
+0 5 * * * $USER $command today | $mail Today "\$LOGNAME"
+0 5 * * * $USER $command tomorrow | $mail Tomorrow "\$LOGNAME"
+0 5 * * 0 $USER $command | $mail Week "\$LOGNAME"
 EOF
 }
 
