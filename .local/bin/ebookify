@@ -62,7 +62,7 @@ function install-puppeteer {
   fi
   local package=puppeteer-core
   local version=chrome-79 #$(dpkg -s "$package" | grep -Po '(?<=^Version: )[^.]+')
-  grep -qs "\"$version\"" "$NODE_PATH"/"$package"/package.json || npm install -g "$package"@"$version" >&2
+  grep -qs "\"$version\"" "$NPM_CONFIG_PREFIX"/lib/node_modules/"$package"/package.json || npm install -g "$package"@"$version" >&2
 }
 
 declare -A javascript_enabled_hosts=(

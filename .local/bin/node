@@ -1,24 +1,13 @@
 #!/bin/bash
-set -eu
-if [[ $(< /etc/os-release) == *=raspbian* ]]; then
-  arch=armv7l
-  checksum=bc7d4614a52782a65126fc1cc89c8490fc81eb317255b11e05b9e072e70f141d
-else
-  arch=x64
-  checksum=82ae74ee0a204de7ebf7767eaa8e382518d9b49668dcbb5bd7fd003154445d1f
-fi
-version=12.14.0
-command=${0##*/}
-set -- "${NODE_PATH%/*/*}"/bin/"$command" "$@"
+set -eux
+set -- "$NPM_CONFIG_PREFIX"/bin/"${0##*/}" "$@"
 if [[ ! -x $1 ]]; then
-  url=https://nodejs.org/dist/v$version/node-v$version-linux-$arch.tar.xz
+  arch=$(arch)
+  version=12.0.0
+  url=https://nodejs.org/dist/v$version/node-v$version-linux-${arch/x86_64/x64}.tar.xz
   path=/tmp/${url##*/}
   wget -O "$path" "$url" || rm -f "$path"
-  sha256sum -c <<< "$checksum $path"
-  directory=${1%/*/*}
-  mkdir -p "$directory"
-  tar -x -C "$directory" -f "$path" --strip-components=1
-  npm install -fg node@lts
-  npm install -g npm
+  tar -x -C "${path%/*}" -f "$path"
+  PATH=${path%.*.*}/bin:$PATH npm install -g node@lts npm
 fi
 exec "$@"
