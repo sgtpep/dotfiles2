@@ -1,5 +1,0 @@
-#!/bin/bash
-set -eu
-set -- "$NPM_CONFIG_PREFIX"/bin/"${0##*/}" "$@"
-[[ -x $1 ]] || eval npm install -g @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint typescript
-exec "$@"

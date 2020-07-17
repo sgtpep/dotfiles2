@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eux
+set -eu
 set -- "$NPM_CONFIG_PREFIX"/bin/"${0##*/}" "$@"
 if [[ ! -x $1 ]]; then
   arch=$(arch)
