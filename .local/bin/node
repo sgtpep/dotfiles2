@@ -3,11 +3,11 @@ set -eu
 set -- "$NPM_CONFIG_PREFIX"/bin/"${0##*/}" "$@"
 if [[ ! -x $1 ]]; then
   arch=$(arch)
-  version=12.0.0
+  version=14.0.0
   url=https://nodejs.org/dist/v$version/node-v$version-linux-${arch/x86_64/x64}.tar.xz
   path=/tmp/${url##*/}
   wget -O "$path" "$url" || rm -f "$path"
   tar -x -C "${path%/*}" -f "$path"
-  PATH=${path%.*.*}/bin:$PATH npm install -g node@lts npm
+  PATH=${path%.*.*}/bin:$PATH npm install -g node npm
 fi
 exec "$@"
