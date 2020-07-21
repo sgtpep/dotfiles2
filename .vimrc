@@ -135,7 +135,7 @@ function s:set_options()
   set smartcase
   set smartindent
   set softtabstop=2
-  set suffixes+=.js,.jsx
+  set suffixes+=,,
   set suffixesadd=.ts,.tsx
   set t_Co=0
   set undodir=/tmp
