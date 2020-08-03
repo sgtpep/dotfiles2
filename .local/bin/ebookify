@@ -60,8 +60,8 @@ function install-puppeteer {
   else
     local package=chromium
   fi
+  local version=chrome-$(dpkg -s "$package" | grep -Po '(?<=^Version: )[^.]+')
   local package=puppeteer-core
-  local version=chrome-79 #$(dpkg -s "$package" | grep -Po '(?<=^Version: )[^.]+')
   grep -qs "\"$version\"" "$NPM_CONFIG_PREFIX"/lib/node_modules/"$package"/package.json || npm install -g "$package"@"$version" >&2
 }
 
