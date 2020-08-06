@@ -14,7 +14,7 @@ function generate-label {
 function hintify-text {
   local index=0
   local text=$1
-  while [[ $text =~ $regex ]]; do
+  while [[ $text =~ $pattern ]]; do
     local label=$(generate-label "$index" "$2")
     printf "%s\e[7m%s\e[m%s" "${text%%${BASH_REMATCH[0]}*}" "$label" "${BASH_REMATCH[0]:${#label}}"
     ((index += 1))
@@ -55,11 +55,13 @@ function parse-urls {
   else
     local text=$1
   fi
-  while [[ $text =~ $regex ]]; do
+  while [[ $text =~ $pattern ]]; do
     echo "${BASH_REMATCH[0]}"
     text=${text#*${BASH_REMATCH[0]}}
   done
 }
+
+pattern='\bhttps?://[^[:space:]"]*[[:alnum:]/-]'
 
 function process-input {
   local count=$#
@@ -89,7 +91,5 @@ function read-text {
   echo "$(< "$path")"
   rm "$path"
 }
-
-regex='\bhttps?://[^[:space:]"]*[[:alnum:]/-]'
 
 [[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"
