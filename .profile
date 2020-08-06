@@ -4,6 +4,7 @@ export EDITOR=vim
 export GEM_HOME=~/.gem
 export LESS='-FRXi -j 3'
 export MANWIDTH=80
+export NODE_PATH=~/.npm/lib/node_modules
 export NO_COLOR=1
 export NPM_CONFIG_PREFIX=~/.npm
 export PYTHONUSERBASE=~/.pip
