@@ -194,7 +194,7 @@ function setup-ufw {
 
 function setup-unattended-upgrades {
   install-packages unattended-upgrades
-  sudo sed -i 's/^\/*\(Unattended-Upgrade::Automatic-Reboot "\).*\(";\)$/\1true\2/' /etc/apt/apt.conf.d/50unattended-upgrades
+  sudo sed -i 's/^\/*\(Unattended-Upgrade::Automatic-Reboot "\)[^"]*/\1true/' /etc/apt/apt.conf.d/50unattended-upgrades
 }
 
 function setup-user {
