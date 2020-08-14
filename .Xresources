@@ -18,9 +18,11 @@ URxvt.cutchars: '`"\'&()*,;<=>?@[]^{|}:'
 URxvt.font: xft:monospace:size=14
 URxvt.internalBorder: 0
 URxvt.iso14755: False
+URxvt.keysym.C-C: eval:selection_to_clipboard
+URxvt.keysym.C-M-v: eval:paste_primary
 URxvt.keysym.C-V: eval:paste_clipboard
 URxvt.letterSpace: -1
 URxvt.lineSpace: 1
-URxvt.perl-ext-common: eval,selection-to-clipboard
+URxvt.perl-ext-common: eval
 URxvt.pointerBlank: True
 URxvt.saveLines: 0
