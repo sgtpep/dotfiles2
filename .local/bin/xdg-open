@@ -16,6 +16,7 @@ else
     [audio/*]='mpv -- "$1"'
     [image/*]='sxiv -- "$1"'
     [image/svg]='x-www-browser -- "$1"'
+    [inode/directory]='x-terminal-emulator -e vifm -- "$1"'
     [text/html]='x-www-browser -- "$1"'
     [text/plain]='x-terminal-emulator -e vim -- "$1"'
     [text/rtf]='libreoffice "$1"'
