@@ -7,6 +7,7 @@ user_pref("browser.pageActions.persistedActions", "{\"idsInUrlbar\":[],\"version
 user_pref("browser.safebrowsing.malware.enabled", false);
 user_pref("browser.safebrowsing.phishing.enabled", false);
 user_pref("browser.search.hiddenOneOffs", "Amazon.ca,Bing,Debian packages,Twitter,Wikipedia (en),eBay");
+user_pref("browser.slowStartup.notificationDisabled", true);
 user_pref("browser.startup.homepage", "about:blank");
 user_pref("browser.tabs.tabClipWidth", 1000000);
 user_pref("browser.tabs.warnOnClose", false);
