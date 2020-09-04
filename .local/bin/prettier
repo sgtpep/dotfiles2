@@ -1,5 +1,5 @@
 #!/bin/bash
 set -eu
 set -- "$NPM_CONFIG_PREFIX"/bin/"${0##*/}" "$@"
-[[ -x $1 ]] || eval npm install -g prettier "${VIM+2> /dev/null} >&2"
+[[ -x $1 ]] || eval npm install -g prettier{,-plugin-jsdoc} "${VIM+2> /dev/null} >&2"
 exec "$@"
