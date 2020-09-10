@@ -136,7 +136,7 @@ function s:set_options()
   set smartindent
   set softtabstop=2
   set suffixes+=,,
-  set suffixesadd=.ts,.tsx
+  set suffixesadd=.js,.ts,.tsx
   set t_Co=0
   set undodir=/tmp
   set undofile
