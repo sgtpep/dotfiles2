@@ -1,8 +1,0 @@
-#!/bin/bash
-set -eu
-if ! output=$(sync-notes 2>&1); then
-  echo "$output" >&2
-  failed=1
-fi
-sync-mail || failed=1
-[[ ! -v failed ]] || exit 1

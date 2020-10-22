@@ -1,9 +1,0 @@
-#!/bin/bash
-set -eu
-path=~/Downloads
-[[ -d $path ]] || mkdir "$path"
-[[ -d ~/mail/Inbox ]] || mbsync -a
-command=${0##*/}
-set -- /usr/bin/"$command" "$@"
-[[ -x $1 ]] || install-packages "$command"
-exec "$@"

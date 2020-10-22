@@ -1,7 +1,6 @@
 #!/bin/bash
 set -eu
 unmount -n
-install-packages gdisk
 sudo sgdisk -og "$1"
 sudo sgdisk -n 1:"$(sudo sgdisk -F "$1")":"$(sudo sgdisk -E "$1")" -t 1:0700 "$1"
 sleep 1
@@ -12,5 +11,4 @@ elif [[ $1 == *[[:digit:]] ]]; then
 else
   path=$1
 fi
-install-packages exfat-utils
 sudo mkfs.exfat "$path"1

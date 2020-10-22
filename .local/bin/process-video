@@ -3,7 +3,6 @@ set -eu
 . process-photo
 
 function convert-video {
-  install-packages ffmpeg
   if [[ $1 != *.mp4 ]] || ! ffprobe "$1" |& grep -q ' encoder '; then
     local path=${1%.*}~.mp4
     ffmpeg -y -i "$1" -vf 'scale=-2:min(ih\, 720)' "$path"

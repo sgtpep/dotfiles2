@@ -1,7 +1,0 @@
-#!/bin/bash
-set -eu
-format='%I:%M %p'
-printf "%(%F %a $format)T\n\n"
-TZ=Europe/Moscow printf "%($format)T MSK, "
-TZ=Europe/London printf "%($format)T LDN\n\n"
-exec ncal -b -A 1

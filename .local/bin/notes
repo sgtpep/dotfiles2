@@ -1,6 +1,3 @@
 #!/bin/bash
 set -eu
-path=~/notes
-[[ -d $path ]] || sync-notes
-cd "$path"
-exec vim "$@"
+exec vim --cmd 'cd ~/notes' "$@"

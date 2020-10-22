@@ -1,6 +1,0 @@
-#!/bin/bash
-set -eu
-command=${0##*/}
-set -- "$CARGO_HOME"/bin/"$command" "$@"
-[[ -x $1 ]] || curl -Sfs --proto =https --tlsv1.2 https://sh.rustup.rs | sh -s - -y --no-modify-path
-exec "$@"

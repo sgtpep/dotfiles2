@@ -1,8 +1,0 @@
-#!/bin/bash
-set -eu
-path=~/.password-store
-[[ -d $path ]] || git clone personal:repositories/pass.git "$path"
-command=${0##*/}
-set -- /usr/bin/"$command" "$@"
-[[ -x $1 ]] || install-packages "$command"
-exec "$@"

@@ -1,9 +1,0 @@
-#!/bin/bash
-set -eu
-path=/sys/class/dmi/id/product_name
-if [[ -f $path && $(< "$path") == Parallels\ * && -h ~/.config/chromium/SingletonLock ]]; then
-  command=chromium
-else
-  command=firefox
-fi
-exec "$command" "$@"

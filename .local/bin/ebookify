@@ -1,230 +1,14 @@
 #!/bin/bash
 set -eu
 
-function activate-window {
-  if [[ -v DISPLAY ]]; then
-    local command=(wmctrl -F -a "${0##*/}")
-    "${command[@]}" 2> /dev/null || "${command[@]}" || :
-  fi
-}
-
-articles=articles
-
-function confirm-upload {
-  activate-window
-  read -p "Upload '$1'? [Y/n] "
-  [[ $REPLY =~ ^[Yy]*$ ]]
-}
-
 function copy-article {
   rsync -ahsz --progress "$@"
 }
 
-function deactivate-links {
-  local string='/S /URI'
-  sed -i "s|$string\b|$(printf "%${#string}s")|g" "$1"
-}
-
-function download-articles {
-  local path=/media/$USER/Kindle
-  local filename
-  while IFS= read -r filename; do
-    local article=$articles/$filename
-    copy-article personal:"$article" "$path"/documents/"$articles"/"$(sanitize-filename "${filename%.*}")".pdf
-    ssh personal xargs -d '\\n' rm <<< $article
-  done < <(list-articles)
-  unmount "$path"
-}
-
-function extract-host {
-  local url=${1#*://}
-  local host=${url%%/*}
-  [[ $host != *.medium.com ]] || host=${host#*.}
-  echo "$host"
-}
-
-function extract-filename {
-  local url=${1%\?*}
-  local filename=${url##*/}
-  echo "${title//%20/ }"
-}
-
-function extract-pdf-title {
-  install-packages poppler-utils
-  pdfinfo "$1" | grep '^Title:' | sed 's/^[^:]*:\s*\(.*\)\s*$/\1/'
-}
-
-function install-puppeteer {
-  if [[ $(< /etc/os-release) == *=raspbian* ]]; then
-    local package=chromium-browser
-  else
-    local package=chromium
-  fi
-  local version=chrome-$(dpkg -s "$package" | grep -Po '(?<=^Version: )[^.]+')
-  local package=puppeteer-core
-  grep -qs "\"$version\"" "$NPM_CONFIG_PREFIX"/lib/node_modules/"$package"/package.json || npm install -g "$package"@"$version" >&2
-}
-
-declare -A javascript_enabled_hosts=(
-  [m.habr.com]=1
-  [warhead.su]=1
-  [www.theatlantic.com]=1
-)
-
-declare -A host_scales=()
-
-declare -A host_scripts=()
-
-declare -A host_styles=(
-  [m.habr.com]='.spoiler_text { display: block; opacity: 1 }'
-  [medium.com]='#root > div > :nth-child(2) { display: none }'
-)
+articles=articles
 
 function list-articles {
   ssh personal ls "$articles"
-}
-
-function main {
-  parse-options "$@"
-  shift "$((OPTIND - 1))"
-  if [[ $@ ]]; then
-    local url
-    for url; do
-      process-url "$url"
-    done
-  else
-    download-articles
-  fi
-}
-
-function parse-options {
-  while getopts c:dej:ps: option; do
-    if [[ $option == c ]]; then
-      style=$OPTARG
-    elif [[ $option == d ]]; then
-      styles_disabled=1
-    elif [[ $option == e ]]; then
-      javascript_enabled=1
-    elif [[ $option == j ]]; then
-      script=$OPTARG
-    elif [[ $option == p ]]; then
-      print_media=1
-    elif [[ $option == s ]]; then
-      scale=$OPTARG
-    else
-      return 1
-    fi
-  done
-}
-
-declare -A print_media_hosts=()
-
-function process-html {
-  install-puppeteer
-  echo -n "Processing $1..." >&2
-  local host=$(extract-host "$1")
-  javascript_enabled=${javascript_enabled-${javascript_enabled_hosts[$host]-}} print_media=${print_media-${print_media_hosts[$host]-}} scale=${scale-${host_scales[$host]-1.375}} script=${script-${host_scripts[$host]-}} style=${style-${host_styles[$host]-}} styles_disabled=${styles_disabled-${styles_disabled_hosts[$host]-}} node - "$1" "$2" << \EOF
-const puppeteer = require('puppeteer-core');
-
-(async () => {
-  try {
-    const scale = Number(process.env.scale);
-    const width = 560;
-    const browser = await puppeteer.launch({
-      defaultViewport: {
-        deviceScaleFactor: scale,
-        height: 100000,
-        width,
-      },
-      executablePath: 'chromium',
-    });
-    const page = await browser.newPage();
-    await page.emulateMedia(process.env.print_media ? 'print' : 'screen');
-    const javaScriptEnabled = Boolean(
-      process.env.javascript_enabled || process.env.style || process.env.styles_disabled
-    );
-    await page.setJavaScriptEnabled(javaScriptEnabled);
-    await page.setUserAgent(
-      'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.75 Mobile Safari/537.36'
-    );
-    await page.goto(process.argv[2], {
-      timeout: 60000,
-      waitUntil: 'networkidle2',
-    });
-    await page.evaluate((script, stylesDisabled) => {
-      [...document.querySelectorAll('*')].forEach(element => {
-        const style = getComputedStyle(element);
-        ['fixed', 'sticky'].includes(style.position) &&
-          element.setAttribute('style', 'display: none !important');
-        style.overflow === 'auto' && (element.style.overflow = 'visible');
-        style.whiteSpace === 'pre' && (element.style.whiteSpace = 'pre-wrap');
-      });
-      eval(script);
-      stylesDisabled && [...document.querySelectorAll('link[rel="stylesheet"], style')].forEach(element => element.remove())
-    }, process.env.script, process.env.styles_disabled);
-    javaScriptEnabled &&
-      (await page.addStyleTag({
-        content: `
-        table { border: 1px solid black }
-        td, th, tr { border: none }
-        td, th { display: block }
-        td:not(:last-child), th:not(:last-child) { border-bottom: 1px solid lightgrey }
-        tr:not(:last-child) { border-bottom: 1px solid black }
-        ${process.env.style}
-        ${process.env.styles_disabled && 'body { font: 1.5em / 1.5 sans-serif }'}
-      `.replace(/;| }/g, ' !important$&'),
-      }));
-    await page.pdf({
-      height: 735,
-      path: process.argv[3],
-      printBackground: true,
-      scale,
-      width,
-    });
-    console.log(await page.title());
-    await browser.close();
-  } catch (error) {
-    console.error();
-    console.error(error);
-    process.exit(1);
-  }
-})();
-EOF
-  echo >&2
-}
-
-function process-pdf {
-  wget -O "$2" "$1"
-  local title=$(extract-pdf-title "$2")
-  if [[ ! $title ]]; then
-    local filename=$(extract-filename "$1")
-    title=${filename%.pdf}
-  fi
-  echo "$title"
-}
-
-function process-url {
-  set -- "$(rewrite-url "$1")"
-  local path=$(temp-path "$1").pdf
-  if [[ ${1%\?*} == *.pdf ]]; then
-    local title=$(process-pdf "$1" "$path")
-  else
-    local title=$(process-html "$1" "$path")
-  fi
-  [[ -f $path ]]
-  deactivate-links "$path"
-  exiftool -q -overwrite_original -Author="$1" "$path"
-  mupdf "$path"
-  ! confirm-upload "$title" || upload-article "$path" "$title"
-  rm "$path"
-}
-
-function rewrite-url {
-  if [[ $1 == https://habr.com/* ]]; then
-    echo "${1/\/\////m.}"
-  else
-    echo "$1"
-  fi
 }
 
 function sanitize-filename {
@@ -246,7 +30,190 @@ s/\s*$//
 EOF
 }
 
+function download-articles {
+  local path=/media/$USER/Kindle
+  local filename
+  while IFS= read -r filename; do
+    local article=$articles/$filename
+    copy-article personal:"$article" "$path"/documents/"$articles"/"$(sanitize-filename "${filename%.*}")".pdf
+    ssh personal xargs -d '\\n' rm <<< $article
+  done < <(list-articles)
+  unmount "$path"
+}
+
+function parse-options {
+  while getopts c:dej:ps: option; do
+    if [[ $option == c ]]; then
+      style=$OPTARG
+    elif [[ $option == d ]]; then
+      styles_disabled=true
+    elif [[ $option == e ]]; then
+      javascript_enabled=true
+    elif [[ $option == j ]]; then
+      script=$OPTARG
+    elif [[ $option == p ]]; then
+      print_media=true
+    elif [[ $option == s ]]; then
+      scale=$OPTARG
+    else
+      return 1
+    fi
+  done
+}
+
+function confirm-upload {
+  read -p "Upload '$1'? [Y/n] "
+  [[ $REPLY =~ ^[Yy]*$ ]]
+}
+
+function deactivate-links {
+  local string='/S /URI'
+  sed -i "s|$string\b|$(printf "%${#string}s")|g" "$1"
+}
+
+function extract-host {
+  local url=${1#*://}
+  local host=${url%%/*}
+  [[ $host != *.medium.com ]] || host=${host#*.}
+  echo "$host"
+}
+
+declare -A host_scales=()
+
+declare -A host_scripts=()
+
+declare -A host_styles=(
+  [m.habr.com]='.spoiler_text { display: block; opacity: 1 }'
+  [medium.com]='#root > div > :nth-child(2) { display: none }'
+)
+
+function install-puppeteer {
+  local package=puppeteer-core
+  local version=chrome-$(dpkg -s chromium | grep -Po '(?<=^Version: )[^.]+')
+  grep -qs "\"$version\"" "$NPM_CONFIG_PREFIX"/lib/node_modules/"$package"/package.json || npm install -g "$package"@"$version" >&2
+}
+
+declare -A javascript_enabled_hosts=(
+  [m.habr.com]=true
+  [www.theatlantic.com]=true
+)
+
+declare -A print_media_hosts=()
+
 declare -A styles_disabled_hosts=()
+
+function process-html {
+  install-puppeteer
+  echo -n "Processing $1..." >&2
+  local host=$(extract-host "$1")
+  javascript_enabled=${javascript_enabled-${javascript_enabled_hosts[$host]-}} print_media=${print_media-${print_media_hosts[$host]-}} scale=${scale-${host_scales[$host]-1.375}} script=${script-${host_scripts[$host]-}} style=${style-${host_styles[$host]-}} styles_disabled=${styles_disabled-${styles_disabled_hosts[$host]-}} node - "$1" "$2" << \EOF
+const puppeteer = require("puppeteer-core");
+
+(async () => {
+  try {
+    const scale = Number(process.env.scale);
+    const width = 560;
+    const browser = await puppeteer.launch({
+      defaultViewport: {
+        deviceScaleFactor: scale,
+        height: 100000,
+        width,
+      },
+      executablePath: "chromium",
+    });
+    const page = await browser.newPage();
+    await page.emulateMedia(process.env.print_media ? "print" : "screen");
+    const javaScriptEnabled = Boolean(
+      process.env.javascript_enabled ||
+        process.env.style ||
+        process.env.styles_disabled
+    );
+    await page.setJavaScriptEnabled(javaScriptEnabled);
+    await page.setUserAgent(
+      "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.75 Mobile Safari/537.36"
+    );
+    await page.goto(process.argv[2], {
+      timeout: 60000,
+      waitUntil: "networkidle2",
+    });
+    await page.evaluate(
+      (script, stylesDisabled) => {
+        [...document.querySelectorAll("*")].forEach((element) => {
+          const style = getComputedStyle(element);
+          ["fixed", "sticky"].includes(style.position) &&
+            element.setAttribute("style", "display: none !important");
+          style.overflow === "auto" && (element.style.overflow = "visible");
+          style.whiteSpace === "pre" && (element.style.whiteSpace = "pre-wrap");
+        });
+        eval(script);
+        stylesDisabled &&
+          [
+            ...document.querySelectorAll('link[rel="stylesheet"], style'),
+          ].forEach((element) => element.remove());
+      },
+      process.env.script,
+      process.env.styles_disabled
+    );
+    javaScriptEnabled &&
+      (await page.addStyleTag({
+        content: `
+        table { border: 1px solid black }
+        td, th, tr { border: none }
+        td, th { display: block }
+        td:not(:last-child), th:not(:last-child) { border-bottom: 1px solid lightgrey }
+        tr:not(:last-child) { border-bottom: 1px solid black }
+        ${process.env.style}
+        ${
+          process.env.styles_disabled && "body { font: 1.5em / 1.5 sans-serif }"
+        }
+      `.replace(/;| }/g, " !important$&"),
+      }));
+    await page.pdf({
+      height: 735,
+      path: process.argv[3],
+      printBackground: true,
+      scale,
+      width,
+    });
+    console.log(await page.title());
+    await browser.close();
+  } catch (error) {
+    console.error();
+    console.error(error);
+    process.exit(1);
+  }
+})();
+EOF
+  echo >&2
+}
+
+function extract-filename {
+  local url=${1%\?*}
+  local filename=${url##*/}
+  echo "${title//%20/ }"
+}
+
+function extract-pdf-title {
+  pdfinfo "$1" | grep '^Title:' | sed 's/^[^:]*:\s*\(.*\)\s*$/\1/'
+}
+
+function process-pdf {
+  wget -O "$2" "$1"
+  local title=$(extract-pdf-title "$2")
+  if [[ ! $title ]]; then
+    local filename=$(extract-filename "$1")
+    title=${filename%.pdf}
+  fi
+  echo "$title"
+}
+
+function rewrite-url {
+  if [[ $1 == https://habr.com/* ]]; then
+    echo "${1/\/\////m.}"
+  else
+    echo "$1"
+  fi
+}
 
 function temp-path {
   local checksum=$(md5sum <<< $1)
@@ -269,6 +236,35 @@ function upload-article {
     return 1
   else
     copy-article "$1" personal:"$articles"/"$filename"
+  fi
+}
+
+function process-url {
+  set -- "$(rewrite-url "$1")"
+  local path=$(temp-path "$1").pdf
+  if [[ ${1%\?*} == *.pdf ]]; then
+    local title=$(process-pdf "$1" "$path")
+  else
+    local title=$(process-html "$1" "$path")
+  fi
+  [[ -f $path ]]
+  deactivate-links "$path"
+  exiftool -q -overwrite_original -Author="$1" "$path"
+  mupdf "$path"
+  ! confirm-upload "$title" || upload-article "$path" "$title"
+  rm "$path"
+}
+
+function main {
+  parse-options "$@"
+  shift "$((OPTIND - 1))"
+  if [[ $@ ]]; then
+    local url
+    for url; do
+      process-url "$url"
+    done
+  else
+    download-articles
   fi
 }
 

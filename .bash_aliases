@@ -1,23 +1,22 @@
-alias cal='ncal -b'
-alias copy='xclip -selection clipboard'
+alias copy='xsel -b'
 alias cp='cp -i'
 alias dd='dd bs=4M oflag=sync status=progress'
 alias df='df -h'
 alias du='du -h'
 alias free='free -h'
-alias grep='paginate grep'
-alias json='paginate python -m json.tool'
+alias gpgtar='GPG_TTY=$(tty) gpgtar'
+alias json='python3 -m json.tool'
 alias ls='ls -h'
 alias mv='mv -i'
-alias pngquant='pngquant -f --ext=.png'
-alias rclone='aws rclone'
-alias rg='paginate rg -p --sort=path'
 alias rm='rm -I'
-alias sxiv='sxiv -r'
-alias vi=vim
+alias serve='python3 -m http.server'
 alias watch='watch '
 
-function paginate {
-  "$@" |& less
+function rg {
+  command rg -p "$@" |& less
   return "${PIPESTATUS[0]}"
+}
+
+function sshuttle {
+  command sshuttle -r personal -x "$(ssh -G personal | grep -Po '(?<=^hostname ).+')" --dns 0/0 |& grep -v DeprecationWarning
 }

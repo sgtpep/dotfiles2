@@ -1,28 +1,22 @@
 #!/bin/bash
 set -eu
-[[ ${FLOCK-} == $0 ]] || FLOCK=$0 exec flock "$0" bash -"$-" "$0" "$@"
 path=~/notes
-if [[ -d $path ]]; then
-  command=(git -C "$path")
-  mapfile -t notes < <("${command[@]}" diff --name-only)
-  if [[ ${notes[@]} ]]; then
-    paths=()
-    for note in "${notes[@]}"; do
-      [[ ! $note =~ ^tasks($|-) ]] || paths+=("$path/$note")
-    done
-    [[ ! ${paths[@]} ]] || scp "${paths[@]}" personal:notes
-    "${command[@]}" add -A
-    "${command[@]}" commit -m 'Update notes'
-  fi
-  "${command[@]}" pull 2>&1 || status=$?
-  if [[ -f $path/.git/REBASE_HEAD ]]; then
-    "${command[@]}" add -A
-    "${command[@]}" rebase --continue
-  else
-    [[ ! -v status ]] || exit "$status"
-  fi
-  [[ ! ${notes[@]} ]] || "${command[@]}" push
-elif ! git clone personal:repositories/notes.git "$path"; then
-  rm -fr "$path"
-  exit 1
+command=(git -C "$path")
+mapfile -t notes < <("${command[@]}" diff --name-only)
+if [[ ${notes[@]} ]]; then
+  paths=()
+  for note in "${notes[@]}"; do
+    [[ ! $note =~ ^tasks($|-) ]] || paths+=("$path/$note")
+  done
+  [[ ! ${paths[@]} ]] || scp "${paths[@]}" personal:notes
+  "${command[@]}" add -A
+  "${command[@]}" commit -m 'Update notes'
 fi
+"${command[@]}" pull 2>&1 || status=$?
+if [[ -f $path/.git/REBASE_HEAD ]]; then
+  "${command[@]}" add -A
+  "${command[@]}" rebase --continue
+else
+  [[ ! -v status ]] || exit "$status"
+fi
+[[ ! ${notes[@]} ]] || "${command[@]}" push

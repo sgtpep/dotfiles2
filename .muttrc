@@ -1,8 +1,7 @@
+folder-hook . 'bind index <Space>s noop'
 folder-hook . 'bind index D noop'
-folder-hook . 'bind index,pager F flag-message'
+folder-hook . 'bind index,pager f forward-message'
 folder-hook . 'set index_format="%3C %Z %{%b %d} %-15.15L (%?l?%4l&%4c?) %s"'
-reply-hook . 'set include'
-send-hook . 'unmy_hdr Chat-Version'
 
 alternative_order text/plain text/html
 auto_view text/html
@@ -20,15 +19,14 @@ color status default default
 color tilde default default
 color tree default default
 folder-hook . 'push <first-entry>'
+folder-hook Feeds 'macro index <Space>s '\''<shell-escape>printf \\ec; mbsync -Z default:Feeds; printf \\ec<Return>'\'''
 folder-hook Feeds 'macro index D <first-entry><delete-pattern>~m-`echo "$(($(tput lines) - 2))"`<Return><sync-mailbox><Return>'
-folder-hook Feeds 'macro index,pager F <pipe-message>"grep -Po '\''(?<=\^X-RSS-URL: ).+'\'' >> ~/.urls"<Return>'
+folder-hook Feeds 'macro index,pager f <pipe-message>"grep -Po '\''(?<=\^X-RSS-URL: ).+'\'' >> ~/.urls"<Return>'
 folder-hook Feeds 'set index_format="%3C %-12.12L  %s"'
+folder-hook Inbox 'macro index <Space>s '\''<shell-escape>printf \\ec; mbsync -Z default:Inbox; printf \\ec<Return>'\'''
 macro attach s '<save-entry><kill-line>~/Downloads/<Return>y<Return>'
 macro index <Space>e '<change-folder>=Inbox<Return>'
 macro index <Space>f '<change-folder>=Feeds<Return>'
-macro index <Space>s '<shell-escape>printf \\ec; sync-mail; printf \\ec<Return>'
-reply-hook '~h '\''^Chat-Disposition-Notification-To:'\''' 'set noinclude'
-send-hook '!(~s '\''.'\'')' 'my_hdr Chat-Version: 1.0'
 set beep_new
 set fast_reply
 set folder=~/mail
@@ -45,7 +43,6 @@ set norecord
 set pager_stop
 set query_command='echo; sed -n '\''s/\(.*'\''%s'\''.*\) <\(.*\)>/\2\t\1/ip; s/\(.*\) <\(.*'\''%s'\''.*\)>/\2\t\1/ip'\'' ~/notes/emails'
 set rfc2047_parameters
-set sendmail=msmtp-enqueue
 set sleep_time=0
 set sort=date
 set spoolfile==Inbox

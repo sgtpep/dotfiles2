@@ -1,6 +1,3 @@
 #!/bin/bash
 set -eu
-command=${0##*/}
-set -- /usr/bin/"$command" -bfp "$@"
-[[ -x $1 ]] || install-packages "$command"
-exec "$@"
+exec /usr/bin/"${0##*/}" -bfp "$@"

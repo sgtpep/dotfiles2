@@ -11,6 +11,8 @@ function generate-label {
   done < <(printf "%0${#2}d" "$1")
 }
 
+pattern='\bhttps?://[^[:space:]"]*[[:alnum:]/-]'
+
 function hintify-text {
   local index=0
   local text=$1
@@ -21,6 +23,17 @@ function hintify-text {
     text=${text#*${BASH_REMATCH[0]}}
   done
   echo -n "$text"
+}
+
+function output-text {
+  printf '\e[?25l%s' "${1%$'\n'}"
+  tmux select-window -t url
+}
+
+function read-text {
+  local path=/tmp/${0##*/}
+  echo "$(< "$path")"
+  rm "$path"
 }
 
 function join-text {
@@ -36,21 +49,6 @@ function join-text {
   done <<< $1
 }
 
-function main {
-  local text=$(read-text)
-  local urls
-  mapfile -t urls < <(parse-urls "$text")
-  if [[ ${urls[@]} ]]; then
-    output-text "$(hintify-text "$text" "${#urls[@]}")"
-    process-input "${urls[@]}"
-  fi
-}
-
-function output-text {
-  printf '\e[?25l%s' "${1%$'\n'}"
-  tmux select-window -t url
-}
-
 function parse-urls {
   local text=$(join-text "$1")
   while [[ $text =~ $pattern ]]; do
@@ -59,11 +57,9 @@ function parse-urls {
   done
 }
 
-pattern='\bhttps?://[^[:space:]"]*[[:alnum:]/-]'
-
 function process-input {
-  local count=$#
   local number=
+  local count=$#
   local index
   for ((index=0; index < ${#count}; index++)); do
     local character
@@ -84,10 +80,14 @@ function process-input {
   fi
 }
 
-function read-text {
-  local path=/tmp/${0##*/}
-  echo "$(< "$path")"
-  rm "$path"
+function main {
+  local text=$(read-text)
+  local urls
+  mapfile -t urls < <(parse-urls "$text")
+  if [[ ${urls[@]} ]]; then
+    output-text "$(hintify-text "$text" "${#urls[@]}")"
+    process-input "${urls[@]}"
+  fi
 }
 
 [[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"

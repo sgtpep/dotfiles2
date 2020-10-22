@@ -4,7 +4,7 @@ SyncState *
 
 IMAPAccount default
   Host imap.fastmail.com
-  PassCmd "netrc-password imap.fastmail.com mail'@'danil.mobi"
+  PassCmd "grep -Po '(?<=^machine imap\.fastmail\.com login mail'@'danil\.mobi password ).+' ~/.netrc"
   SSLType IMAPS
   User "mail"@"danil.mobi"
 

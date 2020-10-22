@@ -11,7 +11,7 @@ elif [[ $1 == d ]]; then
 elif [[ $1 == g ]]; then
   xargs -d '\n' gimp
 elif [[ $1 == y ]]; then
-  head -c -1 | xclip -selection clipboard
+  head -c -1 | xsel -b
 elif [[ $1 == m ]]; then
   mapfile -t
   path=/tmp/sxiv-vifm

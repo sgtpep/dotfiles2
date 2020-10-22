@@ -1,10 +1,6 @@
 #!/bin/bash
 set -eu
 
-function change-extension {
-  rename.ul ."$2" ."$3" "$1"/*."$2" 2> /dev/null || :
-}
-
 function lowercase-extensions {
   local path
   for path; do
@@ -19,20 +15,6 @@ function normalize-extensions {
   local path
   for path; do
     [[ ! -f $path ]] || mv "$path" "${path%.*}".jpg
-  done
-}
-
-function main {
-  [[ $@ ]] || set -- .
-  local path
-  for path; do
-    [[ -d $path ]]
-    local directory=${path%/}
-    lowercase-extensions "$directory"/*.{JPEG,JPG}
-    normalize-extensions "$directory"/*.jpeg
-    rename-dated "$directory"/*.jpg
-    rename-whatsapp "$directory"/*.jpg
-    rotate-photos "$directory"/*.jpg
   done
 }
 
@@ -57,6 +39,20 @@ function rename-whatsapp {
 
 function rotate-photos {
   exiftran -ai "$@"
+}
+
+function main {
+  [[ $@ ]] || set -- .
+  local path
+  for path; do
+    [[ -d $path ]]
+    local directory=${path%/}
+    lowercase-extensions "$directory"/*.{JPEG,JPG}
+    normalize-extensions "$directory"/*.jpeg
+    rename-dated "$directory"/*.jpg
+    rename-whatsapp "$directory"/*.jpg
+    rotate-photos "$directory"/*.jpg
+  done
 }
 
 [[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"

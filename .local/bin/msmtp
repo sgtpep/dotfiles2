@@ -1,7 +1,0 @@
-#!/bin/bash
-set -eu
-netrc-password
-command=${0##*/}
-set -- /usr/bin/"$command" "$@"
-[[ -x $1 ]] || install-packages "$command"
-exec "$@"

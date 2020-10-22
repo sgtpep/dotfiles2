@@ -1,7 +1,0 @@
-#!/bin/bash
-set -eu
-path=~/mail
-[[ -d $path ]] || mkdir "$path"
-set -- /usr/bin/"${0##*/}" "$@"
-[[ -x $1 ]] || install-packages isync
-exec "$@"

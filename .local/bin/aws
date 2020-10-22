@@ -1,4 +1,0 @@
-#!/bin/bash
-set -eu
-eval "$(pass aws)"
-[[ ! -v AWS_ACCESS_KEY_ID || ! -v AWS_SECRET_ACCESS_KEY ]] || exec "$@"

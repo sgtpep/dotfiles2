@@ -1,237 +1,200 @@
 #!/bin/bash
 set -eu
 
-function append {
-  grep -Fqx "$2" "$1" || sudo tee -a "$1" > /dev/null <<< $2
-}
-
-boot_config=/boot/config.txt
+ssh_key_path=~/.ssh/id_rsa
 
 function clone-dotfiles {
   if [[ ! -d ~/.git ]]; then
-    install-packages git
-    "${dotfiles_git[@]}" init
-    if [[ -f ~/.ssh/id_rsa ]]; then
-      local url=git@$repository_hostname:$repository.git
+    cd ~
+    git init
+    local hostname=github.com
+    local repository=sgtpep/dotfiles
+    if [[ -f $ssh_key_path ]]; then
+      local url=git@$hostname:$repository.git
     else
-      local url=https://${repository%/*}@$repository_hostname/$repository.git
+      local url=https://${repository%/*}@$hostname/$repository.git
     fi
-    "${dotfiles_git[@]}" remote add origin "$url"
-    "${dotfiles_git[@]}" fetch
-    "${dotfiles_git[@]}" checkout -f master
-    "${dotfiles_git[@]}" ls-files | grep -Po '.+(?=\.orig$)' | xargs -r -I {} -d '\n' cp ~/{}{.orig,}
-    remove-license
+    git remote add origin "$url"
+    git fetch
+    git checkout -f master
+    git ls-files | grep -Po '.+(?=\.orig$)' | xargs -r -I {} -d '\n' cp ~/{}{.orig,}
+    cd - > /dev/null
   fi
 }
 
-function configure-console-font {
-  local path=/etc/default/console-setup
-  local checksum=$(md5sum "$path")
-  sudo sed -i 's/^\(FONTFACE="\)[^"]*/\1VGA/' "$path"
-  md5sum -c --status <<< $checksum || sudo setupcon --save-only
+function copy-netrc {
+  local path=~/.netrc
+  [[ -f $path ]] || scp personal:"${path#~/}" "$path"
 }
 
-function configure-display {
-  append "$boot_config" 'display_lcd_rotate=2'
-  append "$boot_config" 'dtoverlay=rpi-ft5406,touchscreen-inverted-x=1,touchscreen-inverted-y=1'
-  local path=~/.config/fontconfig/conf.d/50-display.conf
-  mkdir -p "${path%/*}"
-  cat > "$path" << \EOF
-<fontconfig>
-  <match>
-    <edit name="aspect">
-      <double>0.95</double>
-    </edit>
-    <edit name="rgba">
-      <const>bgr</const>
-    </edit>
-    <edit name="width">
-      <const>semicondensed</const>
-    </edit>
-  </match>
-</fontconfig>
-EOF
-}
+keys_path=/dev/disk/by-label/keys
 
-function configure-grub {
-  local path=/etc/default/grub
-  local checksum=$(md5sum "$path")
-  append "$path" 'GRUB_TIMEOUT_STYLE=hidden'
-  sudo sed -i -f - "$path" << \EOF
-s/^#*\(GRUB_TERMINAL=\).*/\1console/
-s/^\(GRUB_CMDLINE_LINUX_DEFAULT\)=.*/\1="quiet loglevel=3"/
-s/^\(GRUB_TIMEOUT=\).*/\11/
-EOF
-  md5sum -c --status <<< $checksum || sudo update-grub
-}
-
-function configure-hostname {
-  local hostname=localhost
-  [[ $(< /etc/hostname) == $hostname ]] || sudo hostnamectl set-hostname "$hostname"
-}
-
-function configure-inotify {
-  sudo tee /etc/sysctl.d/50-inotify.conf > /dev/null <<< 'fs.inotify.max_user_watches = 524288'
-}
-
-function configure-keyboard {
-  sudo sed -i -f - /etc/default/keyboard << \EOF
-s/^\(XKBLAYOUT="\)[^"]*/\1us,ru/
-s/^\(XKBOPTIONS="\)[^"]*/\1ctrl:nocaps,grp:rshift_toggle,lv3:ralt_switch,misc:typo/
-EOF
-}
-
-function configure-locale {
-  local locale=en_CA.UTF-8
-  sudo sed -i "s/^[^#]/# \0/; s/^#* *\(${locale/./\\.} \)/\1/" /etc/locale.gen
-  local path=/etc/default/locale
-  if [[ $(< "$path") != *=$locale ]]; then
-    sudo locale-gen
-    sudo tee "$path" > /dev/null <<< "LANG=$locale"
+function copy-ssh-key {
+  if [[ ! -f $ssh_key_path ]]; then
+    local mountpoint=/mnt
+    sudo mount "$keys_path" "$mountpoint"
+    cp "$mountpoint"/"${ssh_key_path##*/}" "$ssh_key_path"
+    sudo umount "$mountpoint"
+    chmod 600 "$ssh_key_path"
+    sed -i 's|\bhttps://.*\(@github\.com\)/|git\1:|' ~/.git/config
+    until ssh-keygen -p -N '' -f "$ssh_key_path"; do
+      :
+    done
   fi
 }
 
-function configure-nopasswd {
-  declare -A commands=(
-    [apt-install]='/usr/bin/apt -y install *'
-    [apt-update]='/usr/bin/apt update'
-    [poweroff]=$(raspbian || echo /usr)/sbin/poweroff
-    [screensaver]='/usr/bin/xss-lock -n screensaver true'
-    [sshuttle]='/usr/bin/env PYTHONPATH=/usr/lib/python3/dist-packages /usr/bin/python3 /usr/bin/sshuttle --method auto --firewall'
-  )
-  local name
-  for name in "${!commands[@]}"; do
-    sudo tee /etc/sudoers.d/"$name" > /dev/null <<< "%sudo ALL = NOPASSWD: SETENV: ${commands[$name]}"
-  done
-}
-
-function configure-timezone {
-  sudo timedatectl set-timezone "$timezone"
-}
-
-function confirm-reboot {
-  if [[ $TERM == linux && $XDG_VTNR == 1 ]]; then
-    read -p 'Reboot? [Y/n] '
-    [[ ! $REPLY =~ ^[Yy]*$ ]] || sudo reboot
+function import-gpg-key {
+  local path=~/.gnupg
+  if ! ls "$path"/private-keys-v1.d/*.key &> /dev/null; then
+    chmod 700 "$path"
+    local mountpoint=/mnt
+    sudo mount "$keys_path" "$mountpoint"
+    gpg --import "$mountpoint"/private-key.asc
+    sudo umount "$mountpoint"
+    gpg --import-ownertrust <<< "$(gpg -k --with-colons | grep -Po -m 1 '(?<=^fpr:::::::::)[^:]+'):6:"
   fi
-}
-
-function create-user {
-  if ! id "$username" &> /dev/null; then
-    local groups=$(groups "$raspbian_username")
-    groups=${groups#* : * }
-    sudo useradd -m -G "${groups// /,}" "$username"
-  fi
-  sudo grep -q "^$username:\\$" /etc/shadow || sudo passwd "$username"
-}
-
-function disable-bluetooth {
-  append "$boot_config" 'dtoverlay=disable-bt'
-}
-
-function disable-boot-delay {
-  append "$boot_config" 'boot_delay=0'
-  append "$boot_config" 'disable_splash=1'
-}
-
-function disable-dhcp-wait {
-  sudo rm -f /etc/systemd/system/dhcpcd.service.d/wait.conf
-}
-
-function disable-ipv6 {
-  sudo tee /etc/sysctl.d/50-disable-ipv6.conf > /dev/null <<< 'net.ipv6.conf.all.disable_ipv6 = 1'
-}
-
-function disable-transient-hostnames {
-  sudo sed -i 's/, host-name\b//' /etc/dhcp/dhclient.conf
-}
-
-dotfiles_git=(git -C ~)
-
-function enable-area {
-  local path=/etc/apt/sources.list.d/$1${2+-$2}.list
-  if [[ ! -f $path ]]; then
-    sudo tee "$path" > /dev/null <<< "deb http://deb.debian.org/debian $(lsb_release -cs)${2+-$2} $1"
-    sudo apt update -o APT::Get::List-Cleanup=0 -o Dir::Etc::sourcelist="$path" -o Dir::Etc::sourceparts=-
-  fi
-}
-
-function enable-autologin {
-  local path=/etc/systemd/system/getty@tty1.service.d
-  sudo mkdir -p "$path"
-  sudo tee "$path"/autologin.conf > /dev/null << EOF
-[Service]
-ExecStart=
-ExecStart=-$(raspbian || echo /usr)/sbin/agetty -a $USER %I
-EOF
-}
-
-function enable-fstrim {
-  sudo ln -fs /lib/systemd/system/fstrim.timer /etc/systemd/system/timers.target.wants
-}
-
-function fix-efi {
-  local path=/boot/efi/EFI
-  sudo mkdir -p "$path"/boot
-  sudo cp "$path"/{debian/grub,boot/boot}x64.efi
 }
 
 function install-packages {
-  update-apt
-  dpkg -s "${@%/*}" &> /dev/null || sudo apt -y install "$@"
+  local packages=(
+    acpi
+    acpid
+    adb
+    apcalc
+    aria2
+    awesome
+    bash{,-completion}
+    build-essential
+    chromium
+    clipit
+    curl
+    dbus-x11
+    exiftran
+    ffmpeg
+    firejail
+    fonts-liberation2
+    gimp
+    git
+    graphicsmagick-imagemagick-compat
+    htop
+    isync
+    libimage-exiftool-perl
+    libnotify-bin
+    libreoffice
+    mpv youtube-dl-
+    msmtp-mta
+    mupdf
+    mutt
+    ncdu
+    openssh-client
+    pass
+    poppler-utils
+    pulseaudio
+    pulsemixer
+    python3{,-pip}
+    rclone fuse
+    ripgrep
+    rsync
+    rxvt-unicode
+    sdcv
+    sqlite3
+    sshuttle
+    suckless-tools
+    sxiv
+    tmux
+    udisks2
+    unattended-upgrades
+    unzip
+    vifm
+    vim-gtk3
+    w3m
+    webext-ublock-origin
+    wget
+    xinit
+    xsel
+    xserver-xorg
+  )
+  local dpkg_packages=(${packages[@]/%*-})
+  dpkg -s "${dpkg_packages[@]}" &> /dev/null || sudo apt -y install "${packages[@]}"
 }
 
-function install-unattended-upgrades {
-  install-packages unattended-upgrades
-}
-
-function lock-user {
-  sudo grep -q "^$raspbian_username:!" /etc/shadow || sudo usermod -L -e 1970-01-02 "$raspbian_username"
-}
-
-function main {
-  if raspbian && [[ $USER == $raspbian_username ]]; then
-    create-user
-    run-script
-    lock-user
-  else
-    clone-dotfiles
-    setup-system
-    upgrade-system
-    confirm-reboot
+function clone-personal-repository {
+  if [[ ! -d $2 ]] && ! git clone personal:repositories/"$1".git "$2"; then
+    rm -fr "$2"
+    return 1
   fi
 }
 
-function raspbian {
-  [[ $(< /etc/os-release) == *=raspbian* ]]
+function clone-notes {
+  clone-personal-repository notes ~/notes
 }
 
-raspbian_username=pi
-
-function remove-license {
-  local path=~/LICENSE
-  rm -f "$path"
-  "${dotfiles_git[@]}" update-index --assume-unchanged "$path"
+function clone-password-store {
+  clone-personal-repository pass ~/.password-store
 }
 
-repository=sgtpep/dotfiles
-
-repository_hostname=github.com
-
-function run-script {
-  sudo -u "$username" bash -"$-" -c '. <(curl https://raw.githubusercontent.com/"$1"/master/.local/bin/setup-desktop) && main' -- "$repository"
+function download-dictionaries {
+  local url
+  for url in http://download.huzheng.org/lingvo/stardict-{ER,RE}-LingvoUniversal-2.4.2.tar.bz2; do
+    local filename=${url##*/}
+    local path=~/.stardict/dic/${filename%.*.*}
+    if [[ ! -d $path ]]; then
+      mkdir -p "$path"
+      if ! wget -O - "$url" | tar -jx -C "${path%/*}"; then
+        rm -fr "$path"
+        return 1
+      fi
+    fi
+  done
 }
 
-function schedule-syncing {
-  local command=sync-cron
-  sudo tee /etc/cron.d/"$command" > /dev/null << EOF
-PATH=/usr/bin:/bin:$HOME/.local/bin
-10 * * * * $USER $command
-EOF
+function install-node {
+  local prefix=~/.npm
+  if [[ ! -x $prefix/bin/node ]]; then
+    local arch=$(arch)
+    local version=14.0.0
+    local url=https://nodejs.org/dist/v$version/node-v$version-linux-${arch/x86_64/x64}.tar.xz
+    local path=/tmp/${url##*/}
+    wget -O "$path" "$url" || rm -f "$path"
+    tar -x -C "${path%/*}" -f "$path"
+    NPM_CONFIG_PREFIX=$prefix PATH=${path%.*.*}/bin:$PATH npm install -g node npm
+  fi
 }
 
-function setup-acpid {
-  install-packages acpid
+function install-pip-packages {
+  local packages=(
+    pwdhash.py
+    youtube_dl
+  )
+  local package
+  for package in "${packages[@]}"; do
+    local base=~/.pip
+    ls "$base"/lib/python3.*/site-packages/"$package" &> /dev/null || PYTHONUSERBASE=$base pip3 install "$package"
+  done
+  sed -i $'s/\\bsys\.stdout\.write(generated\\b.*/import subprocess; subprocess.run([\'xsel\', \'-b\'], input=generated.encode(\'utf8\'))/' "$base"/lib/python3.*/site-packages/pwdhash.py
+}
+
+function make-downloads {
+  mkdir -p ~/Downloads
+}
+
+function sync-mail {
+  local path=~/mail/Inbox
+  mkdir -p "${path%/*}"
+  [[ -d $path ]] || mbsync -a
+}
+
+function setup-home {
+  clone-notes
+  clone-password-store
+  download-dictionaries
+  install-node
+  install-pip-packages
+  make-downloads
+  sync-mail
+}
+
+function configure-acpid {
   sudo ln -fs /lib/systemd/system/acpid.service /etc/systemd/system/multi-user.target.wants
   sudo ln -fs /usr/share/doc/acpid/examples/default /etc/acpi/events
   local path=/etc/acpi/default.sh
@@ -252,109 +215,72 @@ EOF
   sudo chmod +x "$path"
 }
 
-function setup-cups {
-  install-packages cups
-  sudo usermod -a -G lpadmin "$USER"
+function configure-console-font {
+  local path=/etc/default/console-setup
+  local checksum=$(md5sum "$path")
+  sudo sed -i 's/^\(FONTFACE="\)[^"]*/\1VGA/' "$path"
+  md5sum -c --status <<< $checksum || sudo setupcon --save-only
 }
 
-function setup-debian {
-  if ! raspbian; then
-    configure-console-font
-    configure-grub
-  fi
-}
-
-function setup-raspbian {
-  if raspbian; then
-    configure-display
-    configure-hostname
-    configure-locale
-    configure-timezone
-    disable-bluetooth
-    disable-boot-delay
-    disable-dhcp-wait
-    setup-screensaver
-    silence-boot
-  fi
-}
-
-function setup-screensaver {
-  install-packages xss-lock
-  sudo tee /usr/sbin/screensaver > /dev/null << \EOF
-#!/bin/bash
-set -eu
-path=/sys/class/backlight/rpi_backlight/bl_power
-echo 1 > "$path"
-trap "echo 0 > $path" HUP
-sleep infinity &
-wait
+function configure-grub {
+  local path=/etc/default/grub
+  local checksum=$(md5sum "$path")
+  local line='GRUB_TIMEOUT_STYLE=hidden'
+  grep -Fqx "$line" "$path" || sudo tee -a "$path" > /dev/null <<< $line
+  sudo sed -i -f - "$path" << \EOF
+s/^#*\(GRUB_TERMINAL=\).*/\1console/
+s/^\(GRUB_CMDLINE_LINUX_DEFAULT\)=.*/\1="quiet loglevel=3"/
+s/^\(GRUB_TIMEOUT=\).*/\11/
 EOF
-  sudo chmod +x /usr/sbin/screensaver
+  md5sum -c --status <<< $checksum || sudo update-grub
+}
+
+function configure-inotify {
+  sudo tee /etc/sysctl.d/50-inotify.conf > /dev/null <<< 'fs.inotify.max_user_watches = 524288'
+}
+
+function disable-transient-hostname {
+  sudo sed -i 's/, host-name\b//' /etc/dhcp/dhclient.conf
+}
+
+function enable-autologin {
+  local path=/etc/systemd/system/getty@tty1.service.d
+  sudo mkdir -p "$path"
+  sudo tee "$path"/autologin.conf > /dev/null << EOF
+[Service]
+ExecStart=
+ExecStart=-/usr/sbin/agetty -a $USER %I
+EOF
+}
+
+function enable-fstrim {
+  sudo ln -fs /lib/systemd/system/fstrim.timer /etc/systemd/system/timers.target.wants
+}
+
+function schedule-mbsync {
+  local command=mbsync
+  sudo tee /etc/cron.d/"$command" > /dev/null <<< "@hourly $USER $command -Zaq"
 }
 
 function setup-system {
+  configure-acpid
+  configure-console-font
+  configure-grub
   configure-inotify
-  configure-keyboard
-  configure-nopasswd
-  disable-ipv6
-  disable-transient-hostnames
+  disable-transient-hostname
   enable-autologin
   enable-fstrim
-  install-unattended-upgrades
-  schedule-syncing
-  setup-acpid
-  setup-cups
-  setup-debian
-  setup-raspbian
-  setup-virtualbox
+  schedule-mbsync
 }
 
-function setup-virtualbox {
-  if virtualbox; then
-    fix-efi
-    setup-virtualbox-guest
-  fi
-}
-
-function setup-virtualbox-guest {
-  enable-area non-free
-  install-packages dkms ntp virtualbox-guest-additions-iso
-  if ! ls /opt/VBoxGuestAdditions-* &> /dev/null; then
-    sudo mount -o ro /usr/share/virtualbox/VBoxGuestAdditions.iso /mnt
-    sudo /mnt/VBoxLinuxAdditions.run || :
-    sudo umount /mnt
-  fi
-  sudo usermod -a -G vboxsf "$USER"
-}
-
-function silence-boot {
-  sudo sed -i -f - /boot/cmdline.txt << \EOF
-s/\b\(console=tty\)[^ ]*/\112/
-s/\( rootwait\)\b.*$/\1 loglevel=3 logo.nologo/
-EOF
-}
-
-timezone=America/Toronto
-
-function update-apt {
-  [[ ! $(find /var/cache/apt/pkgcache.bin -mtime +7 2>&1) ]] || sudo apt update
-}
-
-function upgrade-system {
-  local path=/var/lib/apt/upgraded
-  if [[ ! -f $path ]]; then
-    update-apt
-    sudo APT_LISTCHANGES_FRONTEND=none DEBIAN_FRONTEND=noninteractive apt -y -o Dpkg::Options::=--force-confnew full-upgrade
-    sudo apt -y autoremove --purge
-    sudo touch "$path"
-  fi
-}
-
-username=danil
-
-function virtualbox {
-  local path=/sys/class/dmi/id/product_name
-  [[ -f $path && $(< "$path") == VirtualBox ]]
+function main {
+  install-packages
+  setup-system
+  clone-dotfiles
+  copy-ssh-key
+  copy-netrc
+  import-gpg-key
+  setup-home
 }
 
 [[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"
