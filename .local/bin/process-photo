@@ -22,10 +22,25 @@ function rename-dated {
   exiftool '-FileName<CreateDate' -d '%Y-%m-%d-%H-%M-%S%%+c.%%le' "$@" || :
 }
 
+function rename-nokia {
+  local path
+  for path; do
+    if [[ -f $path && $path =~ /[^-]+_([[:digit:]]{4})([[:digit:]]{2})([[:digit:]]{2})_([[:digit:]]{2})([[:digit:]]{2})([[:digit:]]{2}).*\.[^.]+$ ]]; then
+      local destination
+      for destination in "${path%/*}"/"${BASH_REMATCH[1]}"-"${BASH_REMATCH[2]}"-"${BASH_REMATCH[3]}"-"${BASH_REMATCH[4]}"-"${BASH_REMATCH[5]}"-"${BASH_REMATCH[6]}"{,_{1..1000}}."${path##*.}"; do
+        if [[ ! -f $destination ]]; then
+          mv "$path" "$destination"
+          break
+        fi
+      done
+    fi
+  done
+}
+
 function rename-whatsapp {
   local path
   for path; do
-    if [[ $path =~ /[^-]+-([[:digit:]]{4})([[:digit:]]{2})([[:digit:]]{2})-WA0*[[:digit:]]*\.[^.]+$ ]]; then
+    if [[ -f $path && $path =~ /[^-]+-([[:digit:]]{4})([[:digit:]]{2})([[:digit:]]{2})-WA0*[[:digit:]]*\.[^.]+$ ]]; then
       local destination
       for destination in "${path%/*}"/"${BASH_REMATCH[1]}"-"${BASH_REMATCH[2]}"-"${BASH_REMATCH[3]}"{,_{1..1000}}."${path##*.}"; do
         if [[ ! -f $destination ]]; then
@@ -50,6 +65,7 @@ function main {
     lowercase-extensions "$directory"/*.{JPEG,JPG}
     normalize-extensions "$directory"/*.jpeg
     rename-dated "$directory"/*.jpg
+    rename-nokia "$directory"/*.jpg
     rename-whatsapp "$directory"/*.jpg
     rotate-photos "$directory"/*.jpg
   done
