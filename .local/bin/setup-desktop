@@ -259,7 +259,7 @@ function enable-fstrim {
 
 function schedule-mbsync {
   local command=mbsync
-  sudo tee /etc/cron.d/"$command" > /dev/null <<< "@hourly $USER $command -Zaq"
+  sudo tee /etc/cron.d/"$command" > /dev/null <<< "@hourly $USER $command -a"
 }
 
 function setup-system {
