@@ -38,6 +38,32 @@ function s:update_path()
   let &path = join([''] + uniq(sort(map(systemlist('git ls-files'), {_, path -> path =~ '/' ? substitute(path, '/[^/]*$', '', '') : ''}))), ',')
 endfunction
 
+function s:define_comment_mappings()
+  let [opening, closing] = split(empty(&commentstring) ? '#%s' : &commentstring, '%s', 1)
+  execute printf('noremap <buffer> <silent> <Leader>/ :normal 0i%s<C-O>$%s<CR>0', opening, closing)
+  execute printf('noremap <buffer> <silent> <Leader>? :normal $%s^%d"_x<CR>', repeat('"_x', strlen(closing)), strlen(opening))
+endfunction
+
+function s:configure_filetypes()
+  autocmd BufNewFile,BufRead *.ts,*.tsx setlocal filetype=javascript
+  autocmd FileType * call s:define_comment_mappings()
+  autocmd FileType * let [&l:formatoptions, &l:textwidth] = [&g:formatoptions, &g:textwidth]
+  autocmd FileType mail if getline(0, '$') == [''] | startinsert | endif
+  autocmd FileType mail setlocal formatoptions+=w textwidth=72
+endfunction
+
+function s:enable_filetypes()
+  filetype plugin on
+  call s:configure_filetypes()
+endfunction
+
+function s:define_command_line_mappings()
+  cnoremap <C-A> <Home>
+  cnoremap <C-E> <End>
+  cnoremap <Esc>b <S-Left>
+  cnoremap <Esc>f <S-Right>
+endfunction
+
 function s:define_leader_mappings()
   nnoremap <Leader> <Nop>
   nnoremap <Leader>E :edit %:h/
@@ -59,28 +85,10 @@ function s:define_leader_mappings()
   vnoremap <silent> <Leader>s :sort<CR>
 endfunction
 
-function s:define_comment_mappings()
-  let [opening, closing] = split(empty(&commentstring) ? '#%s' : &commentstring, '%s', 1)
-  execute printf('noremap <buffer> <silent> <Leader>/ :normal 0i%s<C-O>$%s<CR>0', opening, closing)
-  execute printf('noremap <buffer> <silent> <Leader>? :normal $%s^%d"_x<CR>', repeat('"_x', strlen(closing)), strlen(opening))
-endfunction
-
-function s:configure_filetypes()
-  autocmd BufNewFile,BufRead *.ts,*.tsx setlocal filetype=javascript
-  autocmd FileType * call s:define_comment_mappings()
-  autocmd FileType * let [&l:formatoptions, &l:textwidth] = [&g:formatoptions, &g:textwidth]
-  autocmd FileType mail if getline(0, '$') == [''] | startinsert | endif
-  autocmd FileType mail setlocal formatoptions+=w textwidth=72
-endfunction
-
-function s:enable_filetypes()
-  filetype plugin on
-  call s:configure_filetypes()
-endfunction
-
 function s:define_mappings()
   nnoremap Q <Nop>
   let g:mapleader = ' '
+  call s:define_command_line_mappings()
   call s:define_leader_mappings()
 endfunction
 
@@ -101,6 +109,7 @@ function s:set_options()
   set grepformat=%f:%l:%c:%m
   set grepprg=rg\ --vimgrep\ --
   set ignorecase
+  set iskeyword+=-
   set noruler
   set nostartofline
   set notitle
