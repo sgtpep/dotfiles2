@@ -1,5 +1,4 @@
 -S
 --hidden
 --ignore-file=/home/danil/.rgignore
---no-ignore-parent
 --sort=path
