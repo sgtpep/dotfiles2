@@ -107,14 +107,15 @@ end
 
 function set_keys()
   local terminal_command = 'x-terminal-emulator -title %q -e '
-  local terminal_interactive_command = terminal_command .. 'bash -i -c %q'
-  local terminal_tmux_command = terminal_command .. 'tmux new-session -Ad -s %q %q \\; set-option status off \\; attach-session -t %q'
+  local xon_command = 'sh -c \'stty -ixon && exec "$@"\' -- %q'
+  local terminal_tmux_command = terminal_command .. 'tmux new-session -Ad -s %q ' .. xon_command .. ' \\; set-option status off \\; attach-session -t %q'
+  local terminal_xon_command = terminal_command .. xon_command
   root.keys(gears.table.join(
     awful.key({ 'Control', 'Mod1' }, 'Tab', function()
       naughty.destroy_all_notifications()
     end),
     awful.key({ 'Control', 'Mod1' }, 'a', function()
-      run_or_raise('calc', terminal_interactive_command)
+      run_or_raise('calc', terminal_xon_command)
     end),
     awful.key({ 'Control', 'Mod1' }, 'b', function()
       run_or_raise('acpi', terminal_command .. 'bash -c \'%s; read -s -n 1\'')
@@ -123,7 +124,7 @@ function set_keys()
       run_or_raise('chromium', 'pgrep \'^%s$\' > /dev/null || exec %q', { class = 'Chromium' }, true)
     end),
     awful.key({ 'Control', 'Mod1' }, 'd', function()
-      run_or_raise('sdcv', terminal_interactive_command)
+      run_or_raise('sdcv', terminal_xon_command)
     end),
     awful.key({ 'Control', 'Mod1' }, 'e', function()
       run_or_raise('mutt', terminal_tmux_command)
