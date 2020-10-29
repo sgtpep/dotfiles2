@@ -1,5 +1,5 @@
 [alias]
-new-branch = !bash -c 'git stash && git checkout "$(git remote show origin | grep -Po \"(?<=HEAD branch: ).+\")" && git pull --stat && git checkout -b "$@" && git push -u origin "$(git rev-parse --abbrev-ref HEAD)" && ( ! git stash show &> /dev/null || git stash pop )' --
+new-branch = !bash -c '( [[ ! $(git status -s) ]] || git stash ) && git checkout "$(git remote show origin | grep -Po \"(?<=HEAD branch: ).+\")" && git pull --stat && git checkout -b "$@" && git push -u origin "$(git rev-parse --abbrev-ref HEAD)" && ( ! git stash show &> /dev/null || git stash pop )' --
 
 [core]
 pager = perl -I /usr/share/doc/git/contrib/diff-highlight -MDiffHighlight -e 'DiffHighlight::highlight_stdin()' | less
