@@ -107,7 +107,7 @@ function s:set_options()
   set directory=/var/tmp//
   set expandtab
   set grepformat=%f:%l:%c:%m
-  set grepprg=rg\ --vimgrep\ --
+  set grepprg=rg\ --vimgrep
   set ignorecase
   set iskeyword+=-
   set noruler
