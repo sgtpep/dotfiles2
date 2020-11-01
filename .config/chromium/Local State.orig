@@ -1,0 +1,5 @@
+{
+  "browser": {
+    "enabled_labs_experiments": ["omnibox-suggestion-transparency-options@2"]
+  }
+}
