@@ -1,5 +1,5 @@
 application/*; xdg-open %s 2> /dev/null >&2
 image/*; xdg-open %s 2> /dev/null >&2
-text/html; mv %s %s.html && xdg-open %s.html 2> /dev/null >&2
+text/html; mv %s %s.html && sh -c 'xdg-open "$1".html 2> /dev/null >&2 &' -- %s
 
 text/html; w3m -I %{charset} -T text/html -o display_link_number; copiousoutput
