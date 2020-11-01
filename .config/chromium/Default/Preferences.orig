@@ -127,6 +127,5 @@
   },
   "spellcheck": {
     "dictionaries": ["en-US", "ru"]
-  },
-  "translate_blocked_languages": ["en", "ru"]
+  }
 }
