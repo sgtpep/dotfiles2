@@ -4,7 +4,7 @@ if [[ $(< /sys/class/dmi/id/product_name) == Parallels\ * ]]; then
   if xmodmap | grep -qw 0xcc; then
     setxkbmap
   else
-    xmodmap - << \EOF
+    xmodmap - << \EOF || :
 clear Mod1
 keycode 133 = ISO_Level3_Shift NoSymbol ISO_Level3_Shift
 keycode 134 = Alt_L NoSymbol Alt_L
