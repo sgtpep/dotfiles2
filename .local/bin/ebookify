@@ -106,7 +106,7 @@ function process-html {
   install-puppeteer
   echo -n "Processing $1..." >&2
   local host=$(extract-host "$1")
-  javascript_enabled=${javascript_enabled-${javascript_enabled_hosts[$host]-}} print_media=${print_media-${print_media_hosts[$host]-}} scale=${scale-${host_scales[$host]-1.375}} script=${script-${host_scripts[$host]-}} style=${style-${host_styles[$host]-}} styles_disabled=${styles_disabled-${styles_disabled_hosts[$host]-}} node - "$1" "$2" << \EOF
+  NODE_PATH="$NPM_CONFIG_PREFIX"/lib/node_modules javascript_enabled=${javascript_enabled-${javascript_enabled_hosts[$host]-}} print_media=${print_media-${print_media_hosts[$host]-}} scale=${scale-${host_scales[$host]-1.375}} script=${script-${host_scripts[$host]-}} style=${style-${host_styles[$host]-}} styles_disabled=${styles_disabled-${styles_disabled_hosts[$host]-}} node - "$1" "$2" << \EOF
 const puppeteer = require("puppeteer-core");
 
 (async () => {
