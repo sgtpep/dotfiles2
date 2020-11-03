@@ -66,7 +66,6 @@ endfunction
 
 function s:define_leader_mappings()
   nnoremap <Leader> <Nop>
-  nnoremap <Leader>E :edit %:h/
   nnoremap <Leader>b :buffer<Space><C-D>
   nnoremap <Leader>e :edit<Space>
   nnoremap <Leader>f :find<Space>
@@ -102,6 +101,7 @@ function s:patch_matchparen()
 endfunction
 
 function s:set_options()
+  set autochdir
   set autoindent
   set clipboard=unnamedplus
   set directory=/var/tmp//
