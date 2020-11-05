@@ -1,4 +1,4 @@
 #!/bin/bash
 set -eu
 [[ $(< /sys/class/dmi/id/product_name) == Parallels\ * ]] || set -- --disable-notifications --force-prefers-reduced-motion "$@"
-exec /usr/bin/"${0##*/}" --disable-features=TranslateUI --animation-duration-scale=0.0 --disable-smooth-scrolling --ignore-gpu-blacklist "$@"
+exec /usr/bin/"${0##*/}" --disable-features=TranslateUI --animation-duration-scale=0.0 --disable-smooth-scrolling "$@"
