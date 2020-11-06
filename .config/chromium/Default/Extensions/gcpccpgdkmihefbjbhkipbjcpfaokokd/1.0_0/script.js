@@ -47,7 +47,7 @@ const listenHintsEvents = (hints, elements) => {
       if (input.length > Object.keys(elements)[0]?.length ?? 0) {
         hideHints();
       } else if (elements[input]) {
-        clickElement(elements[input], !event.shiftKey);
+        clickElement(elements[input], event.shiftKey);
         hideHints();
       }
     } else if (event.key !== "Shift") {
