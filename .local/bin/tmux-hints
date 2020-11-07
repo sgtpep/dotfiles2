@@ -18,9 +18,9 @@ function hintify-text {
   local text=$1
   while [[ $text =~ $pattern ]]; do
     local label=$(generate-label "$index" "$2")
-    printf "%s\e[7m%s\e[m%s" "${text%%${BASH_REMATCH[0]}*}" "$label" "${BASH_REMATCH[0]:${#label}}"
+    printf "%s\e[7m%s\e[m%s" "${text%%"${BASH_REMATCH[0]}"*}" "$label" "${BASH_REMATCH[0]:${#label}}"
     ((index += 1))
-    text=${text#*${BASH_REMATCH[0]}}
+    text=${text#*"${BASH_REMATCH[0]}"}
   done
   echo -n "$text"
 }
@@ -53,7 +53,7 @@ function parse-urls {
   local text=$(join-text "$1")
   while [[ $text =~ $pattern ]]; do
     echo "${BASH_REMATCH[0]}"
-    text=${text#*${BASH_REMATCH[0]}}
+    text=${text#*"${BASH_REMATCH[0]}"}
   done
 }
 
