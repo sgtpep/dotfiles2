@@ -11,8 +11,7 @@
     "preferences": {
       "InspectorView.splitViewState": "{\"vertical\":{\"size\":500}}",
       "currentDockState": "\"left\"",
-      "networkLogShowOverview": "false",
-      "shortcutPanelSwitch": "true"
+      "networkLogShowOverview": "false"
     }
   },
   "enable_do_not_track": true,
