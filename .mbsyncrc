@@ -17,5 +17,5 @@ MaildirStore local
 
 Channel default
   Master :remote:
-  Pattern Archive Feeds INBOX
+  Pattern Archive Feeds INBOX Spam
   Slave :local:

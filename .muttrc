@@ -25,10 +25,12 @@ folder-hook Feeds 'macro index D <first-entry><delete-pattern>~m-`echo "$(($(tpu
 folder-hook Feeds 'macro index,pager f <pipe-message>"grep -Po '\''(?<=\^X-RSS-URL: ).+'\'' >> ~/.urls"<Return>'
 folder-hook Feeds 'set index_format="%3C %-12.12L  %s"'
 folder-hook Inbox 'macro index <Space>s '\''<shell-escape>printf \\ec; mbsync -Z default:Inbox; printf \\ec<Return>'\'''
+folder-hook Spam 'macro index <Space>s '\''<shell-escape>printf \\ec; mbsync -Z default:Spam; printf \\ec<Return>'\'''
 macro attach s '<save-entry><kill-line>~/Downloads/<Return>y<Return>'
 macro index <Space>a '<change-folder>=Archive<Return>'
 macro index <Space>e '<change-folder>=Inbox<Return>'
 macro index <Space>f '<change-folder>=Feeds<Return>'
+macro index <Space>x '<change-folder>=Spam<Return>'
 macro index,pager A '<save-message>=Archive<Return><Return><shell-escape>printf \\ec; mbsync -Z default:Archive; printf \\ec<Return>'
 macro index,pager b '<view-attachments><search>text/html<Return><view-mailcap><exit><delete-message>'
 set beep_new
