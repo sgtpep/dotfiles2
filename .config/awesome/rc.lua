@@ -110,6 +110,9 @@ function set_keys()
   local terminal_tmux_command = terminal_command .. 'tmux new-session -Ad -s %q ' .. xon_command .. ' \\; set-option status off \\; attach-session -t %q'
   local terminal_xon_command = terminal_command .. xon_command
   root.keys(gears.table.join(
+    awful.key({ 'Control' }, 'F1', function()
+      awful.spawn('parallels-keyboard')
+    end),
     awful.key({ 'Control', 'Mod1' }, 'Tab', function()
       naughty.destroy_all_notifications()
     end),
