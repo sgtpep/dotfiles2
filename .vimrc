@@ -11,7 +11,8 @@ function s:configure_view()
 endfunction
 
 function s:format_code()
-  let output = systemlist(printf('PATH=node_modules/.bin:$PATH prettier --cursor-offset=%d --stdin-filepath=%s', abs(line2byte(line('.'))) + col('.') - 2, shellescape(expand('%'))), getline(1, '$'))
+  let path = 'node_modules/.bin/prettier'
+  let output = systemlist(printf('%s --cursor-offset=%d --stdin-filepath=%s', executable(path) ? path : 'npx prettier', abs(line2byte(line('.'))) + col('.') - 2, shellescape(expand('%'))), getline(1, '$'))
   if v:shell_error
     echo join(output, "\n")
     echo get(output, 0, '')
