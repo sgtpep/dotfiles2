@@ -32,6 +32,7 @@ macro index <Space>e '<change-folder>=Inbox<Return>'
 macro index <Space>f '<change-folder>=Feeds<Return>'
 macro index <Space>x '<change-folder>=Spam<Return>'
 macro index,pager A '<save-message>=Archive<Return><Return><shell-escape>printf \\ec; mbsync -Z default:Archive; printf \\ec<Return>'
+macro index,pager B '<view-attachments><search>text/html<Return><view-mailcap><exit>'
 macro index,pager b '<view-attachments><search>text/html<Return><view-mailcap><exit><delete-message>'
 set beep_new
 set fast_reply
