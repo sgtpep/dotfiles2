@@ -1,5 +1,5 @@
 application/*; xdg-open %s 2> /dev/null >&2
 image/*; xdg-open %s 2> /dev/null >&2
-text/html; mv %s %s.html && sh -c 'setsid xdg-open "$1".html 2> /dev/null >&2 &' -- %s
+text/html; path=%s.html && mv %s "$path" && sed -i '1i <!doctype html>' "$path" && sh -c 'setsid xdg-open "$1" 2> /dev/null >&2 &' -- "$path"
 
 text/html; w3m -I %{charset} -T text/html -o display_link_number; copiousoutput
