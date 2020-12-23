@@ -108,7 +108,7 @@ function install-packages {
     vifm
     vim-gtk3
     w3m
-    webext-ublock-origin-chromium.
+    webext-ublock-origin-chromium
     wget
     xinit
     xsel
