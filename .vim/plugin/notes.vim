@@ -8,7 +8,7 @@ if getcwd() ==# expand('~/notes')
     checktime
   endfunction
   nnoremap <silent> <Leader>T :edit tasks<CR>
-  nnoremap <silent> <Leader>W :edit job<CR>
   nnoremap <silent> <Leader>s :call <SID>sync()<CR>
   nnoremap <silent> <Leader>t :find todo<CR>
+  nnoremap <silent> <Leader>w :edit job<CR>
 endif

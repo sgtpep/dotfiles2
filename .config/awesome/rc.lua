@@ -129,7 +129,8 @@ function set_keys()
       run_or_raise('sdcv', terminal_xon_command)
     end),
     awful.key({ 'Control', 'Mod1' }, 'e', function()
-      run_or_raise('mutt', terminal_tmux_command)
+      local command = terminal_tmux_command:gsub(' exec ', ' while [ "$(stty size)" = 24\\ 80 ]]; do sleep 0.1; done &&%0')
+      run_or_raise('mutt', command)
     end),
     awful.key({ 'Control', 'Mod1' }, 'f', function()
       awful.spawn.with_shell('path=~/.urls && [[ -f $path ]] && uniq "$path"{,~} && rm "$path" && exec xargs -r -a "$path"~ -d \'\\n\' x-www-browser')

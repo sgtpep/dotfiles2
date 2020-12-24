@@ -8,7 +8,7 @@ elif [[ $1 =~ ^mailto: ]]; then
 else
   declare -A commands=(
     [application/msword]='libreoffice "$1"'
-    [application/pdf]='mupdf "$1"'
+    [application/pdf]='x-www-browser -- "$1"'
     [application/vnd.ms-excel]='libreoffice "$1"'
     [application/vnd.openxmlformats-officedocument.spreadsheetml.sheet]='libreoffice "$1"'
     [application/vnd.openxmlformats-officedocument.wordprocessingml.document]='libreoffice "$1"'

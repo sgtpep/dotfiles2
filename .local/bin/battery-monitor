@@ -5,7 +5,7 @@ if [[ $(pgrep -cf " ${BASH_SOURCE[0]}$") == 1 ]]; then
     [[ -f $path ]] || exit 1
   done
   while :; do
-    (($(< "$path") > 5)) || [[ $(< "${path%/*}"/status) == Charging ]] || x-terminal-emulator -T battery -e bash -"$-" -c $'read -s -p \'Low battery...\'' || :
+    (($(< "$path") > 5)) || [[ $(< "${path%/*}"/status) == Charging ]] || x-terminal-emulator -T "${0##*/}" -e bash -"$-" -c $'read -s -p \'Low battery...\'' || :
     sleep 3m
   done
 fi

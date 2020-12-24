@@ -1,7 +1,9 @@
-folder-hook . 'bind index <Space>s noop'
 folder-hook . 'bind index D noop'
 folder-hook . 'bind index,pager f forward-message'
 folder-hook . 'set index_format="%3C %Z %{%b %d} %-15.15L (%?l?%4l&%4c?) %s"'
+folder-hook . 'set trash==Trash'
+folder-hook . 'set sort=reverse-date'
+set `bash -eu -c 'while IFS= read -r line; do pattern="\bmachine\s+((imap|smtp)\..+)\s+login\s+(.+)\s+password\s+(.+)"; [[ ! $line =~ $pattern ]] || echo -n "from=${BASH_REMATCH[3]} my_${BASH_REMATCH[2]}_url=${BASH_REMATCH[2]}s://${BASH_REMATCH[3]}:${BASH_REMATCH[4]}@${BASH_REMATCH[1]} "; done < ~/.netrc'`
 
 alternative_order text/plain text/html
 auto_view text/html
@@ -19,41 +21,44 @@ color status default default
 color tilde default default
 color tree default default
 folder-hook . 'push <first-entry>'
-folder-hook Archive 'macro index <Space>s '\''<shell-escape>printf \\ec; mbsync -Z default:Archive; printf \\ec<Return>'\'''
-folder-hook Feeds 'macro index <Space>s '\''<shell-escape>printf \\ec; mbsync -Z default:Feeds; printf \\ec<Return>'\'''
 folder-hook Feeds 'macro index D <first-entry><delete-pattern>~m-`echo "$(($(tput lines) - 2))"`<Return><sync-mailbox><Return>'
 folder-hook Feeds 'macro index,pager f <pipe-message>"grep -Po '\''(?<=\^X-RSS-URL: ).+'\'' >> ~/.urls"<Return>'
 folder-hook Feeds 'set index_format="%3C %-12.12L  %s"'
-folder-hook Inbox 'macro index <Space>s '\''<shell-escape>printf \\ec; mbsync -Z default:Inbox; printf \\ec<Return>'\'''
-folder-hook Spam 'macro index <Space>s '\''<shell-escape>printf \\ec; mbsync -Z default:Spam; printf \\ec<Return>'\'''
+folder-hook Feeds 'set sort=date'
+folder-hook Feeds|Trash 'unset trash'
 macro attach s '<save-entry><kill-line>~/Downloads/<Return>y<Return>'
 macro index <Space>a '<change-folder>=Archive<Return>'
 macro index <Space>e '<change-folder>=Inbox<Return>'
 macro index <Space>f '<change-folder>=Feeds<Return>'
-macro index <Space>x '<change-folder>=Spam<Return>'
-macro index,pager A '<save-message>=Archive<Return><Return><shell-escape>printf \\ec; mbsync -Z default:Archive; printf \\ec<Return>'
+macro index <Space>s '<change-folder>=Spam<Return>'
+macro index,pager A '<save-message>=Archive<Return><Return>'
 macro index,pager B '<view-attachments><search>text/html<Return><view-mailcap><exit>'
 macro index,pager b '<view-attachments><search>text/html<Return><view-mailcap><exit><delete-message>'
 set beep_new
 set fast_reply
-set folder=~/mail
+set folder=$my_imap_url
 set forward_format=Fw:\ %s
-set from='Danil Semelenov <mail'@'danil.mobi>'
+set header_cache=~/.cache/mutt
+set imap_idle
 set include
+set mail_check=60
 set mime_forward
 set noabort_nosubject
 set noabort_unmodified
 set nohelp
 set nomarkers
-set nopostpone
-set norecord
 set pager_stop
+set postponed==Drafts
 set query_command='echo; sed -n '\''s/\(.*'\''%s'\''.*\) <\(.*\)>/\2\t\1/ip; s/\(.*\) <\(.*'\''%s'\''.*\)>/\2\t\1/ip'\'' ~/notes/emails'
+set record==Sent
 set rfc2047_parameters
 set sleep_time=0
-set sort=date
-set spoolfile==Inbox
+set smtp_url=$my_smtp_url
+set spoolfile==INBOX
 set text_flowed
 set timeout=10
 set wrap=80
+unset imap_passive
 unset wait_key
+
+mailboxes =INBOX

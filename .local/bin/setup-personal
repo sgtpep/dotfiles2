@@ -64,11 +64,21 @@ function download-dotfile {
 email=mail'@'danil.mobi
 
 function configure-msmtp {
-  sudo tee /etc/aliases > /dev/null <<< "default: $email"
-  local path=~/.msmtprc
-  download-dotfile "${path#~/}"
-  sudo ln -fs "$path" /etc/msmtprc
-  sudo ln -fs ~/.netrc /etc/netrc
+  local aliases_path=/etc/aliases
+  sudo tee "$aliases_path" > /dev/null <<< "default: $email"
+  local netrc_path=~/.netrc
+  cat > /etc/msmtprc << EOF
+account default
+  aliases $aliases_path
+  auth on
+  from $email
+  host $(grep -Po '(?<=\bmachine\s)\s*smtp\.[^\s]+' "$netrc_path")
+  port 587
+  tls on
+  tls_trust_file /etc/ssl/certs/ca-certificates.crt
+  user $email
+EOF
+  sudo ln -fs "$netrc_path" /etc/netrc
 }
 
 function configure-ufw {
@@ -88,7 +98,7 @@ function schedule-rss2email {
   local command=r2e
   sudo tee /etc/cron.d/"$command" > /dev/null << EOF
 0 */3 * * * $USER $command run > /dev/null 2>&1
-0 1 * * 0 $USER $command run 2>&1 | grep -v '^\(HTTP status 5\|sax parsing error:\)'
+0 1 * * 0 $USER $command run 2>&1
 EOF
 }
 

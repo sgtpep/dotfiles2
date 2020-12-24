@@ -2,13 +2,8 @@
 set -eu
 path=~/notes
 command=(git -C "$path")
-mapfile -t notes < <("${command[@]}" diff --name-only)
-if [[ ${notes[@]} ]]; then
-  paths=()
-  for note in "${notes[@]}"; do
-    [[ ! $note =~ ^tasks($|-) ]] || paths+=("$path/$note")
-  done
-  [[ ! ${paths[@]} ]] || scp "${paths[@]}" personal:notes
+mapfile -t paths < <("${command[@]}" diff --name-only)
+if [[ ${paths[@]} ]]; then
   "${command[@]}" add -A
   "${command[@]}" commit -m 'Update notes'
 fi
@@ -19,4 +14,4 @@ if [[ -f $path/.git/REBASE_HEAD ]]; then
 else
   [[ ! -v status ]] || exit "$status"
 fi
-[[ ! ${notes[@]} ]] || "${command[@]}" push
+[[ ! ${paths[@]} ]] || "${command[@]}" push

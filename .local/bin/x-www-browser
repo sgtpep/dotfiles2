@@ -1,3 +1,1 @@
-#!/bin/bash
-set -eu
-exec chromium "$@"
+/usr/bin/chromium

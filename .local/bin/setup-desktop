@@ -77,13 +77,10 @@ function install-packages {
     git
     graphicsmagick-imagemagick-compat
     htop
-    isync
     libimage-exiftool-perl
     libnotify-bin
     libreoffice
     mpv youtube-dl-
-    msmtp-mta
-    mupdf
     mutt
     ncdu
     openssh-client
@@ -148,17 +145,29 @@ function download-dictionaries {
   done
 }
 
+function install-npm-completions {
+  local path=~/.local/share/bash-completion/completions/npm
+  if [[ ! -f $path ]]; then
+    mkdir -p "${path%/*}"
+    npm completion > "$path"
+  fi
+}
+
 function install-node {
   local prefix=~/.npm
   if [[ ! -x $prefix/bin/node ]]; then
     local arch=$(arch)
-    local version=14.0.0
-    local url=https://nodejs.org/dist/v$version/node-v$version-linux-${arch/x86_64/x64}.tar.xz
+    local url=https://nodejs.org/dist/v14.0.0/node-v$version-linux-${arch/x86_64/x64}.tar.xz
     local path=/tmp/${url##*/}
     wget -O "$path" "$url" || rm -f "$path"
     tar -x -C "${path%/*}" -f "$path"
     NPM_CONFIG_PREFIX=$prefix PATH=${path%.*.*}/bin:$PATH npm install -g node npm
   fi
+  install-npm-completions
+}
+
+function patch-pwdhash {
+  sed -i $'s/\\bsys\.stdout\.write(generated\\b.*/import subprocess; subprocess.run([\'xsel\', \'-b\'], input=generated.encode(\'utf8\'))/' ~/.pip/lib/python3.*/site-packages/pwdhash.py
 }
 
 function install-pip-packages {
@@ -168,20 +177,14 @@ function install-pip-packages {
   )
   local package
   for package in "${packages[@]}"; do
-    local base=~/.pip
-    ls "$base"/lib/python3.*/site-packages/"$package" &> /dev/null || PYTHONUSERBASE=$base pip3 install "$package"
+    local path=~/.pip
+    ls "$path"/lib/python3.*/site-packages/"$package" &> /dev/null || PYTHONUSERBASE=$path pip3 install "$package"
   done
-  sed -i $'s/\\bsys\.stdout\.write(generated\\b.*/import subprocess; subprocess.run([\'xsel\', \'-b\'], input=generated.encode(\'utf8\'))/' "$base"/lib/python3.*/site-packages/pwdhash.py
+  patch-pwdhash
 }
 
 function make-downloads {
   mkdir -p ~/Downloads
-}
-
-function sync-mail {
-  local path=~/mail/Inbox
-  mkdir -p "${path%/*}"
-  [[ -d $path ]] || mbsync -a
 }
 
 function setup-home {
@@ -191,7 +194,6 @@ function setup-home {
   install-node
   install-pip-packages
   make-downloads
-  sync-mail
 }
 
 function configure-acpid {
@@ -257,11 +259,6 @@ function enable-fstrim {
   sudo ln -fs /lib/systemd/system/fstrim.timer /etc/systemd/system/timers.target.wants
 }
 
-function schedule-mbsync {
-  local command=mbsync
-  sudo tee /etc/cron.d/"$command" > /dev/null <<< "10 * * * * $USER $command -a"
-}
-
 function setup-system {
   configure-acpid
   configure-console-font
@@ -270,7 +267,6 @@ function setup-system {
   disable-transient-hostname
   enable-autologin
   enable-fstrim
-  schedule-mbsync
 }
 
 function main {

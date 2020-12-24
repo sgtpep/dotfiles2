@@ -8,7 +8,16 @@ if [[ $@ ]]; then
       [[ $year != \* && $year != $current_year || $month != \* && $month != $current_month || $day != \* && $day != $current_day ]] || echo "$task"
       [[ $date != $current_weekday ]] || echo "$task"
     fi
-  done < <(cat ~/notes/tasks{,-*})
+  done < <(
+    for filename in tasks{,-periodic}; do
+      path=~/notes
+      if [[ -d $path ]]; then
+        cat "$path"/"$filename"
+      else
+        git -C ~/repositories/notes.git show master:"$filename"
+      fi
+    done
+  )
 else
   for day in {1..7}; do
     output=$(bash -"$-" "$0" "$day day")
