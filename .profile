@@ -1,7 +1,6 @@
 export EDITOR=vim
 export LESS='-FRXi -j 3'
 export MANWIDTH=80
-export NO_COLOR=true
 export NPM_CONFIG_PREFIX=~/.npm
 export PYTHONUSERBASE=~/.pip
 export RIPGREP_CONFIG_PATH=~/.ripgreprc
