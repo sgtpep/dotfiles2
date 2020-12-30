@@ -55,6 +55,20 @@ function import-gpg-key {
   fi
 }
 
+function install-flathub-apps {
+  local apps=(
+    com.vscodium.codium
+  )
+  if ! flatpak info "${apps[@]}" &> /dev/null; then
+    local app
+    for app in "${apps[@]}"; do
+      sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+      sudo flatpak install -y flathub "$app"
+      sudo flatpak override --env=XCURSOR_THEME=Adwaita "$app"
+    done
+  fi
+}
+
 function install-packages {
   local packages=(
     acpi
@@ -72,6 +86,7 @@ function install-packages {
     exiftran
     ffmpeg
     firejail
+    flatpak
     fonts-liberation2
     gimp
     git
@@ -183,6 +198,19 @@ function install-pip-packages {
   patch-pwdhash
 }
 
+function install-vscode-extensions {
+  local extensions=(
+    vscodevim.vim
+  )
+  local command=(flatpak run com.vscodium.codium)
+  if [[ $(comm -23 <(printf '%s\n' "${extensions[@]}") <("${command[@]}" --list-extensions)) ]]; then
+    local extension
+    for extension in "${extensions[@]}"; do
+      "${command[@]}" --install-extension "$extension"
+    done
+  fi
+}
+
 function make-downloads {
   mkdir -p ~/Downloads
 }
@@ -193,6 +221,7 @@ function setup-home {
   download-dictionaries
   install-node
   install-pip-packages
+  install-vscode-extensions
   make-downloads
 }
 
@@ -271,6 +300,7 @@ function setup-system {
 
 function main {
   install-packages
+  install-flathub-apps
   setup-system
   clone-dotfiles
   copy-ssh-key

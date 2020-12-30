@@ -138,6 +138,9 @@ function set_keys()
     awful.key({ 'Control', 'Mod1' }, 'r', function()
       run_or_raise('dmenu_run', '%q -i -fn monospace-14 -nb Black -nf White -sb White -sf Black', { class = 'dmenu' })
     end),
+    awful.key({ 'Control', 'Mod1' }, 's', function()
+      run_or_raise('code', 'pgrep \'^codium$\' > /dev/null || exec %q', { class = 'VSCodium' }, true)
+    end),
     awful.key({ 'Control', 'Mod1' }, 't', function()
       run_or_raise('tmux', terminal_command .. '%q new-session -A -s %q')
     end),
