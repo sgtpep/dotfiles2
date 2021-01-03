@@ -67,7 +67,7 @@ function configure-msmtp {
   local aliases_path=/etc/aliases
   sudo tee "$aliases_path" > /dev/null <<< "default: $email"
   local netrc_path=~/.netrc
-  cat > /etc/msmtprc << EOF
+  sudo tee /etc/msmtprc > /dev/null << EOF
 account default
   aliases $aliases_path
   auth on
@@ -98,7 +98,7 @@ function schedule-rss2email {
   local command=r2e
   sudo tee /etc/cron.d/"$command" > /dev/null << EOF
 0 */3 * * * $USER $command run > /dev/null 2>&1
-0 1 * * 0 $USER $command run 2>&1
+0 1 * * 0 $USER $command run 2>&1 | grep -v '^sax parsing error:'
 EOF
 }
 
