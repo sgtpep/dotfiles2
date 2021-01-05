@@ -13,7 +13,7 @@ fi
 battery-monitor &
 clipit -d &
 eval "$(dbus-launch --exit-with-x11 --sh-syntax)"
-export SSH_AUTH_SOCK=/tmp/ssh-agent && ssh-agent -a "$SSH_AUTH_SOCK" &
+export SSH_AUTH_SOCK=/tmp/ssh-agent; ssh-agent -a "$SSH_AUTH_SOCK" &
 start-pulseaudio-x11 &
 udisks-monitor &
 
