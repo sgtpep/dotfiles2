@@ -4,6 +4,7 @@ folder-hook . 'set index_format="%3C %Z %{%b %d} %-15.15L (%?l?%4l&%4c?) %s"'
 folder-hook . 'set trash==Trash'
 folder-hook . 'set sort=reverse-date'
 set `bash -eu -c 'while IFS= read -r line; do pattern="\bmachine\s+((imap|smtp)\..+)\s+login\s+(.+)\s+password\s+(.+)"; [[ ! $line =~ $pattern ]] || echo -n "from=${BASH_REMATCH[3]} my_${BASH_REMATCH[2]}_url=${BASH_REMATCH[2]}s://${BASH_REMATCH[3]}:${BASH_REMATCH[4]}@${BASH_REMATCH[1]} "; done < ~/.netrc'`
+set my_mailcap_macro='<view-attachments><search>text/html<Return><view-mailcap><exit>'
 
 alternative_order text/plain text/html
 auto_view text/html
@@ -31,9 +32,11 @@ macro index <Space>a '<change-folder>=Archive<Return>'
 macro index <Space>e '<change-folder>=Inbox<Return>'
 macro index <Space>f '<change-folder>=Feeds<Return>'
 macro index <Space>s '<change-folder>=Spam<Return>'
+macro index b "$my_mailcap_macro<delete-message>"
 macro index,pager A '<save-message>=Archive<Return><Return>'
-macro index,pager B '<view-attachments><search>text/html<Return><view-mailcap><exit>'
-macro index,pager b '<view-attachments><search>text/html<Return><view-mailcap><exit><delete-message>'
+macro index,pager B $my_mailcap_macro
+macro pager b "$my_mailcap_macro<delete-message><exit>"
+macro pager d '<delete-message><exit>'
 set beep_new
 set fast_reply
 set folder=$my_imap_url
