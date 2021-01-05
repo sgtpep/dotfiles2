@@ -1,5 +1,5 @@
-application/*; xdg-open %s 2> /dev/null >&2
-image/*; xdg-open %s 2> /dev/null >&2
-text/html; path=%s.html && mv %s "$path" && sed -i '1i <!doctype html>' "$path" && bash -c 'setsid xdg-open "$1" 2> /dev/null >&2 &' -- "$path" && find /tmp/ -maxdepth 1 -mtime +1 -name 'mutt-*' -type f -delete
+application/*; mailcap-open %s
+image/*; mailcap-open %s
+text/html; sed -i '1i <!doctype html>' %s && mailcap-open %s
 
 text/html; w3m -I %{charset} -T text/html -o display_link_number; copiousoutput
