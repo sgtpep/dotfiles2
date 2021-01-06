@@ -32,11 +32,9 @@ macro index <Space>a '<change-folder>=Archive<Return>'
 macro index <Space>e '<change-folder>=Inbox<Return>'
 macro index <Space>f '<change-folder>=Feeds<Return>'
 macro index <Space>s '<change-folder>=Spam<Return>'
-macro index b "$my_mailcap_macro<delete-message>"
 macro index,pager A '<save-message>=Archive<Return><Return>'
 macro index,pager B $my_mailcap_macro
-macro pager b "$my_mailcap_macro<delete-message><exit>"
-macro pager d '<delete-message><exit>'
+macro index,pager b "$my_mailcap_macro<delete-message>"
 set beep_new
 set fast_reply
 set folder=$my_imap_url
@@ -57,7 +55,7 @@ set record==Sent
 set rfc2047_parameters
 set sleep_time=0
 set smtp_url=$my_smtp_url
-set spoolfile==INBOX
+set spoolfile==Inbox
 set text_flowed
 set timeout=10
 set wrap=80
