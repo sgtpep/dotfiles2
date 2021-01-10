@@ -94,7 +94,7 @@ function run_or_raise(name, command, rule, shell)
       if shell then
         awful.spawn.with_shell(formatted_command)
       else
-        awful.spawn(formatted_command)
+        awful.spawn(formatted_command, false)
       end
     end
   end
@@ -111,7 +111,7 @@ function set_keys()
   local terminal_xon_command = terminal_command .. xon_command
   root.keys(gears.table.join(
     awful.key({ 'Control' }, 'F1', function()
-      awful.spawn('parallels-keyboard')
+      awful.spawn('parallels-keyboard', false)
     end),
     awful.key({ 'Control', 'Mod1' }, 'Tab', function()
       naughty.destroy_all_notifications()
