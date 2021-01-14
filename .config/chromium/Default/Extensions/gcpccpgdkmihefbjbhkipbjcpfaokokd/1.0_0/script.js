@@ -1,13 +1,13 @@
 const getVisibleElements = () =>
   [
     ...document.querySelectorAll(
-      "a, button, input:not([type=hidden]), select, textarea"
+      'a, button, input:not([type="hidden"]), select, textarea'
     ),
   ].filter((element) => isElementVisible(element));
 
 const isElementVisible = (element) => {
-  const rects = element.getClientRects();
-  return rects.length && rects[0].bottom >= 0 && rects[0].top <= innerHeight;
+  const [{ bottom, top } = {}] = element.getClientRects();
+  return bottom >= 0 && top <= innerHeight;
 };
 
 const characters = "fdsagrewcx";

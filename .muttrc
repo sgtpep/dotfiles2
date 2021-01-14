@@ -13,7 +13,7 @@ bind index g reply
 bind index r group-reply
 color attachment default default
 color hdrdefault default default
-color indicator black white
+color indicator brightdefault default
 color markers default default
 color normal default default
 color quoted default default

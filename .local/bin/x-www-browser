@@ -1,1 +1,3 @@
-/usr/bin/chromium
+#!/bin/bash
+set -eu
+exec snap run chromium "$@"

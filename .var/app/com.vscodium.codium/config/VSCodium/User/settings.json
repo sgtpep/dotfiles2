@@ -1,7 +1,6 @@
 {
     "editor.cursorBlinking": "solid",
     "editor.occurrencesHighlight": false,
-    "editor.wordSeparators": "`~!@#$%^&*()=+[{]}\\|;:'\",.<>/?",
     "vim.handleKeys": {
         "<C-q>": false
     },

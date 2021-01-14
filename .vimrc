@@ -1,3 +1,8 @@
+function s:disable_colors()
+  set t_Co=0
+  syntax off
+endfunction
+
 function s:map_commenting()
   let [opening, closing] = split(empty(&commentstring) ? '#%s' : &commentstring, '%s', 1)
   execute printf('noremap <buffer> <silent> <Leader>/ :normal 0i%s<C-O>$%s<CR>0', opening, closing)
@@ -19,6 +24,7 @@ endfunction
 function s:enable_views()
   autocmd BufWinEnter * silent! loadview
   autocmd BufWinLeave * silent! mkview
+  set viewoptions=cursor
 endfunction
 
 function s:patch_matchparen()
@@ -40,7 +46,7 @@ endfunction
 
 function s:format_code()
   let path = 'node_modules/.bin/prettier'
-  let output = systemlist(printf('%s --cursor-offset=%d --stdin-filepath=%s', executable(path) ? path : 'npx prettier', abs(line2byte(line('.'))) + col('.') - 2, shellescape(expand('%'))), getline(1, '$'))
+  let output = systemlist(printf('%s --cursor-offset=%d --stdin-filepath=%s', executable(path) ? path : 'npx prettier', abs(line2byte(line('.'))) + col('.') - 2, shellescape(expand('%'))), getline(1, '$'))->filter({index, line -> index > 0 || line !~# '^npx: installed'})
   if v:shell_error
     echo join(output, "\n")
     echo get(output, 0, '')
@@ -116,13 +122,13 @@ function s:set_options()
   set smartindent
   set softtabstop=2
   set suffixesadd=.js,.jsx,.ts,.tsx
-  set t_Co=0
   set undofile
   set wildignorecase
   set wildmode=list:longest,list:full
 endfunction
 
 function s:main()
+  call s:disable_colors()
   call s:enable_filetypes()
   call s:enable_views()
   call s:patch_matchparen()

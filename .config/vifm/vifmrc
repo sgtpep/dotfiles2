@@ -2,13 +2,11 @@ execute 'filetype <application/json> ' . $EDITOR . ' -- %f'
 filetype <application/gzip,application/x-tar> tar -x -f %f
 filetype <application/zip> unzip -- %f
 fileviewer <audio/*,image/*,video/*> file -b -- %f
-filextype <application/*,image/svg,text/html,text/rtf,video/*> xdg-open %f %i &
-filextype <audio/*> xdg-open %f
-filextype <image/*> bash -eu -c $'paths=$(find "${1%%/*}" -maxdepth 1 -type f -iregex \'.*\.\(gif\|jpe?g\|png\)\' | LANG=C sort); exec sxiv -i -n "$(output=$(grep -Fnx -m 1 "$1" <<< $paths); echo "${output%%:*}")" <<< $paths' -- %c:p %i &
+filextype <*> xdg-open %f %i &
 highlight Border cterm=none ctermfg=default ctermbg=default
 highlight BrokenLink cterm=none ctermfg=default ctermbg=default
 highlight CmdLine cterm=none ctermfg=default ctermbg=default
-highlight CurrLine cterm=reverse ctermfg=default ctermbg=default
+highlight CurrLine cterm=bold ctermfg=default ctermbg=default
 highlight Device cterm=none ctermfg=default ctermbg=default
 highlight Directory cterm=none ctermfg=default ctermbg=default
 highlight ErrorMsg cterm=reverse ctermfg=default ctermbg=default

@@ -21,10 +21,6 @@ const main = () =>
           ? copyText([title, url].filter(Boolean).join(" "))
           : command === "copy-url"
           ? copyText(url)
-          : command === "history-back"
-          ? chrome.tabs.executeScript({ code: "history.back()" })
-          : command === "history-forward"
-          ? chrome.tabs.executeScript({ code: "history.forward()" })
           : command === "toggle-pinned"
           ? setPinned(!pinned)
           : undefined

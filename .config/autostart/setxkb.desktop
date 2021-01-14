@@ -1,0 +1,4 @@
+# See https://gitlab.gnome.org/GNOME/gnome-shell/-/issues/1154
+[Desktop Entry]
+Type=Application
+Exec=setxkb us,ru

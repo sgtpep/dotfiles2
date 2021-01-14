@@ -1,177 +1,109 @@
 #!/bin/bash
 set -eu
 
-function is-raspberry-pi {
-  [[ -f /proc/device-tree/model ]]
-}
-
-username=danil
-
-function add-raspberry-pi-user {
-  id "$username" &> /dev/null || adduser --add_extra_groups --gecos="Danil Semelenov" "$username"
-  passwd -l root
-  local package=sudo
-  if ! dpkg -s "$package" &> /dev/null; then
-    apt update
-    apt -y install "$package"
-  fi
-  usermod -a -G "$package" "$username"
-}
-
-ssh_key_path=~/.ssh/id_rsa
-
-function clone-dotfiles {
-  if [[ ! -d ~/.git ]]; then
-    cd ~
-    git init
-    local hostname=github.com
-    local repository=sgtpep/dotfiles
-    if [[ -f $ssh_key_path ]]; then
-      local url=git@$hostname:$repository.git
-    else
-      local url=https://${repository%/*}@$hostname/$repository.git
-    fi
-    git remote add origin "$url"
-    git fetch
-    git checkout -f master
-    git ls-files | grep -Po '.+(?=\.orig$)' | xargs -r -I {} -d '\n' cp ~/{}{.orig,}
-    cd - > /dev/null
-  fi
-}
-
-function copy-netrc {
-  local path=~/.netrc
-  [[ -f $path ]] || scp personal:"${path#~/}" "$path"
-}
-
-keys_path=/dev/disk/by-label/keys
-
-function copy-ssh-key {
-  if [[ ! -f $ssh_key_path ]]; then
-    local mountpoint=/mnt
-    sudo mount "$keys_path" "$mountpoint"
-    cp "$mountpoint"/"${ssh_key_path##*/}" "$ssh_key_path"
-    sudo umount "$mountpoint"
-    chmod 600 "$ssh_key_path"
-    sed -i 's|\bhttps://.*\(@github\.com\)/|git\1:|' ~/.git/config
-  fi
-}
-
-function import-gpg-key {
-  local path=~/.gnupg
-  if ! ls "$path"/private-keys-v1.d/*.key &> /dev/null; then
-    local mountpoint=/mnt
-    sudo mount "$keys_path" "$mountpoint"
-    gpg --import "$mountpoint"/private-key.asc
-    sudo umount "$mountpoint"
-    gpg --import-ownertrust <<< "$(gpg -k --with-colons | grep -Po -m 1 '(?<=^fpr:::::::::)[^:]+'):6:"
-  fi
-  chmod 700 "$path"
-}
-
-function install-flathub-apps {
-  local apps=(
-    com.vscodium.codium
-  )
-  if ! flatpak info "${apps[@]}" &> /dev/null; then
-    local app
-    for app in "${apps[@]}"; do
-      sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-      sudo flatpak install -y flathub "$app"
-      sudo flatpak override --env=XCURSOR_THEME=Adwaita "$app"
-    done
-  fi
-}
-
-function install-packages {
-  [[ $(arch) != x86* ]] || local x86=true
+function install-dpkg-packages {
   local packages=(
-    ${x86+acpi}
-    acpid
     adb
-    apcalc
     aria2
-    awesome
-    bash{,-completion}
-    build-essential
-    chromium
-    clipit
     curl
-    dbus-x11
+    dconf-editor
     exiftran
     ffmpeg
     firejail
     flatpak
-    fonts-liberation2
     gimp
     git
     graphicsmagick-imagemagick-compat
     htop
     libimage-exiftool-perl
-    libnotify-bin
-    libreoffice
-    mpv youtube-dl-
     mutt
+    ncal
     ncdu
-    openssh-client
     pass
     poppler-utils
-    pulseaudio
-    pulsemixer
-    python3{,-pip}
-    rclone fuse
+    python3-pip
+    rclone
     ripgrep
     rsync
-    rxvt-unicode
     sdcv
     sqlite3
     sshuttle
-    suckless-tools
-    sxiv
     tmux
-    udisks2
-    unattended-upgrades
-    unzip
     vifm
     vim-gtk3
     w3m
     webext-ublock-origin-chromium
-    wget
-    xinit
     xsel
-    xserver-xorg
   )
   local dpkg_packages=(${packages[@]/%*-})
   dpkg -s "${dpkg_packages[@]}" &> /dev/null || sudo DEBIAN_FRONTEND=noninteractive apt -y install "${packages[@]}"
 }
 
-function clone-personal-repository {
-  if [[ ! -d $2 ]] && ! git clone personal:repositories/"$1".git "$2"; then
-    rm -fr "$2"
-    return 1
+function install-snap-packages {
+  local packages=(
+    chromium
+  )
+  local package
+  for package in "${packages[@]}"; do
+    snap list | grep -q "^$package " || sudo snap install "$package"
+  done
+}
+
+vscodium_app=com.vscodium.codium
+
+function install-flatpak-apps {
+  local apps=(
+    "$vscodium_app"
+  )
+  if ! flatpak info "${apps[@]}" &> /dev/null; then
+    local app
+    for app in "${apps[@]}"; do
+      sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo                              
+      sudo flatpak install -y flathub "$app"
+    done
   fi
 }
 
-function clone-notes {
-  clone-personal-repository notes ~/notes
+pip_path=~/.pip
+
+function patch-pwdhash {
+  sed -i $'s/\\bsys\.stdout\.write(generated\\b.*/import subprocess; subprocess.run([\'xsel\', \'-b\'], input=generated.encode(\'utf8\'))/' "$pip_path"/lib/python3.*/site-packages/pwdhash.py
 }
 
-function clone-password-store {
-  clone-personal-repository pass ~/.password-store
+function install-pip-packages {
+  local packages=(
+    gnome_extensions_cli
+    pwdhash.py
+    youtube_dl
+  )
+  local package
+  for package in "${packages[@]}"; do
+    ls "$pip_path"/lib/python3.*/site-packages/"$package" &> /dev/null || PYTHONUSERBASE=$pip_path pip3 install "$package"
+  done
+  patch-pwdhash
 }
 
-function download-dictionaries {
-  local url
-  for url in http://download.huzheng.org/lingvo/stardict-{ER,RE}-LingvoUniversal-2.4.2.tar.bz2; do
-    local filename=${url##*/}
-    local path=~/.stardict/dic/${filename%.*.*}
-    if [[ ! -d $path ]]; then
-      mkdir -p "$path"
-      if ! wget -O - "$url" | tar -jx -C "${path%/*}"; then
-        rm -fr "$path"
-        return 1
-      fi
-    fi
+function install-gnome-extensions {
+  local extensions=(
+    no-title-bar@jonaspoehler.de
+    no_activities@yaya.cout
+    remove-dropdown-arrows@mpdeimos.com
+    transparent-top-bar@ftpix.com
+  )
+  local extension
+  for extension in "${extensions[@]}"; do
+    [[ -d ~/.local/share/gnome-shell/extensions/$extension ]] || PATH=$PATH:$pip_path/bin PYTHONUSERBASE=$pip_path gnome-extensions-cli install "$extension"
+  done
+}
+
+function install-vscodium-extensions {
+  local extensions=(
+    vscodevim.vim
+  )
+  local command=()
+  local extension
+  for extension in "${extensions[@]}"; do
+    ls ~/.var/app/"$vscodium_app"/data/codium/extensions/"$extension"-* &> /dev/null || flatpak run "$vscodium_app" --install-extension "$extension"
   done
 }
 
@@ -199,140 +131,182 @@ function install-node {
   install-npm-completions
 }
 
-function patch-pwdhash {
-  sed -i $'s/\\bsys\.stdout\.write(generated\\b.*/import subprocess; subprocess.run([\'xsel\', \'-b\'], input=generated.encode(\'utf8\'))/' ~/.pip/lib/python3.*/site-packages/pwdhash.py
-}
-
-function install-pip-packages {
-  local packages=(
-    pwdhash.py
-    youtube_dl
-  )
-  local package
-  for package in "${packages[@]}"; do
-    local path=~/.pip
-    ls "$path"/lib/python3.*/site-packages/"$package" &> /dev/null || PYTHONUSERBASE=$path pip3 install "$package"
-  done
-  patch-pwdhash
-}
-
-function install-vscode-extensions {
-  local extensions=(
-    vscodevim.vim
-  )
-  local command=(flatpak run com.vscodium.codium)
-  if [[ $(comm -23 <(printf '%s\n' "${extensions[@]}") <("${command[@]}" --list-extensions)) ]]; then
-    local extension
-    for extension in "${extensions[@]}"; do
-      "${command[@]}" --install-extension "$extension"
-    done
-  fi
-}
-
-function make-downloads {
-  mkdir -p ~/Downloads
-}
-
-function setup-home {
-  clone-notes
-  clone-password-store
-  download-dictionaries
-  install-node
+function install-packages {
+  install-dpkg-packages
+  install-snap-packages
+  install-flatpak-apps
   install-pip-packages
-  install-vscode-extensions
-  make-downloads
+  install-gnome-extensions
+  install-vscodium-extensions
+  install-node
 }
 
-function configure-acpid {
-  sudo ln -fs /lib/systemd/system/acpid.service /etc/systemd/system/multi-user.target.wants
-  sudo ln -fs /usr/share/doc/acpid/examples/default /etc/acpi/events
-  local path=/etc/acpi/default.sh
-  sudo tee "$path" > /dev/null << \EOF
-#!/bin/bash
-set -eu
-if [[ $1 == video/brightness* ]]; then
-  if [[ $1 == *down ]]; then
-    operation=-
-  elif [[ $1 == *up ]]; then
-    operation=+
-  fi
-  path=(/sys/class/backlight/*/brightness)
-  brightness=$(($(< "$path") $operation 1))
-  echo "$brightness" > "$path"
-fi
+function is-raspberry-pi {
+  local path=/proc/device-tree/model
+  [[ -f $path && $(head -c -1 "$path") == Raspberry\ Pi\ * ]]
+}
+
+function configure-raspberry-pi-display {
+  if is-raspberry-pi; then
+    local line=lcd_rotate=2
+    local path=/boot/firmware/config.txt
+    grep -qx "$line" "$path" || sudo tee -a "$path" > /dev/null <<< $line
+    local name=rpi-backlight-poweroff
+    sudo tee /etc/systemd/system/"$name".service > /dev/null << \EOF
+[Unit]
+DefaultDependencies=no
+
+[Service]
+ExecStart=/bin/sh -c '/bin/echo 1 > /sys/class/backlight/rpi_backlight/bl_power'
+Type=oneshot
+
+[Install]
+WantedBy=halt.target poweroff.target reboot.target
 EOF
-  sudo chmod +x "$path"
-}
-
-function configure-console-font {
-  if ! is-raspberry-pi; then
-    local path=/etc/default/console-setup
-    local checksum=$(md5sum "$path")
-    sudo sed -i 's/^\(FONTFACE="\)[^"]*/\1VGA/' "$path"
-    md5sum -c --status <<< $checksum || sudo setupcon --save-only
+    [[ -h /etc/systemd/system/poweroff.target.wants/$name.service ]] || sudo systemctl enable "$name"
+    dconf write /org/gnome/settings-daemon/plugins/xsettings/rgba-order "'bgr'"
   fi
 }
 
-function configure-grub {
-  if ! is-raspberry-pi; then
-    local path=/etc/default/grub
-    local checksum=$(md5sum "$path")
-    local line='GRUB_TIMEOUT_STYLE=hidden'
-    grep -Fqx "$line" "$path" || sudo tee -a "$path" > /dev/null <<< $line
-    sudo sed -i -f - "$path" << \EOF
-s/^#*\(GRUB_TERMINAL=\).*/\1console/
-s/^\(GRUB_CMDLINE_LINUX_DEFAULT\)=.*/\1="quiet loglevel=3"/
-s/^\(GRUB_TIMEOUT=\).*/\11/
-EOF
-    md5sum -c --status <<< $checksum || sudo update-grub
-  fi
+function configure-exitensions {
+  dconf write /com/ftpix/transparentbar/transparency 100
+  dconf write /org/gnome/shell/extensions/no-title-bar/button-position "'before-status-area'"
 }
 
-function configure-inotify {
-  sudo tee /etc/sysctl.d/50-inotify.conf > /dev/null <<< 'fs.inotify.max_user_watches = 524288'
+function configure-terminal {
+  local path=/org/gnome/terminal/legacy
+  dconf write "$path"/default-show-menubar false
+  dconf write "$path"/headerbar '@mb false'
+  dconf write "$path"/keybindings/copy "'<Ctrl><Alt>c'"
+  dconf write "$path"/keybindings/paste "'<Ctrl><Alt>v'"
+  local profile_path=$path/profiles:/:$(gsettings get org.gnome.Terminal.ProfilesList default | sed $'s/^\'\(.*\)\'$/\\1/')
+  dconf write "$profile_path"/background-color "'rgb(255,255,255)'"
+  dconf write "$profile_path"/font "'Monospace 13'"
+  dconf write "$profile_path"/foreground-color "'rgb(0,0,0)'"
+  dconf write "$profile_path"/scrollbar-policy "'never'"
+  dconf write "$profile_path"/use-system-font false
+  dconf write "$profile_path"/use-theme-colors false
+}
+
+function configure-settings {
+  configure-exitensions
+  configure-terminal
+  dconf write /org/gnome/deja-dup/prompt-check "'disabled'"
+  dconf write /org/gnome/desktop/input-sources/per-window true
+  dconf write /org/gnome/desktop/input-sources/sources "[('xkb', 'us'), ('xkb', 'ru')]"
+  dconf write /org/gnome/desktop/input-sources/xkb-options "['ctrl:nocaps', 'grp:rshift_toggle', 'lv3:ralt_switch', 'misc:typo']"
+  dconf write /org/gnome/desktop/interface/clock-format "'12h'"
+  dconf write /org/gnome/desktop/interface/cursor-blink false
+  dconf write /org/gnome/desktop/interface/font-name "'Liberation Sans 11'"
+  dconf write /org/gnome/desktop/interface/monospace-font-name "'Mono 12'"
+  dconf write /org/gnome/desktop/privacy/remove-old-temp-files true
+  dconf write /org/gnome/desktop/privacy/remove-old-trash-files true
+  dconf write /org/gnome/desktop/screensaver/lock-enabled false
+  dconf write /org/gnome/desktop/wm/preferences/titlebar-font "'Liberation Sans Bold 11'"
+  dconf write /org/gnome/shell/extensions/dash-to-dock/dock-fixed false
+  dconf write /org/gnome/shell/extensions/desktop-icons/show-home false
+  dconf write /org/gnome/shell/extensions/desktop-icons/show-mount false
+  dconf write /org/gnome/shell/extensions/desktop-icons/show-trash false
+  dconf write /org/gnome/shell/favorite-apps "['chromium_chromium.desktop', 'org.gnome.Terminal.desktop']"
+}
+
+function disable-connectivity-checking {
+  local path=/var/lib/NetworkManager/NetworkManager-intern.conf
+  local checksum=$(sudo md5sum "$path")
+  sudo sed -i 's/\(^\.set\.enabled=\).*/\1false/' "$path"
+  sudo md5sum -c --status <<< $checksum || sudo systemctl restart NetworkManager
 }
 
 function disable-transient-hostname {
-  sudo sed -i 's/, host-name\b//' /etc/dhcp/dhclient.conf
+  local line=hostname-mode=none
+  local path=/etc/NetworkManager/NetworkManager.conf
+  grep -qx "$line" "$path" || sudo sed -i "/^plugins=/a $line" "$path"
 }
 
-function enable-autologin {
-  local path=/etc/systemd/system/getty@tty1.service.d
-  sudo mkdir -p "$path"
-  sudo tee "$path"/autologin.conf > /dev/null << EOF
-[Service]
-ExecStart=
-ExecStart=-/usr/sbin/agetty -a $USER %I
-EOF
-}
-
-function enable-fstrim {
-  sudo ln -fs /lib/systemd/system/fstrim.timer /etc/systemd/system/timers.target.wants
-}
-
-function setup-system {
-  configure-acpid
-  configure-console-font
-  configure-grub
-  configure-inotify
+function configure-system {
+  configure-raspberry-pi-display
+  configure-settings
+  disable-connectivity-checking
   disable-transient-hostname
-  enable-autologin
-  enable-fstrim
+}
+
+keys_path=/media/$USER/keys
+
+function copy-ssh-key {
+  local path=~/.ssh/id_rsa
+  if [[ ! -f $path ]]; then
+    cp "$keys_path"/"${path##*/}" "$path"
+    chmod 600 "$path"
+  fi
+}
+
+function clone-dotfiles {
+  if [[ ! -d ~/.git ]]; then
+    cd ~
+    git init
+    git remote add origin git@github.com:sgtpep/dotfiles.git
+    git fetch
+    git checkout -f master
+    git ls-files | grep -Po '.+(?=\.orig$)' | xargs -r -I {} -d '\n' cp ~/{}{.orig,}
+    cd - > /dev/null
+  fi
+}
+
+function clone-repositories {
+  declare -A repositories=(
+    [notes]=~/notes
+    [pass]=~/.password-store
+  )
+  local name
+  for name in "${!repositories[@]}"; do
+    local path=${repositories[$name]}
+    if [[ ! -d $path ]] && ! git clone personal:repositories/"$name".git "$path"; then
+      rm -fr "$path"
+      return 1
+    fi
+  done
+}
+
+function copy-netrc {
+  local path=~/.netrc
+  [[ -f $path ]] || scp personal:"${path#~/}" "$path"
+}
+
+function download-dictionaries {
+  local url
+  for url in http://download.huzheng.org/lingvo/stardict-{ER,RE}-LingvoUniversal-2.4.2.tar.bz2; do
+    local filename=${url##*/}
+    local path=~/.stardict/dic/${filename%.*.*}
+    if [[ ! -d $path ]]; then
+      mkdir -p "$path"
+      if ! wget -O - "$url" | tar -jx -C "${path%/*}"; then
+        rm -fr "$path"
+        return 1
+      fi
+    fi
+  done
+}
+
+function import-gpg-key {
+  if ! ls ~/.gnupg/private-keys-v1.d/*.key &> /dev/null; then
+    gpg --import "$keys_path"/private-key.asc
+    gpg --import-ownertrust <<< "$(gpg -k --with-colons | grep -Po -m 1 '(?<=^fpr:::::::::)[^:]+'):6:"
+  fi
+}
+
+function setup-home {
+  clone-dotfiles
+  clone-repositories
+  copy-netrc
+  download-dictionaries
+  import-gpg-key
 }
 
 function main {
-  if is-raspberry-pi && [[ $UID == 0 ]]; then
-    add-raspberry-pi-user
-  else
-    install-packages
-    install-flathub-apps
-    setup-system
-    clone-dotfiles
-    copy-ssh-key
-    copy-netrc
-    import-gpg-key
-    setup-home
-  fi
+  install-packages
+  configure-system
+  copy-ssh-key
+  setup-home
 }
 
 [[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"

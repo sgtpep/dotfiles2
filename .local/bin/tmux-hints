@@ -72,7 +72,7 @@ function process-input {
   local url=${@:$number + 1:1}
   if [[ $url ]]; then
     if [[ $character == $lowercase_character ]]; then
-      setsid x-www-browser "$url" &> /dev/null &
+      setsid xdg-open "$url" &> /dev/null &
       sleep 0.1
     else
       echo "$url" >> ~/.urls
