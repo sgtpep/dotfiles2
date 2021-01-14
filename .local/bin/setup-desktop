@@ -1,6 +1,23 @@
 #!/bin/bash
 set -eu
 
+function is-raspberry-pi {
+  [[ -f /proc/device-tree/model ]]
+}
+
+username=danil
+
+function add-raspberry-pi-user {
+  id "$username" &> /dev/null || adduser --add_extra_groups --gecos="Danil Semelenov" "$username"
+  passwd -l root
+  local package=sudo
+  if ! dpkg -s "$package" &> /dev/null; then
+    apt update
+    apt -y install "$package"
+  fi
+  usermod -a -G "$package" "$username"
+}
+
 ssh_key_path=~/.ssh/id_rsa
 
 function clone-dotfiles {
@@ -37,22 +54,19 @@ function copy-ssh-key {
     sudo umount "$mountpoint"
     chmod 600 "$ssh_key_path"
     sed -i 's|\bhttps://.*\(@github\.com\)/|git\1:|' ~/.git/config
-    until ssh-keygen -p -N '' -f "$ssh_key_path"; do
-      :
-    done
   fi
 }
 
 function import-gpg-key {
   local path=~/.gnupg
   if ! ls "$path"/private-keys-v1.d/*.key &> /dev/null; then
-    chmod 700 "$path"
     local mountpoint=/mnt
     sudo mount "$keys_path" "$mountpoint"
     gpg --import "$mountpoint"/private-key.asc
     sudo umount "$mountpoint"
     gpg --import-ownertrust <<< "$(gpg -k --with-colons | grep -Po -m 1 '(?<=^fpr:::::::::)[^:]+'):6:"
   fi
+  chmod 700 "$path"
 }
 
 function install-flathub-apps {
@@ -70,8 +84,9 @@ function install-flathub-apps {
 }
 
 function install-packages {
+  [[ $(arch) != x86* ]] || local x86=true
   local packages=(
-    acpi
+    ${x86+acpi}
     acpid
     adb
     apcalc
@@ -127,7 +142,7 @@ function install-packages {
     xserver-xorg
   )
   local dpkg_packages=(${packages[@]/%*-})
-  dpkg -s "${dpkg_packages[@]}" &> /dev/null || sudo apt -y install "${packages[@]}"
+  dpkg -s "${dpkg_packages[@]}" &> /dev/null || sudo DEBIAN_FRONTEND=noninteractive apt -y install "${packages[@]}"
 }
 
 function clone-personal-repository {
@@ -164,7 +179,7 @@ function install-npm-completions {
   local path=~/.local/share/bash-completion/completions/npm
   if [[ ! -f $path ]]; then
     mkdir -p "${path%/*}"
-    npm completion > "$path"
+    PATH=~/.npm/bin:$PATH npm completion > "$path"
   fi
 }
 
@@ -172,7 +187,10 @@ function install-node {
   local prefix=~/.npm
   if [[ ! -x $prefix/bin/node ]]; then
     local arch=$(arch)
-    local url=https://nodejs.org/dist/v14.0.0/node-v$version-linux-${arch/x86_64/x64}.tar.xz
+    arch=${arch/aarch64/arm64}
+    arch=${arch/x86_64/x64}
+    local version=14.0.0
+    local url=https://nodejs.org/dist/v$version/node-v$version-linux-$arch.tar.xz
     local path=/tmp/${url##*/}
     wget -O "$path" "$url" || rm -f "$path"
     tar -x -C "${path%/*}" -f "$path"
@@ -247,23 +265,27 @@ EOF
 }
 
 function configure-console-font {
-  local path=/etc/default/console-setup
-  local checksum=$(md5sum "$path")
-  sudo sed -i 's/^\(FONTFACE="\)[^"]*/\1VGA/' "$path"
-  md5sum -c --status <<< $checksum || sudo setupcon --save-only
+  if ! is-raspberry-pi; then
+    local path=/etc/default/console-setup
+    local checksum=$(md5sum "$path")
+    sudo sed -i 's/^\(FONTFACE="\)[^"]*/\1VGA/' "$path"
+    md5sum -c --status <<< $checksum || sudo setupcon --save-only
+  fi
 }
 
 function configure-grub {
-  local path=/etc/default/grub
-  local checksum=$(md5sum "$path")
-  local line='GRUB_TIMEOUT_STYLE=hidden'
-  grep -Fqx "$line" "$path" || sudo tee -a "$path" > /dev/null <<< $line
-  sudo sed -i -f - "$path" << \EOF
+  if ! is-raspberry-pi; then
+    local path=/etc/default/grub
+    local checksum=$(md5sum "$path")
+    local line='GRUB_TIMEOUT_STYLE=hidden'
+    grep -Fqx "$line" "$path" || sudo tee -a "$path" > /dev/null <<< $line
+    sudo sed -i -f - "$path" << \EOF
 s/^#*\(GRUB_TERMINAL=\).*/\1console/
 s/^\(GRUB_CMDLINE_LINUX_DEFAULT\)=.*/\1="quiet loglevel=3"/
 s/^\(GRUB_TIMEOUT=\).*/\11/
 EOF
-  md5sum -c --status <<< $checksum || sudo update-grub
+    md5sum -c --status <<< $checksum || sudo update-grub
+  fi
 }
 
 function configure-inotify {
@@ -299,14 +321,18 @@ function setup-system {
 }
 
 function main {
-  install-packages
-  install-flathub-apps
-  setup-system
-  clone-dotfiles
-  copy-ssh-key
-  copy-netrc
-  import-gpg-key
-  setup-home
+  if is-raspberry-pi && [[ $UID == 0 ]]; then
+    add-raspberry-pi-user
+  else
+    install-packages
+    install-flathub-apps
+    setup-system
+    clone-dotfiles
+    copy-ssh-key
+    copy-netrc
+    import-gpg-key
+    setup-home
+  fi
 }
 
 [[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"
