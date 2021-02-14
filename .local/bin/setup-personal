@@ -30,6 +30,8 @@ function install-packages {
     rsync
     ufw
     unattended-upgrades
+    uwsgi
+    uwsgi-plugin-python3
   )
   dpkg -s "${packages[@]}" &> /dev/null || sudo apt -y install "${packages[@]}"
 }
@@ -167,6 +169,10 @@ EOF
   md5sum -c --status <<< $checksum || sudo systemctl reload nginx
 }
 
+function setup-notes {
+  download-dotfile .local/bin/notes-server
+}
+
 function setup-tasks {
   local command=tasks
   download-dotfile .local/bin/"$command"
@@ -186,6 +192,7 @@ function setup-system {
   schedule-rss2email
   setup-gallery
   setup-nginx
+  setup-notes
   setup-tasks
 }
 
