@@ -1,0 +1,21 @@
+#!/bin/bash
+set -eu
+if [[ $1 == 1 ]]; then
+  xargs -d '\n' exiftran -1i
+elif [[ $1 == 2 ]]; then
+  xargs -d '\n' exiftran -2i
+elif [[ $1 == 9 ]]; then
+  xargs -d '\n' exiftran -9i
+elif [[ $1 == d ]]; then
+  xargs -d '\n' bash -"$-" -c 'for path; do mv "$path" "${path%/*}"/."${path##*/}"; done' --
+elif [[ $1 == g ]]; then
+  xargs -d '\n' gimp
+elif [[ $1 == y ]]; then
+  head -c -1 | xsel -b
+elif [[ $1 == m ]]; then
+  mapfile -t
+  path=$XDG_RUNTIME_DIR/sxiv-target
+  rm -f "$path"
+  x-terminal-emulator -e bash -c 'stty -ixon; nnn -p "$@"' -- "$path" "${MAPFILE[0]%/*}"
+  [[ ! -f $path ]] || mv "${MAPFILE[@]}" "$(< "$path")"
+fi

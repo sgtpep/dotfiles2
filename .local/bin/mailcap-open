@@ -1,10 +1,12 @@
 #!/bin/bash
 set -eu
-find /tmp/ -maxdepth 1 -mtime +1 -name 'mutt-*' -type f -delete
+find "${1%/*}" -maxdepth 1 -mtime +1 -name 'mutt-*' -type f -delete
 if [[ ${1##*/} == *.* ]]; then
+  command=xdg-open
   path=${1%/*}/mutt-${1##*/}
 else
+  command=x-www-browser
   path=$1.html
 fi
 mv -f "$1" "$path"
-setsid xdg-open "$path" &> /dev/null &
+setsid "$command" "$path" &> /dev/null &

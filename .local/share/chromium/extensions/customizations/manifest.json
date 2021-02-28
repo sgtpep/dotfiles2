@@ -1,0 +1,40 @@
+{
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "chrome_url_overrides": {
+    "newtab": "tab.html"
+  },
+  "commands": {
+    "copy-title-url": {
+      "description": "Copy a title and URL"
+    },
+    "copy-url": {
+      "description": "Copy a URL"
+    },
+    "history-back": {
+      "description": "Back in history"
+    },
+    "history-forward": {
+      "description": "Forward in history"
+    },
+    "noop": {
+      "description": "No operation"
+    },
+    "toggle-pinned": {
+      "description": "Pin/unpin a tab"
+    }
+  },
+  "content_scripts": [
+    {
+      "js": ["script.js"],
+      "matches": ["<all_urls>"],
+      "run_at": "document_start"
+    }
+  ],
+  "key": "FGkXUYJ6otzjRPtG23pzlY6hn04N+lHoRqsM/WPa06I=",
+  "manifest_version": 2,
+  "name": "Customizations",
+  "permissions": ["<all_urls>", "activeTab"],
+  "version": "1.0"
+}

@@ -1,11 +1,11 @@
 (session-info "toplevel"
+  (size 2000 2000)
   (aux-info
+    (left-docks-width "350")
     (maximized "yes"))
   (factory-entry "gimp-single-image-window")
   (gimp-toolbox
     (book
       (dockable "gimp-tool-options"))
-    (book
-      (dockable "gimp-layer-list"))
     (side left))
   (open-on-exit))

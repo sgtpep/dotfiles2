@@ -8,6 +8,7 @@ alias ls='ls -h'
 alias mv='mv -i'
 alias rm='rm -I'
 alias serve='python3 -m http.server'
+alias sxiv='sxiv -r'
 alias watch='watch '
 
 function rg {

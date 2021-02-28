@@ -38,7 +38,16 @@ function download-articles {
     copy-article personal:"$article" "$path"/documents/"$articles"/"$(sanitize-filename "${filename%.*}")".pdf
     ssh personal xargs -d '\\n' rm <<< $article
   done < <(list-articles)
-  unmount "$path"
+}
+
+function install-packages {
+  local packages=(
+    chromium
+    libimage-exiftool-perl
+    poppler-utils
+    rsync
+  )
+  dpkg -s "${packages[@]}" &> /dev/null || sudo apt -y install "${packages[@]}"
 }
 
 function parse-options {
@@ -71,6 +80,11 @@ function deactivate-links {
   sed -i "s|$string\b|$(printf "%${#string}s")|g" "$1"
 }
 
+function output-path {
+  local checksum=$(md5sum <<< $1)
+  echo "$XDG_RUNTIME_DIR"/"${checksum%% *}"
+}
+
 function extract-host {
   local url=${1#*://}
   local host=${url%%/*}
@@ -89,7 +103,7 @@ declare -A host_styles=(
 
 function install-puppeteer {
   local package=puppeteer-core
-  local version=chrome-$(dpkg -s chromium | grep -Po '(?<=^Version: )[^.]+')
+  local version=7.1.0
   grep -qs "\"$version\"" "$NPM_CONFIG_PREFIX"/lib/node_modules/"$package"/package.json || npm install -g "$package"@"$version" >&2
 }
 
@@ -122,7 +136,7 @@ const puppeteer = require("puppeteer-core");
       executablePath: "chromium",
     });
     const page = await browser.newPage();
-    await page.emulateMedia(process.env.print_media ? "print" : "screen");
+    await page.emulateMediaType(process.env.print_media ? "print" : "screen");
     const javaScriptEnabled = Boolean(
       process.env.javascript_enabled ||
         process.env.style ||
@@ -215,11 +229,6 @@ function rewrite-url {
   fi
 }
 
-function temp-path {
-  local checksum=$(md5sum <<< $1)
-  echo /tmp/"${checksum%% *}"
-}
-
 function truncate-filename {
   local filename=$1
   while (($(wc -c <<< $filename) > 255)); do
@@ -241,7 +250,8 @@ function upload-article {
 
 function process-url {
   set -- "$(rewrite-url "$1")"
-  local path=$(temp-path "$1").pdf
+  local path=$(output-path "$1").pdf
+  touch "$path"
   if [[ ${1%\?*} == *.pdf ]]; then
     local title=$(process-pdf "$1" "$path")
   else
@@ -250,12 +260,18 @@ function process-url {
   [[ -f $path ]]
   deactivate-links "$path"
   exiftool -q -overwrite_original -Author="$1" "$path"
-  setsid xdg-open "$path" &> /dev/null &
+  if [[ -f /etc/apt/sources.list.d/cros.list ]]; then
+    local downloads_path=~/Downloads/${path##*/}
+    mv "$path" "$downloads_path"
+    path=$downloads_path
+  fi
+  setsid x-www-browser "$path" &> /dev/null &
   ! confirm-upload "$title" || upload-article "$path" "$title"
   rm "$path"
 }
 
 function main {
+  install-packages
   parse-options "$@"
   shift "$((OPTIND - 1))"
   if [[ $@ ]]; then

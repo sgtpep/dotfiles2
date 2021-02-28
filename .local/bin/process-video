@@ -18,7 +18,15 @@ function convert-videos {
   done
 }
 
+function install-packages {
+  local packages=(
+    ffmpeg
+  )
+  dpkg -s "${packages[@]}" &> /dev/null || sudo apt -y install "${packages[@]}"
+}
+
 function main {
+  install-packages
   [[ $@ ]] || set -- .
   local path
   for path; do

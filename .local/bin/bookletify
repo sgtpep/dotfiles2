@@ -53,6 +53,7 @@ function install-packages {
   local packages=(
     mupdf-tools
     pdfposter
+    poppler-utils
     texlive-extra-utils
   )
   dpkg -s "${packages[@]}" &> /dev/null || sudo apt -y install "${packages[@]}"

@@ -1,3 +1,31 @@
 #!/bin/bash
 set -eu
-exec vim --cmd 'cd ~/notes' "$@"
+cd ~/notes
+exec -a notes vim -c "
+function Sync()
+  let path = expand('~/notes')
+  let command = 'git -C ' . shellescape(path)
+  let paths = systemlist(command . ' diff --name-only')
+  function! Commit(command, paths)
+    call system(a:command . ' add -A')
+    call system(a:command . ' commit -m ' . shellescape('Update ' . join(a:paths, ', ')))
+  endfunction
+  if !empty(paths)
+    call Commit(command, paths)
+  endif
+  let output = system(command . ' pull -r')
+  let status = v:shell_error
+  if filereadable(path . '/.git/REBASE_HEAD')
+    call Commit(command, paths)
+    call system(command . ' rebase --skip')
+  elseif status != 0
+    echo output
+  endif
+  if !empty(paths)
+    call system(command . ' push')
+  endif
+endfunction
+autocmd BufWritePost * update | call Sync() | checktime
+nnoremap <silent> <Leader>T :edit tasks<CR>
+nnoremap <silent> <Leader>t :find todo<CR>
+" "$@"

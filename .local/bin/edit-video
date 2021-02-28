@@ -1,9 +1,11 @@
 #!/bin/bash
 set -eu
+package=ffmpeg
+dpkg -s "$package" &> /dev/null || sudo apt -y install "$package"
 path=${1%.*}~.${1##*.}
 if [[ $2 == concat ]]; then
   arguments=("${@:3}")
-  input=/tmp/ffmpeg-input
+  input=$XDG_RUNTIME_DIR/ffmpeg-input
   printf 'file %q\n' "$1" "${arguments[@]}" > "$input"
   ffmpeg -f concat -safe 0 -i "$input" -c copy "$path"
   rm "$input"

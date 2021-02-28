@@ -1,6 +1,14 @@
 #!/bin/bash
 set -eu
 
+function install-packages {
+  local packages=(
+    exiftran
+    libimage-exiftool-perl
+  )
+  dpkg -s "${packages[@]}" &> /dev/null || sudo apt -y install "${packages[@]}"
+}
+
 function lowercase-extensions {
   local path
   for path; do
@@ -57,6 +65,7 @@ function rotate-photos {
 }
 
 function main {
+  install-packages
   [[ $@ ]] || set -- .
   local path
   for path; do

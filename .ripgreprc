@@ -1,4 +1,5 @@
 -S
+-g=!.git
+-g=!package-lock.json
 --hidden
---ignore-file=/home/danil/.rgignore
 --sort=path

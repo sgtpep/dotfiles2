@@ -1,0 +1,249 @@
+#!/bin/bash
+set -eu
+
+function install-npm-completions {
+  local path=~/.local/share/bash-completion/completions/npm
+  if [[ ! -f $path ]]; then
+    mkdir -p "${path%/*}"
+    PATH=~/.npm/bin:$PATH npm completion > "$path"
+  fi
+}
+
+function install-node {
+  local prefix=~/.npm
+  if [[ ! -x $prefix/bin/node ]]; then
+    local arch=$(arch)
+    arch=${arch/aarch64/arm64}
+    arch=${arch/x86_64/x64}
+    local version=14.0.0
+    local url=https://nodejs.org/dist/v$version/node-v$version-linux-$arch.tar.xz
+    local path=$XDG_RUNTIME_DIR/${url##*/}
+    wget -O "$path" "$url" || rm -f "$path"
+    tar -x -C "${path%/*}" -f "$path"
+    NPM_CONFIG_PREFIX=$prefix PATH=${path%.*.*}/bin:$PATH npm install -g node npm
+  fi
+  install-npm-completions
+}
+
+function install-packages {
+  local packages=(
+    adb
+    apcalc
+    bsdmainutils
+    curl
+    exiftran
+    firejail xpra-
+    gimp
+    git
+    graphicsmagick-imagemagick-compat
+    htop
+    mpv youtube-dl-
+    mupdf
+    mutt
+    ncdu
+    nnn
+    pass
+    python3-pip
+    rclone
+    ripgrep
+    rsync
+    sdcv
+    sshuttle
+    sxiv
+    tmux
+    unzip
+    vim-gtk3
+    w3m
+    xsel
+    xterm
+  )
+  local dpkg_packages=(${packages[@]/%*-})
+  dpkg -s "${dpkg_packages[@]}" &> /dev/null || sudo DEBIAN_FRONTEND=noninteractive apt -y install "${packages[@]}"
+}
+
+pip_path=~/.pip
+
+function patch-pwdhash {
+  sed -i $'s/\\bsys\.stdout\.write(generated\\b.*/import subprocess; subprocess.run([\'xsel\', \'-b\'], input=generated.encode(\'utf8\'))/' "$pip_path"/lib/python3.*/site-packages/pwdhash.py
+}
+
+function install-pip-packages {
+  local packages=(
+    pwdhash.py
+    youtube_dl
+  )
+  local package
+  for package in "${packages[@]}"; do
+    ls "$pip_path"/lib/python3.*/site-packages/"$package" &> /dev/null || PYTHONUSERBASE=$pip_path pip3 install "$package"
+  done
+  patch-pwdhash
+}
+
+function install-software {
+  install-packages
+  install-node
+  install-pip-packages
+}
+
+function clone-dotfiles {
+  local path=~/.git
+  if [[ ! -d $path ]]; then
+    cd ~
+    git init
+    git remote add origin https://github.com/sgtpep/dotfiles.git
+    git fetch || rm -fr "$path"
+    git checkout -f master
+    git ls-files | grep -Po '.+(?=\.orig$)' | xargs -r -I {} -d '\n' cp ~/{}{.orig,}
+    cd - > /dev/null
+  fi
+}
+
+function clone-repositories {
+  declare -A repositories=(
+    [notes]=~/notes
+    [pass]=~/.password-store
+  )
+  local name
+  for name in "${!repositories[@]}"; do
+    local path=${repositories[$name]}
+    if [[ ! -d $path ]] && ! git clone personal:repositories/"$name".git "$path"; then
+      rm -fr "$path"
+      return 1
+    fi
+  done
+}
+
+function configure-sommelier {
+  local path=~/.config/systemd/user/sommelier-x@0.service.d/override.conf
+  mkdir -p "${path%/*}"
+  cat > "$path" << \EOF
+[Service]
+Environment="SOMMELIER_ACCELERATORS=<Alt>Tab,<Alt>equal,<Alt>space,<Control>space,Super_L"
+EOF
+}
+
+function copy-netrc {
+  local path=~/.netrc
+  [[ -f $path ]] || scp personal:"${path#~/}" "$path"
+}
+
+keys_path=/mnt/chromeos/removable/keys
+
+function copy-ssh-key {
+  local path=~/.ssh/id_rsa
+  [[ -f $path ]] || cp "$keys_path"/"${path##*/}" "$path"
+  chmod 600 "$path"
+  sed -i 's|\bhttps://\([^/]*\)/|git@\1:|' ~/.git/config
+}
+
+function download-dictionaries {
+  local url
+  for url in http://download.huzheng.org/lingvo/stardict-{ER,RE}-LingvoUniversal-2.4.2.tar.bz2; do
+    local filename=${url##*/}
+    local path=~/.stardict/dic/${filename%.*.*}
+    if [[ ! -d $path ]]; then
+      mkdir -p "$path"
+      if ! wget -O - "$url" | tar -jx -C "${path%/*}"; then
+        rm -fr "$path"
+        return 1
+      fi
+    fi
+  done
+}
+
+function enable-ssh-agent {
+  local filename=ssh-agent.socket
+  local path=~/.config/systemd/user/ssh-agent.service
+  mkdir -p "${path%/*}"
+  cat > "$path" << EOF
+[Service]
+ExecStart=/usr/bin/ssh-agent -D -a %t/$filename
+Type=simple
+
+[Install]
+WantedBy=default.target
+EOF
+  systemctl --user enable "$path"
+  local line="export SSH_AUTH_SOCK=\$XDG_RUNTIME_DIR/$filename"
+  local path=~/.profile_local
+  grep -Fqsx "$line" "$path" || echo "$line" >> "$path"
+}
+
+function enable-xrdb {
+  local path=~/.config/systemd/user/xrdb.service
+  mkdir -p "${path%/*}"
+  cat > "$path" << \EOF
+[Unit]
+After=sommelier-x@0.service
+Requires=sommelier-x@0.service
+
+[Service]
+ExecStart=xrdb -merge %h/.Xresources
+RemainAfterExit=yes
+Type=oneshot
+
+[Install]
+WantedBy=default.target
+EOF
+  systemctl --user enable "$path"
+}
+
+function fix-icon {
+  local path=~/.local/share/applications/xterm.desktop
+  mkdir -p "${path%/*}"
+  cp /usr/share/applications/debian-xterm.desktop "$path"
+  sed -i -f - "$path" << \EOF
+s/\(^Exec=\).*/\1xterm -ls/
+s|\(^Icon=\).*|\1/usr/share/icons/Adwaita/512x512/apps/utilities-terminal.png|
+EOF
+}
+
+downloads_path=/mnt/chromeos/MyFiles/Downloads
+
+function copy-chromium-extension {
+  cp -Tru ~/.local/share/chromium/extensions/customizations "$downloads_path"/.customizations
+}
+
+function import-gpg-key {
+  if ! ls ~/.gnupg/private-keys-v1.d/*.key &> /dev/null; then
+    gpg --import "$keys_path"/private-key.asc
+    gpg --import-ownertrust <<< "$(gpg -k --with-colons | grep -Po -m 1 '(?<=^fpr:::::::::)[^:]+'):6:"
+  fi
+}
+
+function set-hostname {
+  sudo hostnamectl set-hostname localhost
+  sudo sed -i 's/, host-name\b//' /etc/dhcp/dhclient.conf
+}
+
+function set-terminal-emulator {
+  sudo update-alternatives --set x-terminal-emulator /usr/bin/xterm
+}
+
+function symlink-downloads {
+  ln -fs "$downloads_path" ~
+}
+
+function setup-system {
+  clone-repositories
+  configure-sommelier
+  copy-chromium-extension
+  copy-netrc
+  copy-ssh-key
+  download-dictionaries
+  enable-ssh-agent
+  enable-xrdb
+  fix-icon
+  import-gpg-key
+  set-hostname
+  set-terminal-emulator
+  symlink-downloads
+}
+
+function main {
+  install-software
+  clone-dotfiles
+  setup-system
+}
+
+[[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"

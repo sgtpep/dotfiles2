@@ -1,0 +1,7 @@
+#!/bin/bash
+set -eu
+path=/usr/share/doc/git/contrib/diff-highlight
+[[ ! -d $path ]] || exec perl -I "$path" -MDiffHighlight -e 'DiffHighlight::highlight_stdin()'
+path=/usr/local/opt/git/share/git-core/contrib/diff-highlight/diff-highlight
+[[ ! -x $path ]] || exec "$path"
+exec cat

@@ -1,14 +1,14 @@
+const isElementVisible = (element) => {
+  const [{ bottom, top } = {}] = element.getClientRects();
+  return bottom >= 0 && top <= innerHeight;
+};
+
 const getVisibleElements = () =>
   [
     ...document.querySelectorAll(
       'a, button, input:not([type="hidden"]), select, textarea'
     ),
   ].filter((element) => isElementVisible(element));
-
-const isElementVisible = (element) => {
-  const [{ bottom, top } = {}] = element.getClientRects();
-  return bottom >= 0 && top <= innerHeight;
-};
 
 const characters = "fdsagrewcx";
 
@@ -26,17 +26,31 @@ const clickElement = (element, isBackground = false) => {
       view: window,
     })
   );
-  target && (element.target = target);
-  isElementVisible(element) && element.focus({ preventScroll: true });
+  if (target) {
+    element.target = target;
+  }
+  if (isElementVisible(element)) {
+    element.focus({ preventScroll: true });
+  }
 };
 
 const id = "gcpccpgdkmihefbjbhkipbjcpfaokokd-hints";
 
-const hideHints = () => document.getElementById(id).remove();
+const hideHints = () => {
+  document.getElementById(id).remove();
+};
 
 const listenHintsEvents = (hints, elements) => {
-  addEventListener("scroll", () => hideHints(), { once: true });
-  hints.addEventListener("click", () => hideHints());
+  addEventListener(
+    "scroll",
+    () => {
+      hideHints();
+    },
+    { once: true }
+  );
+  hints.addEventListener("click", () => {
+    hideHints();
+  });
   let input = "";
   hints.addEventListener("keydown", (event) => {
     event.preventDefault();
@@ -89,8 +103,8 @@ const showHints = () => {
     outline: none;
   }
   #${id} > * {
-    background-color: black;
-    color: white;
+    background-color: white;
+    color: black;
     font: 16px / 1.2 monospace;
     margin: 0;
     padding: 0;
@@ -105,11 +119,10 @@ const showHints = () => {
 
 const main = () => {
   const hintsKey = "f";
-  addEventListener("DOMContentLoaded", () =>
-    document
-      .querySelector(`[accesskey="${hintsKey}"]`)
-      ?.removeAttribute("accesskey")
-  );
+  addEventListener("DOMContentLoaded", () => {
+    const name = "accesskey";
+    document.querySelector(`[${name}="${hintsKey}"]`)?.removeAttribute(name);
+  });
   addEventListener("keydown", (event) => {
     if (event.altKey && !event.ctrlKey && event.key === hintsKey) {
       event.preventDefault();

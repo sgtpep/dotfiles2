@@ -1,6 +1,6 @@
 #!/bin/bash
 set -eu
-path=/tmp/${0##*/}/$1
+path=$XDG_RUNTIME_DIR/${0##*/}/$1
 if mountpoint -q "$path"; then
   mounted=true
 else
@@ -11,7 +11,7 @@ else
     sleep 1
   done
 fi
-vifm "$path" || :
+nnn "$path" || :
 if [[ ! -v mounted ]]; then
   until fusermount -u "$path"; do
     sleep 1

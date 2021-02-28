@@ -1,0 +1,9 @@
+XTerm.maximized: true
+XTerm.termName: xterm-mono
+XTerm.vt100.charClass: 33:48,35:48,37-38:48,43-47:48,59:48,61:48,63-64:48,95:48,126:48
+XTerm.vt100.faceName: monospace:size=12
+XTerm.vt100.internalBorder: 0
+XTerm.vt100.metaSendsEscape: true
+XTerm.vt100.selectToClipboard: true
+XTerm.vt100.translations: #override \n\
+  Alt Ctrl <Key>V: insert-selection(CLIPBOARD)

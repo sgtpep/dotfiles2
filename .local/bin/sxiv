@@ -1,0 +1,3 @@
+#!/bin/bash
+set -eu
+exec /usr/bin/"${0##*/}" -bfp -g 2000x2000 "$@"
