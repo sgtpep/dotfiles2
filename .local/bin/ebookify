@@ -260,12 +260,7 @@ function process-url {
   [[ -f $path ]]
   deactivate-links "$path"
   exiftool -q -overwrite_original -Author="$1" "$path"
-  if [[ -f /etc/apt/sources.list.d/cros.list ]]; then
-    local downloads_path=~/Downloads/${path##*/}
-    mv "$path" "$downloads_path"
-    path=$downloads_path
-  fi
-  setsid x-www-browser "$path" &> /dev/null &
+  setsid xdg-open "$path" &> /dev/null &
   ! confirm-upload "$title" || upload-article "$path" "$title"
   rm "$path"
 }
