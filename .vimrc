@@ -46,7 +46,7 @@ endfunction
 
 function s:format_code()
   let path = 'node_modules/.bin/prettier'
-  let output = systemlist(printf('%s --cursor-offset=%d --stdin-filepath=%s', executable(path) ? path : 'npx prettier', abs(line2byte(line('.'))) + col('.') - 2, shellescape(expand('%'))), getline(1, '$'))->filter({index, line -> index > 0 || line !~# '^npx: installed'})
+  let output = filter(systemlist(printf('%s --cursor-offset=%d --stdin-filepath=%s', executable(path) ? path : 'npx prettier', abs(line2byte(line('.'))) + col('.') - 2, shellescape(expand('%'))), getline(1, '$')), {index, line -> index > 0 || line !~# '^npx: installed'})
   if v:shell_error
     echo join(output, "\n")
     echo get(output, 0, '')
