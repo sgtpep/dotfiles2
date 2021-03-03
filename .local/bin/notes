@@ -2,6 +2,8 @@
 set -eu
 cd ~/notes
 exec -a notes vim -c "
+nnoremap <silent> <Leader>T :edit tasks<CR>
+nnoremap <silent> <Leader>t :find todo<CR>
 function Sync()
   let path = expand('~/notes')
   let command = 'git -C ' . shellescape(path)
@@ -26,6 +28,4 @@ function Sync()
   endif
 endfunction
 autocmd BufWritePost * update | call Sync() | checktime
-nnoremap <silent> <Leader>T :edit tasks<CR>
-nnoremap <silent> <Leader>t :find todo<CR>
 " "$@"
