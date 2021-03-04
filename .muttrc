@@ -39,6 +39,7 @@ set beep_new
 set fast_reply
 set folder=$my_imap_url
 set forward_format=Fw:\ %s
+set from='Danil Semelenov <mail'@'danil.mobi>'
 set header_cache=~/.cache/mutt
 set imap_idle
 set include
