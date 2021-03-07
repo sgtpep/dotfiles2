@@ -1,9 +1,26 @@
-XTerm.maximized: true
-XTerm.termName: xterm-mono
-XTerm.vt100.charClass: 33:48,35:48,37-38:48,43-47:48,59:48,61:48,63-64:48,95:48,126:48
-XTerm.vt100.faceName: monospace:size=12
-XTerm.vt100.internalBorder: 0
-XTerm.vt100.metaSendsEscape: true
-XTerm.vt100.selectToClipboard: true
-XTerm.vt100.translations: #override \n\
-  Alt Ctrl <Key>V: insert-selection(CLIPBOARD)
+URxvt.color0: White
+URxvt.color10: Black
+URxvt.color11: Black
+URxvt.color12: Black
+URxvt.color13: Black
+URxvt.color14: Black
+URxvt.color15: Black
+URxvt.color1: Black
+URxvt.color2: Black
+URxvt.color3: Black
+URxvt.color4: Black
+URxvt.color5: Black
+URxvt.color6: Black
+URxvt.color7: Black
+URxvt.color8: Black
+URxvt.color9: Black
+URxvt.cutchars: '`"\'&()*,;<=>?@[]^{|}:'
+URxvt.font: xft:monospace:size=12
+URxvt.geometry: 1000x1000
+URxvt.internalBorder: 0
+URxvt.iso14755: False
+URxvt.letterSpace: -1
+URxvt.loginShell: True
+URxvt.perl-ext-common: selection-to-clipboard
+URxvt.pointerBlank: True
+URxvt.saveLines: 0

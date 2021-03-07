@@ -47,6 +47,7 @@ function install-packages {
     rclone
     ripgrep
     rsync
+    rxvt-unicode
     sdcv
     sshuttle
     sxiv
@@ -55,7 +56,6 @@ function install-packages {
     vim-gtk3
     w3m
     xsel
-    xterm
   )
   local dpkg_packages=(${packages[@]/%*-})
   dpkg -s "${dpkg_packages[@]}" &> /dev/null || sudo DEBIAN_FRONTEND=noninteractive apt -y install "${packages[@]}"
@@ -189,13 +189,10 @@ EOF
 }
 
 function fix-icon {
-  local path=~/.local/share/applications/xterm.desktop
+  local path=~/.local/share/applications/rxvt-unicode.desktop
   mkdir -p "${path%/*}"
-  cp /usr/share/applications/debian-xterm.desktop "$path"
-  sed -i -f - "$path" << \EOF
-s/\(^Exec=\).*/\1xterm -ls/
-s|\(^Icon=\).*|\1/usr/share/icons/Adwaita/512x512/apps/utilities-terminal.png|
-EOF
+  cp /usr/share/applications/"${path##*/}" "$path"
+  sed -i "s|\(^Icon=\).*|\1/usr/share/icons/Adwaita/512x512/apps/utilities-terminal.png|" "$path"
 }
 
 downloads_path=/mnt/chromeos/MyFiles/Downloads
@@ -217,7 +214,7 @@ function set-hostname {
 }
 
 function set-terminal-emulator {
-  sudo update-alternatives --set x-terminal-emulator /usr/bin/xterm
+  sudo update-alternatives --set x-terminal-emulator /usr/bin/urxvt
 }
 
 function symlink-downloads {
