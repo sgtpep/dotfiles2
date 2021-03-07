@@ -15,7 +15,6 @@ elif [[ $1 == y ]]; then
 elif [[ $1 == m ]]; then
   mapfile -t
   path=$XDG_RUNTIME_DIR/sxiv-target
-  rm -f "$path"
-  x-terminal-emulator -e bash -c 'stty -ixon; nnn -p "$@"' -- "$path" "${MAPFILE[0]%/*}"
-  [[ ! -f $path ]] || mv "${MAPFILE[@]}" "$(< "$path")"
+  x-terminal-emulator -e vifm --choose-dir="$path" "${MAPFILE[0]%/*/*}"
+  mv "${MAPFILE[@]}" "$(< "$path")"
 fi

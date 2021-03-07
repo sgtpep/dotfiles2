@@ -1,0 +1,39 @@
+execute 'filetype <application/json> ' . $EDITOR . ' -- %f'
+filetype <application/gzip,application/x-tar> tar -x -f %f
+filetype <application/zip> unzip -- %f
+fileviewer <audio/*,image/*,video/*> file -b -- %f
+filextype <*> xdg-open %f %i &
+highlight Border cterm=none ctermfg=default ctermbg=default
+highlight BrokenLink cterm=none ctermfg=default ctermbg=default
+highlight CmdLine cterm=none ctermfg=default ctermbg=default
+highlight CurrLine cterm=reverse ctermfg=default ctermbg=default
+highlight Device cterm=none ctermfg=default ctermbg=default
+highlight Directory cterm=none ctermfg=default ctermbg=default
+highlight ErrorMsg cterm=reverse ctermfg=default ctermbg=default
+highlight Executable cterm=none ctermfg=default ctermbg=default
+highlight Fifo cterm=none ctermfg=default ctermbg=default
+highlight JobLine cterm=reverse ctermfg=default ctermbg=default
+highlight Link cterm=none ctermfg=default ctermbg=default
+highlight OtherLine cterm=reverse ctermfg=default ctermbg=default
+highlight Selected cterm=reverse ctermfg=default ctermbg=default
+highlight Socket cterm=none ctermfg=default ctermbg=default
+highlight StatusLine cterm=none ctermfg=default ctermbg=default
+highlight SuggestBox cterm=none ctermfg=default ctermbg=default
+highlight TopLine cterm=none ctermfg=default ctermbg=default
+highlight TopLineSel cterm=none ctermfg=default ctermbg=default
+highlight WildMenu cterm=reverse ctermfg=default ctermbg=default
+highlight Win cterm=none ctermfg=default ctermbg=default
+nnoremap <silent> E :edit<CR>
+nnoremap <silent> gh :cd ~<CR>
+nnoremap <silent> yn :!echo -n %f | xsel -b &<CR>
+nnoremap <silent> yp :!echo -n %f:p | xsel -b &<CR>
+nnoremap q ZQ
+only
+set classify+=@:link:
+set dotdirs=rootparent
+set ignorecase
+set nohlsearch
+set notrash
+set smartcase
+set statusline='%A %u:%g %d %s'
+set tuioptions-=ps

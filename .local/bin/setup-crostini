@@ -41,7 +41,6 @@ function install-packages {
     mupdf
     mutt
     ncdu
-    nnn
     pass
     python3-pip
     rclone
@@ -53,6 +52,7 @@ function install-packages {
     sxiv
     tmux
     unzip
+    vifm
     vim-gtk3
     w3m
     xsel
@@ -192,7 +192,10 @@ function fix-icon {
   local path=~/.local/share/applications/rxvt-unicode.desktop
   mkdir -p "${path%/*}"
   cp /usr/share/applications/"${path##*/}" "$path"
-  sed -i "s|\(^Icon=\).*|\1/usr/share/icons/Adwaita/512x512/apps/utilities-terminal.png|" "$path"
+  sed -i -f - "$path" << \EOF
+s|\(^Icon=\).*|\1/usr/share/icons/Adwaita/512x512/apps/utilities-terminal.png|
+s/\(^Name=\).*/\1URxvt/
+EOF
 }
 
 downloads_path=/mnt/chromeos/MyFiles/Downloads
