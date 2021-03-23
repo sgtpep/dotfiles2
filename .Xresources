@@ -22,5 +22,4 @@ URxvt.iso14755: False
 URxvt.letterSpace: -1
 URxvt.loginShell: True
 URxvt.perl-ext-common: selection-to-clipboard
-URxvt.pointerBlank: True
 URxvt.saveLines: 0
