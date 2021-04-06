@@ -1,4 +1,5 @@
 -S
+-g=!*.min.js
 -g=!.git
 -g=!package-lock.json
 --hidden
