@@ -11,6 +11,11 @@ alias serve='python3 -m http.server'
 alias sxiv='sxiv -r'
 alias watch='watch '
 
+function pass {
+  [[ $# != 1 || $1 == -* ]] || set -- -c "$1"
+  command pass "$@"
+}
+
 function rg {
   command rg -p "$@" |& less
   return "${PIPESTATUS[0]}"
