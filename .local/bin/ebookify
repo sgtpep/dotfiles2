@@ -146,10 +146,7 @@ const puppeteer = require("puppeteer-core");
     await page.setUserAgent(
       "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.75 Mobile Safari/537.36"
     );
-    await page.goto(process.argv[2], {
-      timeout: 60000,
-      waitUntil: "networkidle2",
-    });
+    await page.goto(process.argv[2], { timeout: 60000 });
     await page.evaluate(
       (script, stylesDisabled) => {
         [...document.querySelectorAll("*")].forEach((element) => {
