@@ -25,6 +25,7 @@ highlight WildMenu cterm=reverse ctermfg=default ctermbg=default
 highlight Win cterm=none ctermfg=default ctermbg=default
 nnoremap <silent> E :edit<CR>
 nnoremap <silent> gh :cd ~<CR>
+nnoremap <silent> gm :cd /mnt/chromeos<CR>
 nnoremap <silent> yn :!echo -n %f | xsel -b &<CR>
 nnoremap <silent> yp :!echo -n %f:p | xsel -b &<CR>
 nnoremap q ZQ
