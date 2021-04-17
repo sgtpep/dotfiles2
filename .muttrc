@@ -1,4 +1,5 @@
 folder-hook . 'bind index D noop'
+folder-hook . 'bind index,pager F flag-message'
 folder-hook . 'bind index,pager f forward-message'
 folder-hook . 'set index_format="%3C %Z %{%b %d} %-15.15L (%?l?%4l&%4c?) %s"'
 folder-hook . 'set sort=reverse-date'
@@ -23,6 +24,7 @@ color tilde default default
 color tree default default
 folder-hook . 'push <first-entry>'
 folder-hook Feeds 'macro index D <first-entry><delete-pattern>~m-`echo "$(($(tput lines) - 2))"`<Return><sync-mailbox><Return>'
+folder-hook Feeds 'macro index,pager F <forward-message>'
 folder-hook Feeds 'macro index,pager f <pipe-message>"grep -Po '\''(?<=\^X-RSS-URL: ).+'\'' >> ~/.urls"<Return>'
 folder-hook Feeds 'set index_format="%3C %-12.12L  %s"'
 folder-hook Feeds 'set sort=date'
