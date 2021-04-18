@@ -37,7 +37,6 @@ function install-packages {
     git
     graphicsmagick-imagemagick-compat
     htop
-    mpv youtube-dl-
     mupdf
     mutt
     ncdu
