@@ -13,9 +13,16 @@ function generate-label {
 
 pattern='\bhttps?://[^[:space:]"]*[[:alnum:]/-]'
 
+function is-mutt {
+  [[ ${1##*$'\n'} == *' -- ('*')' ]]
+}
+
 function hintify-text {
   local index=0
   local text=$1
+  if ! is-mutt "$text"; then
+    text=$(join-text "$1")
+  fi
   while [[ $text =~ $pattern ]]; do
     local label=$(generate-label "$index" "$2")
     printf "%s\e[7m%s\e[m%s" "${text%%"${BASH_REMATCH[0]}"*}" "$label" "${BASH_REMATCH[0]:${#label}}"
@@ -25,20 +32,9 @@ function hintify-text {
   echo -n "$text"
 }
 
-function output-text {
-  printf '\e[?25l%s' "${1%$'\n'}"
-  tmux select-window -t url
-}
-
-function read-text {
-  local path=$XDG_RUNTIME_DIR/${0##*/}
-  echo "$(< "$path")"
-  rm "$path"
-}
-
 function join-text {
   local columns=$(tput cols)
-  if [[ ${1##*$'\n'} == *' -- ('*')' ]]; then
+  if is-mutt "$1"; then
     local width=80
     (($columns < $width)) || columns=$width
   fi
@@ -47,6 +43,11 @@ function join-text {
     echo -n "$line"
     [[ ! ${line: -1} =~ [[:space:]] ]] && ((${#line} >= $columns)) || echo
   done <<< $1
+}
+
+function output-text {
+  printf '\e[?25l%s' "${1%$'\n'}"
+  tmux select-window -t url
 }
 
 function parse-urls {
@@ -78,6 +79,12 @@ function process-input {
       echo "$url" >> ~/.urls
     fi
   fi
+}
+
+function read-text {
+  local path=$XDG_RUNTIME_DIR/${0##*/}
+  echo "$(< "$path")"
+  rm "$path"
 }
 
 function main {
