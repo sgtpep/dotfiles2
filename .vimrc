@@ -1,17 +1,22 @@
+function s:comment_code(is_visual, is_commenting) range
+  let [opening, closing] = split(empty(&commentstring) ? '#%s' : &commentstring, '%s', 1)
+  let lines = getline(a:firstline, a:lastline)
+  let column = min(map(copy(lines), {_, line -> len(matchstr(line, '^\s*'))})) + 1
+  let range = a:is_visual ? "'<,'>" : ''
+  if a:is_commenting
+    execute printf("%snormal %d|i%s\<C-O>$%s\<Esc>\^", range, column, opening, closing)
+  elseif empty(filter(lines, {_, line -> stridx(trim(line), opening) == -1 || stridx(line, closing, strlen(closing)) == -1}))
+    execute printf('%snormal ^%d"_x$%s%d|', range, strlen(opening), repeat('"_x', strlen(closing)), column)
+  endif
+endfunction
+
 function s:disable_colors()
   set t_Co=0
   syntax off
 endfunction
 
-function s:map_commenting()
-  let [opening, closing] = split(empty(&commentstring) ? '#%s' : &commentstring, '%s', 1)
-  execute printf('noremap <buffer> <silent> <Leader>/ :normal 0i%s<C-O>$%s<CR>0', opening, closing)
-  execute printf('noremap <buffer> <silent> <Leader>? :normal $%s^%d"_x<CR>', repeat('"_x', strlen(closing)), strlen(opening))
-endfunction
-
 function s:configure_filetypes()
   autocmd BufNewFile,BufRead *.ts,*.tsx setlocal filetype=javascript
-  autocmd FileType * call s:map_commenting()
   autocmd FileType * let [&l:formatoptions, &l:textwidth] = [&g:formatoptions, &g:textwidth]
   autocmd FileType mail setlocal formatoptions+=w textwidth=72 | if getline(0, '$') == [''] | startinsert | endif
 endfunction
@@ -86,6 +91,8 @@ function s:map_keys()
   nnoremap <Leader>e :edit<Space>
   nnoremap <Leader>f :find<Space>
   nnoremap <Leader>g :grep<Space>
+  nnoremap <silent> <Leader>/ :call <SID>comment_code(v:false, v:true)<CR>
+  nnoremap <silent> <Leader>? :call <SID>comment_code(v:false, v:false)<CR>
   nnoremap <silent> <Leader>D :bdelete!<CR>
   nnoremap <silent> <Leader>F :call <SID>update_path()<CR>
   nnoremap <silent> <Leader>N :bnext<CR>
@@ -97,6 +104,8 @@ function s:map_keys()
   nnoremap <silent> <Leader>r :call <SID>format_code()<CR>
   nnoremap <silent> <Leader>y :call system('xsel -b', expand('%'))<CR>
   nnoremap Q <Nop>
+  vnoremap <silent> <Leader>/ :call <SID>comment_code(v:true, v:true)<CR>
+  vnoremap <silent> <Leader>? :call <SID>comment_code(v:true, v:false)<CR>
   vnoremap <silent> <Leader>s :sort<CR>
 endfunction
 
