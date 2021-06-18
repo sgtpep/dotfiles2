@@ -11,18 +11,11 @@ function generate-label {
   done < <(printf "%0${#2}d" "$1")
 }
 
-pattern='\bhttps?://[^[:space:]"]*[[:alnum:]/-]'
-
-function is-mutt {
-  [[ ${1##*$'\n'} == *' -- ('*')' ]]
-}
+pattern='\bhttps?://[^][:space:]"]*[[:alnum:]/-]'
 
 function hintify-text {
   local index=0
   local text=$1
-  if ! is-mutt "$text"; then
-    text=$(join-text "$1")
-  fi
   while [[ $text =~ $pattern ]]; do
     local label=$(generate-label "$index" "$2")
     printf "%s\e[7m%s\e[m%s" "${text%%"${BASH_REMATCH[0]}"*}" "$label" "${BASH_REMATCH[0]:${#label}}"
@@ -30,6 +23,10 @@ function hintify-text {
     text=${text#*"${BASH_REMATCH[0]}"}
   done
   echo -n "$text"
+}
+
+function is-mutt {
+  [[ ${1##*$'\n'} == *' -- ('*')' ]]
 }
 
 function join-text {
@@ -51,7 +48,7 @@ function output-text {
 }
 
 function parse-urls {
-  local text=$(join-text "$1")
+  local text=$1
   while [[ $text =~ $pattern ]]; do
     echo "${BASH_REMATCH[0]}"
     text=${text#*"${BASH_REMATCH[0]}"}
@@ -83,8 +80,9 @@ function process-input {
 
 function read-text {
   local path=$XDG_RUNTIME_DIR/${0##*/}
-  echo "$(< "$path")"
+  local text=$(< "$path")
   rm "$path"
+  join-text "$text"
 }
 
 function main {
