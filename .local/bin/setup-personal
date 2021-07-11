@@ -28,6 +28,7 @@ function install-packages {
     nginx-light
     rss2email
     rsync
+    tmux
     ufw
     unattended-upgrades
     uwsgi

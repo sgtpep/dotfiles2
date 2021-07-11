@@ -1,0 +1,44 @@
+#!/bin/bash
+set -eu
+
+function install-packages {
+  local packages=(
+    awesome
+    suckless-tools
+    xserver-xephyr
+  )
+  local dpkg_packages=(${packages[@]/%*-})
+  dpkg -s "${dpkg_packages[@]}" &> /dev/null || sudo DEBIAN_FRONTEND=noninteractive apt -y install "${packages[@]}"
+}
+
+function install-software {
+  install-packages
+}
+
+repository=https://github.com/sgtpep/dotfiles.git
+
+function clone-dotfiles {
+  local path=~/.git
+  if [[ -d $path ]]; then
+    return
+  fi
+
+  local git=(git -C ~)
+  "${git[@]}" init
+  "${git[@]}" remote add origin "$repository"
+  "${git[@]}" fetch || rm -fr "$path"
+  "${git[@]}" checkout -f master
+  "${git[@]}" ls-files | grep -Po '.+(?=\.orig$)' | xargs -r -I {} -d '\n' cp ~/{}{.orig,}
+}
+
+function setup-system {
+  :
+}
+
+function main {
+  install-software
+  clone-dotfiles
+  setup-system
+}
+
+[[ -v BASH_SOURCE[0] && ${BASH_SOURCE[0]##*/} != ${0##*/} ]] || main "$@"

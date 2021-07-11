@@ -1,0 +1,6 @@
+[Desktop Entry]
+Exec=bash -l -c "xinit -- /usr/bin/Xephyr :2 +iglx -dpi 170 -dpms -dumbSched -fullscreen -glamor -no-host-grab -noreset -resizeable -title Desktop &> /tmp/xinit.log"
+Name=Desktop
+StartupNotify=true
+StartupWMClass=Xephyr
+Type=Application
